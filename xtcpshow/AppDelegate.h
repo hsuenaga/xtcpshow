@@ -14,10 +14,9 @@
 
 @property (assign) IBOutlet NSWindow *window;
 @property (weak) IBOutlet NSTextField *textField;
-@property (weak) IBOutlet NSSlider *slider;
 @property (strong) Track *track;
 
-- (IBAction)mute:(id)sender;
-- (IBAction)takeFloatValueForVolumeFrom:(id)sender;
+- (IBAction)startCapture:(id)sender;
+- (void) updateUserInterface;
 
 @end
