@@ -16,15 +16,24 @@
 	// Insert code here to initialize your application
 	Track *aTrack = [[Track alloc] init];
 	
-	[self setTrack:aTrack];	
+	[self setTrack:aTrack];
+	[self updateUserInterface];
 }
 
 - (IBAction)mute:(id)sender {
+	[self.track setVolume:0.0];
+	[self updateUserInterface];
+	
 	NSLog(@"received a mute: message");
 }
 
 - (IBAction)takeFloatValueForVolumeFrom:(id)sender {
+	float newValue;
 	NSString *senderName = NULL;
+	
+	newValue = [sender floatValue];
+	[self.track setVolume:newValue];
+	[self updateUserInterface];
 	
 	if (sender == self.textField)
 		senderName = @"textFiled";
@@ -33,6 +42,14 @@
 	else
 		senderName = @"unkonwon";
 	NSLog(@"%@ sent takeFloatValueForVolumeFrom: with value %1.2f ",
-	    senderName, [ sender floatValue ]);
+	    senderName, newValue);
+}
+
+- (void)updateUserInterface {
+	float newValue;
+	
+	newValue = [self.track volume];
+	[self.textField setFloatValue:newValue];
+	[self.slider setFloatValue:newValue];
 }
 @end
