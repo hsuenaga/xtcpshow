@@ -8,15 +8,19 @@
 
 #import <Cocoa/Cocoa.h>
 
-@class Track;
+@class TCPShowModel;
 
 @interface AppDelegate : NSObject <NSApplicationDelegate>
 
 @property (assign) IBOutlet NSWindow *window;
 @property (weak) IBOutlet NSTextField *textField;
-@property (strong) Track *track;
+@property (weak) IBOutlet NSButton *startButton;
+@property (weak) IBOutlet NSButton *stopButton;
+
+@property (strong) TCPShowModel *model;
 
 - (IBAction)startCapture:(id)sender;
+- (IBAction)stopCapture:(id)sender;
 - (void) updateUserInterface;
 
 @end

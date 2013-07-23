@@ -13,7 +13,7 @@
 		4639F8351798BA9700E59491 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 4639F8331798BA9700E59491 /* Credits.rtf */; };
 		4639F8381798BA9700E59491 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 4639F8371798BA9700E59491 /* AppDelegate.m */; };
 		4639F83B1798BA9700E59491 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4639F8391798BA9700E59491 /* MainMenu.xib */; };
-		4639F8431799095A00E59491 /* Track.m in Sources */ = {isa = PBXBuildFile; fileRef = 4639F8421799095A00E59491 /* Track.m */; };
+		4639F8431799095A00E59491 /* Capture.m in Sources */ = {isa = PBXBuildFile; fileRef = 4639F8421799095A00E59491 /* Capture.m */; };
 		4639F847179D0D0900E59491 /* libpcap.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4639F846179D0D0900E59491 /* libpcap.dylib */; };
 /* End PBXBuildFile section */
 
@@ -31,8 +31,8 @@
 		4639F8361798BA9700E59491 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		4639F8371798BA9700E59491 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
 		4639F83A1798BA9700E59491 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainMenu.xib; sourceTree = "<group>"; };
-		4639F8411799095A00E59491 /* Track.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Track.h; sourceTree = "<group>"; };
-		4639F8421799095A00E59491 /* Track.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Track.m; sourceTree = "<group>"; };
+		4639F8411799095A00E59491 /* Capture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Capture.h; sourceTree = "<group>"; };
+		4639F8421799095A00E59491 /* Capture.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Capture.m; sourceTree = "<group>"; };
 		4639F846179D0D0900E59491 /* libpcap.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libpcap.dylib; path = usr/lib/libpcap.dylib; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -93,8 +93,8 @@
 				4639F8371798BA9700E59491 /* AppDelegate.m */,
 				4639F8391798BA9700E59491 /* MainMenu.xib */,
 				4639F82B1798BA9700E59491 /* Supporting Files */,
-				4639F8411799095A00E59491 /* Track.h */,
-				4639F8421799095A00E59491 /* Track.m */,
+				4639F8411799095A00E59491 /* Capture.h */,
+				4639F8421799095A00E59491 /* Capture.m */,
 			);
 			path = xtcpshow;
 			sourceTree = "<group>";
@@ -177,7 +177,7 @@
 			files = (
 				4639F8311798BA9700E59491 /* main.m in Sources */,
 				4639F8381798BA9700E59491 /* AppDelegate.m in Sources */,
-				4639F8431799095A00E59491 /* Track.m in Sources */,
+				4639F8431799095A00E59491 /* Capture.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -10,24 +10,31 @@
 #import <Foundation/Foundation.h>
 #import "AppDelegate.h"
 
-struct traffic {
-	struct timeval last;
-	uint32_t bytes;
-	uint32_t pkts;
-};
+@interface CaptureOperation : NSOperation
+@property (strong) TCPShowModel *model;
+- (void)main;
+@end
 
-@interface Track : NSObject {
-	pcap_t *pcap;
+@interface TCPShowModel : NSObject {
+	NSOperationQueue *capture_cue;
+	struct timeval timestamp_store;
+	char errbuf_store[PCAP_ERRBUF_SIZE];
 }
+
+/*
+ * pcap binding
+ */
+@property (assign) pcap_t *pcap;
+@property (assign) char *errbuf;
 
 /*
  * raw traffic data
  */
-@property (assign) struct timeval last;
+@property (assign) struct timeval *last;
 @property (assign) uint32_t bytes;
 @property (assign) uint32_t pkts;
 /*
- * cocked traffic data
+ * cooked traffic data
  */
 @property (assign) float mbps;
 
@@ -37,6 +44,5 @@ struct traffic {
 @property (weak) AppDelegate *controller;
 
 - (void)startCapture;
-- (void)updateNotify;
-
+- (void)stopCapture;
 @end
