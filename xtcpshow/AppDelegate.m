@@ -8,6 +8,7 @@
 
 #import "AppDelegate.h"
 #import "Capture.h"
+#import "CaptureView.h"
 
 @implementation AppDelegate
 
@@ -18,7 +19,9 @@
 	
 	model = [[TCPShowModel alloc] init];
 	[model setController:self];
+	[[self graphView] setModel:model];
 	[self setModel:model];
+
 	[[self startButton] setEnabled:TRUE];
 	[[self stopButton] setEnabled:FALSE];
 	[self updateUserInterface];
@@ -48,6 +51,7 @@
 	[self.textField setFloatValue:newValue];
 	[self.maxField setFloatValue:newMax];
 	[self.ageField setFloatValue:newAge];
+	[self.graphView setNeedsDisplay:YES];
 //	NSLog(@"got mbps from model: %f [mbps]", newValue);
 }
 

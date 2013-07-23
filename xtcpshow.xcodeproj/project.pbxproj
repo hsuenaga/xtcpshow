@@ -15,6 +15,7 @@
 		4639F83B1798BA9700E59491 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4639F8391798BA9700E59491 /* MainMenu.xib */; };
 		4639F8431799095A00E59491 /* Capture.m in Sources */ = {isa = PBXBuildFile; fileRef = 4639F8421799095A00E59491 /* Capture.m */; };
 		4639F847179D0D0900E59491 /* libpcap.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4639F846179D0D0900E59491 /* libpcap.dylib */; };
+		46551D4F179E6C1100F77EF1 /* CaptureView.m in Sources */ = {isa = PBXBuildFile; fileRef = 46551D4E179E6C1100F77EF1 /* CaptureView.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -34,6 +35,8 @@
 		4639F8411799095A00E59491 /* Capture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Capture.h; sourceTree = "<group>"; };
 		4639F8421799095A00E59491 /* Capture.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Capture.m; sourceTree = "<group>"; };
 		4639F846179D0D0900E59491 /* libpcap.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libpcap.dylib; path = usr/lib/libpcap.dylib; sourceTree = SDKROOT; };
+		46551D4D179E6C1100F77EF1 /* CaptureView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CaptureView.h; sourceTree = "<group>"; };
+		46551D4E179E6C1100F77EF1 /* CaptureView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CaptureView.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -93,6 +96,8 @@
 				4639F8371798BA9700E59491 /* AppDelegate.m */,
 				4639F8411799095A00E59491 /* Capture.h */,
 				4639F8421799095A00E59491 /* Capture.m */,
+				46551D4D179E6C1100F77EF1 /* CaptureView.h */,
+				46551D4E179E6C1100F77EF1 /* CaptureView.m */,
 				4639F8391798BA9700E59491 /* MainMenu.xib */,
 				4639F82B1798BA9700E59491 /* Supporting Files */,
 			);
@@ -178,6 +183,7 @@
 				4639F8311798BA9700E59491 /* main.m in Sources */,
 				4639F8381798BA9700E59491 /* AppDelegate.m in Sources */,
 				4639F8431799095A00E59491 /* Capture.m in Sources */,
+				46551D4F179E6C1100F77EF1 /* CaptureView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

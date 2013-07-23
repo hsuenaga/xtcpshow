@@ -9,6 +9,7 @@
 #import <Cocoa/Cocoa.h>
 
 @class TCPShowModel;
+@class CaptureView;
 
 @interface AppDelegate : NSObject <NSApplicationDelegate>
 
@@ -18,6 +19,7 @@
 @property (weak) IBOutlet NSTextField *ageField;
 @property (weak) IBOutlet NSButton *startButton;
 @property (weak) IBOutlet NSButton *stopButton;
+@property (weak) IBOutlet CaptureView *graphView;
 
 @property (strong) TCPShowModel *model;
 
