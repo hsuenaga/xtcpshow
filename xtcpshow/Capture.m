@@ -10,11 +10,13 @@
 #include <stdint.h>
 #include <pcap/pcap.h>
 
-#define SNAPLEN 128
+#define SNAPLEN 64
 #define NPKT 1000
 #define TICK 10 /* [ms] */
-#define TIMESLOT 50 /* [ms] */
+#define TIMESLOT (50.0 / 1000.0) /* [sec] */
+#define AGESLOT (1.0) /* [sec] */
 #define DEF_DEVICE "en0"
+#define DEF_FILTER "ip"
 
 #import "Capture.h"
 
@@ -22,19 +24,19 @@ static int alloc_pcap(id, const char *);
 static int set_filter(id, const char *);
 static int dispatch(pcap_t *, id);
 static void callback(u_char *, const struct pcap_pkthdr *, const u_char *);
-static uint32_t tv2msec(struct timeval *);
+static float tv2float(struct timeval *);
 
 /*
  * C utility
  */
-static uint32_t tv2msec(struct timeval *tv)
+static float tv2float(struct timeval *tv)
 {
-	uint32_t ms;
+	float sec;
 	
-	ms = (uint32_t)tv->tv_sec * 1000;
-	ms += (uint32_t)tv->tv_usec / 1000;
+	sec = (float)tv->tv_sec * 1000.0;
+	sec += (float)tv->tv_usec / (1000.0 * 1000.0);
 	
-	return ms;
+	return sec;
 }
 
 /*
@@ -43,12 +45,20 @@ static uint32_t tv2msec(struct timeval *tv)
 @implementation CaptureOperation
 - (void) main
 {
+	struct timeval now;
+	pcap_t *p;
+	
+	gettimeofday(&now, NULL);
 	NSLog(@"caputer thread");
-	for (;;) {
-		dispatch([[self model] pcap], self);
+	p = [[self model] pcap];
+	[[self model] setPcap:NULL];
+	*self.model.last = now;
+	while (p) {
+		dispatch(p, self);
 		if ([self isCancelled] == YES)
 			break;
 	}
+	pcap_close(p);
 	NSLog(@"done thread");
 }
 @end
@@ -84,7 +94,7 @@ static void callback(u_char *user,
 	CaptureOperation *op;
 	TCPShowModel *model;
 	struct timeval now, delta;
-	float delta_ms, mbps, bps;
+	float fDelta, mbps, bps;
 
 	if (user == NULL)
 		return;
@@ -97,24 +107,37 @@ static void callback(u_char *user,
 	
 	gettimeofday(&now, NULL);
 	timersub(&now, model.last, &delta);
-	delta_ms = (float)tv2msec(&delta);
+	fDelta = tv2float(&delta);
 	
-	if (delta_ms < TIMESLOT) {
+	if (hdr && fDelta < TIMESLOT) {
 		if (bytes) {
 			model.bytes += hdr->len;
 			model.pkts++;
 		}
 		return;
 	}
-	NSLog(@"Resolusion %f [ms], %d [pkts]", delta_ms, model.pkts);
-	
+
 	/* timeslot expired */
-	bps = ((float)model.bytes * 8.0 * 1000.0) / delta_ms;
-	mbps = bps / (1000.0 * 1000.0);
-//	NSLog(@"%8.3f [mbps]\n", mbps);
-	
-	model.mbps = mbps;
 	*model.last = now;
+	bps = ((float)model.bytes * 8.0) / fDelta;
+	mbps = bps / (1000.0 * 1000.0);
+	model.mbps = mbps;
+	
+	/* max data */
+	if (mbps > model.max_mbps) {
+		model.max_mbps = mbps;
+	}
+	
+	/* aging data */
+	model.aged_db = (model.aged_db * 0.9) + (mbps * 0.1);
+	timersub(&now, model.age_last, &delta);
+	fDelta = tv2float(&delta);
+	if (fDelta > AGESLOT) {
+		model.aged_mbps = model.aged_db;
+		*model.age_last = now;
+	}
+	
+	/* clear counter */
 	model.bytes = 0;
 	model.pkts = 0;
 	[[model controller] updateUserInterface];
@@ -132,24 +155,19 @@ static void callback(u_char *user,
 	/* pcap binding */
 	self.pcap = NULL;
 	self.errbuf = self->errbuf_store;
-	NSLog(@"initialize pcap");
-	if (alloc_pcap(self, DEF_DEVICE) < 0) {
-		NSLog(@"Cannot initialize pcap");
-		return nil;
-	}
-	if (set_filter(self, "tcp") < 0) {
-		NSLog(@"Cannot initialize filter");
-		return nil;
-	}
+	self.pcap = NULL;
 	
 	/* raw traffic */
 	memset(&self->timestamp_store, 0, sizeof(self->timestamp_store));
 	self.last = &self->timestamp_store;
+	self.age_last = &self->agerate_store;
 	self.bytes = 0;
 	self.pkts = 0;
 	
 	/* cooked data */
 	self.mbps = 0.0;
+	self.max_mbps = 0.0;
+	self.aged_mbps = 0.0;
 	
 	return self;
 }
@@ -158,8 +176,27 @@ static void callback(u_char *user,
 {
 	CaptureOperation *op = [[CaptureOperation alloc] init];
 	
+	NSLog(@"initialize pcap");
+	if (self.pcap) {
+		pcap_close(self.pcap);
+		self.pcap = NULL;
+	}
+	if (alloc_pcap(self, DEF_DEVICE) < 0) {
+		NSLog(@"Cannot initialize pcap");
+		return;
+	}
+	if (set_filter(self, DEF_FILTER) < 0) {
+		NSLog(@"Cannot initialize filter");
+		return;
+	}
+	
 	NSLog(@"Start capture thread");
 	op.model = self;
+	op.model.mbps = 0.0;
+	op.model.max_mbps = 0.0;
+	op.model.aged_mbps = 0.0;
+	op.model.bytes = 0;
+	op.model.pkts = 0;
 	[self->capture_cue addOperation:op];
 }
 

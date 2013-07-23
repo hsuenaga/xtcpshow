@@ -18,6 +18,7 @@
 @interface TCPShowModel : NSObject {
 	NSOperationQueue *capture_cue;
 	struct timeval timestamp_store;
+	struct timeval agerate_store;
 	char errbuf_store[PCAP_ERRBUF_SIZE];
 }
 
@@ -31,12 +32,16 @@
  * raw traffic data
  */
 @property (assign) struct timeval *last;
+@property (assign) struct timeval *age_last;
 @property (assign) uint32_t bytes;
 @property (assign) uint32_t pkts;
 /*
  * cooked traffic data
  */
 @property (assign) float mbps;
+@property (assign) float max_mbps;
+@property (assign) float aged_db;
+@property (assign) float aged_mbps;
 
 /*
  * connection to controller

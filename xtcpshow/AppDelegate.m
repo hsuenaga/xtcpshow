@@ -39,10 +39,15 @@
 }
 
 - (void)updateUserInterface {
-	float newValue;
+	float newValue, newMax, newAge;
 	
 	newValue = [self.model mbps];
+	newMax = [self.model max_mbps];
+	newAge = [self.model aged_mbps];
+	
 	[self.textField setFloatValue:newValue];
+	[self.maxField setFloatValue:newMax];
+	[self.ageField setFloatValue:newAge];
 //	NSLog(@"got mbps from model: %f [mbps]", newValue);
 }
 

@@ -91,10 +91,10 @@
 			children = (
 				4639F8361798BA9700E59491 /* AppDelegate.h */,
 				4639F8371798BA9700E59491 /* AppDelegate.m */,
-				4639F8391798BA9700E59491 /* MainMenu.xib */,
-				4639F82B1798BA9700E59491 /* Supporting Files */,
 				4639F8411799095A00E59491 /* Capture.h */,
 				4639F8421799095A00E59491 /* Capture.m */,
+				4639F8391798BA9700E59491 /* MainMenu.xib */,
+				4639F82B1798BA9700E59491 /* Supporting Files */,
 			);
 			path = xtcpshow;
 			sourceTree = "<group>";
@@ -313,6 +313,7 @@
 				4639F8401798BA9700E59491 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

@@ -14,6 +14,8 @@
 
 @property (assign) IBOutlet NSWindow *window;
 @property (weak) IBOutlet NSTextField *textField;
+@property (weak) IBOutlet NSTextField *maxField;
+@property (weak) IBOutlet NSTextField *ageField;
 @property (weak) IBOutlet NSButton *startButton;
 @property (weak) IBOutlet NSButton *stopButton;
 
