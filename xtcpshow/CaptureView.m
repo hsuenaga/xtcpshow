@@ -9,33 +9,54 @@
 #import "CaptureView.h"
 #import "Capture.h"
 
+/*
+ * plot bar graph
+ */
+void plot_mbps(NSRect rect, float mbps, float max_mbps,
+	       unsigned int n, unsigned int max_n)
+{
+	NSBezierPath *path;
+	float l, r, w, h;
+
+	/* width and height of bar */
+	w = rect.size.width / (float)max_n;
+	h = rect.size.height * (mbps / max_mbps);
+
+	/* left and right of bar */
+	l = w * (float)n;
+	r = l + w;
+	if (r > rect.size.width)
+		return;
+
+	[[NSColor greenColor] set];
+	path = [NSBezierPath bezierPath];
+
+	[path moveToPoint:NSMakePoint(l, 0.0)];
+	[path lineToPoint:NSMakePoint(l, h)];
+	[path lineToPoint:NSMakePoint(r, h)];
+	[path lineToPoint:NSMakePoint(r, 0.0)];
+	[path closePath];
+	[path fill]; /* stroke? */
+}
+
 @implementation CaptureView
 - (void)drawRect:(NSRect)rect
 {
 	NSGraphicsContext* gc = [NSGraphicsContext currentContext];
-	NSBezierPath *path = [NSBezierPath bezierPath];
-	float mbps, ratio, x, y;
+	float mbps, max_mbps;
+
+	mbps = [[self model] aged_mbps];
+	max_mbps = [[self model] max_mbps];
 	
-	NSLog(@"w=%f, h=%f", rect.size.width, rect.size.height);
-	[gc saveGraphicsState];
-	
+	/* clear screen */
 	[[NSColor blackColor] set];
 	NSRectFill(rect);
 	
-	[[NSColor greenColor] set];
-	[path moveToPoint:NSMakePoint(0.0, 0.0)];
-	mbps = [[self model] aged_mbps];
-	ratio = mbps / 10.0; /* [%] of 10 Mbps */
-	x = rect.size.height * ratio;
-	y = rect.size.width * ratio;
-	NSLog(@"x=%f, y=%f", x, y);
-	[path lineToPoint:NSMakePoint(0, y)];
-	[path lineToPoint:NSMakePoint(rect.size.width, y)];
-	[path lineToPoint:NSMakePoint(rect.size.width, 0)];
-	[path closePath];
-	[path fill];
-//	[path stroke];
-	
-	[gc restoreGraphicsState];
+	/* plot bar graph */
+	{
+		[gc saveGraphicsState];
+		plot_mbps(rect, mbps, max_mbps, 1, 2);
+		[gc restoreGraphicsState];
+	}
 }
 @end
