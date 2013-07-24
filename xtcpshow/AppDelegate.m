@@ -29,9 +29,17 @@
 }
 
 - (IBAction)startCapture:(id)sender {
+	self.model.device =
+	    [[[self deviceField] stringValue] cStringUsingEncoding:NSASCIIStringEncoding];
+	self.model.filter =
+	    [[[self filterField] stringValue] cStringUsingEncoding:NSASCIIStringEncoding];
 	[[self startButton] setEnabled:FALSE];
 	[[self stopButton] setEnabled:TRUE];
-	[self.model startCapture];
+	if ([self.model startCapture] < 0) {
+		[[self startButton] setEnabled:TRUE];
+		[[self stopButton] setEnabled:FALSE];
+		return;
+	}
 	[self updateUserInterface];
 }
 

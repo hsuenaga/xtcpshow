@@ -20,6 +20,8 @@
 @property (weak) IBOutlet NSButton *startButton;
 @property (weak) IBOutlet NSButton *stopButton;
 @property (weak) IBOutlet CaptureView *graphView;
+@property (weak) IBOutlet NSTextField *deviceField;
+@property (weak) IBOutlet NSTextField *filterField;
 
 @property (strong) TCPShowModel *model;
 

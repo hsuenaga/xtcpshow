@@ -38,6 +38,7 @@ static float tv2floatSec(struct timeval *tv)
 - (void) main
 {
 	struct timeval now;
+	struct pcap_stat ps;
 	pcap_t *p;
 	
 	gettimeofday(&now, NULL);
@@ -50,7 +51,15 @@ static float tv2floatSec(struct timeval *tv)
 		if ([self isCancelled] == YES)
 			break;
 	}
+	if (pcap_stats(p, &ps) == 0) {
+		NSLog(@"%d packets recieved by pcap", ps.ps_recv);
+		NSLog(@"%d packets dropped by pcap", ps.ps_drop);
+		NSLog(@"%d packets dropped by device", ps.ps_ifdrop);
+		self.model.drop_pkts += ps.ps_drop;
+		self.model.drop_pkts += ps.ps_ifdrop;
+	}
 	pcap_close(p);
+	NSLog(@"%d packets proccessed.", self.model.total_pkts);
 	NSLog(@"done thread");
 }
 @end
@@ -105,6 +114,7 @@ static void callback(u_char *user,
 		if (hdr && bytes) {
 			model.bytes += hdr->len;
 			model.pkts++;
+			model.total_pkts++;
 		}
 		return;
 	}
@@ -156,6 +166,8 @@ static void callback(u_char *user,
 	self.age_last = &self->agerate_store;
 	self.bytes = 0;
 	self.pkts = 0;
+	self.total_pkts = 0;
+	self.drop_pkts = 0;
 	
 	/* cooked data */
 	self.mbps = 0.0;
@@ -165,7 +177,7 @@ static void callback(u_char *user,
 	return self;
 }
 
-- (void) startCapture
+- (int) startCapture
 {
 	CaptureOperation *op = [[CaptureOperation alloc] init];
 	
@@ -174,13 +186,15 @@ static void callback(u_char *user,
 		pcap_close(self.pcap);
 		self.pcap = NULL;
 	}
-	if (alloc_pcap(self, DEF_DEVICE) < 0) {
+	if (alloc_pcap(self, self.device) < 0) {
 		NSLog(@"Cannot initialize pcap");
-		return;
+		return -1;
 	}
-	if (set_filter(self, DEF_FILTER) < 0) {
+	if (set_filter(self, self.filter) < 0) {
 		NSLog(@"Cannot initialize filter");
-		return;
+		pcap_close(self.pcap);
+		self.pcap = NULL;
+		return -1;
 	}
 	
 	NSLog(@"Start capture thread");
@@ -191,6 +205,8 @@ static void callback(u_char *user,
 	op.model.bytes = 0;
 	op.model.pkts = 0;
 	[self->capture_cue addOperation:op];
+	
+	return 0;
 }
 
 - (void) stopCapture
@@ -225,7 +241,6 @@ static int alloc_pcap(id obj, const char *source) {
 		NSLog(@"pcap_set_snaplen() failed.");
 		goto error;
 	}
-	
 	if (pcap_set_timeout(pcap, TICK) != 0) {
 		NSLog(@"pcap_set_timeout() failed.");
 		goto error;
@@ -276,6 +291,11 @@ static int set_filter(id obj, const char *prog)
 		pcap_freecode(&filter);
 		return -1;
 	}
+	
+	if (pcap_setdirection(model.pcap, PCAP_D_IN) != 0) {
+		NSLog(@"pcap_setdirection() is not supported.");
+	}
+
 
 	pcap_freecode(&filter);
 	return 0;

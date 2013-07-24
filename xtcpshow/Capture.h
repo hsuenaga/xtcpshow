@@ -15,8 +15,6 @@
 #define TICK 10 /* [ms] */
 #define TIMESLOT (0.05) /* [sec] */
 #define AGESLOT (1.0) /* [sec] */
-#define DEF_DEVICE "en2"
-#define DEF_FILTER "tcp"
 
 @interface CaptureOperation : NSOperation
 @property (strong) TCPShowModel *model;
@@ -35,6 +33,8 @@
  */
 @property (assign) pcap_t *pcap;
 @property (assign) char *errbuf;
+@property (assign) const char *device;
+@property (assign) const char *filter;
 
 /*
  * raw traffic data
@@ -43,6 +43,8 @@
 @property (assign) struct timeval *age_last;
 @property (assign) uint32_t bytes;
 @property (assign) uint32_t pkts;
+@property (assign) uint32_t total_pkts;
+@property (assign) uint32_t drop_pkts;
 
 /*
  * cooked traffic data
@@ -58,6 +60,6 @@
  */
 @property (weak) AppDelegate *controller;
 
-- (void)startCapture;
+- (int)startCapture;
 - (void)stopCapture;
 @end
