@@ -13,7 +13,7 @@
 #define SNAPLEN 64
 #define NPKT 1000
 #define TICK 10 /* [ms] */
-#define TIMESLOT (50.0 / 1000.0) /* [sec] */
+#define TIMESLOT (0.05) /* [sec] */
 #define AGESLOT (1.0) /* [sec] */
 #define DEF_DEVICE "en2"
 #define DEF_FILTER "tcp"

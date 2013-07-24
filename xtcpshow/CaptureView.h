@@ -9,7 +9,7 @@
 #import <Cocoa/Cocoa.h>
 
 #define NHIST 500
-#define MIN_FILTER (0.01) // [Mbps]
+#define MIN_FILTER (1.0) // [Mbps]
 
 @class TCPShowModel;
 

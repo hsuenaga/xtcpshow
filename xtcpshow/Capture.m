@@ -21,13 +21,13 @@ static float tv2float(struct timeval *);
 /*
  * C utility
  */
-static float tv2float(struct timeval *tv)
+static float tv2floatSec(struct timeval *tv)
 {
 	float sec;
 	
-	sec = (float)tv->tv_sec * 1000.0;
+	sec = (float)tv->tv_sec;
 	sec += (float)tv->tv_usec / (1000.0 * 1000.0);
-	
+
 	return sec;
 }
 
@@ -72,7 +72,7 @@ static int dispatch(pcap_t *pcap, id obj) {
 	
 	user = (u_char *)((__bridge_retained void*)op);
 	op = nil;
-	n = pcap_dispatch(pcap, -1, callback, user);
+	n = pcap_dispatch(pcap, 1, callback, user);
 	if (n == 0)
 		callback(user, NULL, NULL);
 	op = (__bridge_transfer CaptureOperation *)((void *)user);
@@ -99,10 +99,10 @@ static void callback(u_char *user,
 	
 	gettimeofday(&now, NULL);
 	timersub(&now, model.last, &delta);
-	fDelta = tv2float(&delta);
+	fDelta = tv2floatSec(&delta);
 	
-	if (hdr && fDelta < TIMESLOT) {
-		if (bytes) {
+	if (fDelta < TIMESLOT) {
+		if (hdr && bytes) {
 			model.bytes += hdr->len;
 			model.pkts++;
 		}
@@ -122,14 +122,14 @@ static void callback(u_char *user,
 	}
 	
 	/* aging data */
-	model.aged_db = (model.aged_db * 0.9) + (mbps * 0.1);
+	model.aged_db = (model.aged_db * 0.5) + (mbps * 0.5);
 	timersub(&now, model.age_last, &delta);
-	fDelta = tv2float(&delta);
+	fDelta = tv2floatSec(&delta);
 	if (fDelta > AGESLOT) {
 		model.aged_mbps = model.aged_db;
 		*model.age_last = now;
 	}
-
+	
 	/* clear counter */
 	model.bytes = 0;
 	model.pkts = 0;
