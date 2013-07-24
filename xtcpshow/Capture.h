@@ -1,5 +1,5 @@
 //
-//  Track.h
+//  Capture.h
 //  xtcpshow
 //
 //  Created by SUENAGA Hiroki on 2013/07/19.
@@ -9,6 +9,14 @@
 
 #import <Foundation/Foundation.h>
 #import "AppDelegate.h"
+
+#define SNAPLEN 64
+#define NPKT 1000
+#define TICK 10 /* [ms] */
+#define TIMESLOT (50.0 / 1000.0) /* [sec] */
+#define AGESLOT (1.0) /* [sec] */
+#define DEF_DEVICE "en2"
+#define DEF_FILTER "tcp"
 
 @interface CaptureOperation : NSOperation
 @property (strong) TCPShowModel *model;
@@ -35,6 +43,7 @@
 @property (assign) struct timeval *age_last;
 @property (assign) uint32_t bytes;
 @property (assign) uint32_t pkts;
+
 /*
  * cooked traffic data
  */
@@ -42,6 +51,7 @@
 @property (assign) float max_mbps;
 @property (assign) float aged_db;
 @property (assign) float aged_mbps;
+@property (assign) float resolution;
 
 /*
  * connection to controller

@@ -19,6 +19,7 @@
 	
 	model = [[TCPShowModel alloc] init];
 	[model setController:self];
+	[[self graphView] allocHist];
 	[[self graphView] setModel:model];
 	[self setModel:model];
 

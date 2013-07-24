@@ -1,5 +1,5 @@
 //
-//  Track.m
+//  Capture.m
 //  xtcpshow
 //
 //  Created by SUENAGA Hiroki on 2013/07/19.
@@ -9,14 +9,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <pcap/pcap.h>
-
-#define SNAPLEN 64
-#define NPKT 1000
-#define TICK 10 /* [ms] */
-#define TIMESLOT (50.0 / 1000.0) /* [sec] */
-#define AGESLOT (1.0) /* [sec] */
-#define DEF_DEVICE "en0"
-#define DEF_FILTER "ip"
 
 #import "Capture.h"
 
@@ -122,6 +114,7 @@ static void callback(u_char *user,
 	bps = ((float)model.bytes * 8.0) / fDelta;
 	mbps = bps / (1000.0 * 1000.0);
 	model.mbps = mbps;
+	model.resolution = fDelta;
 	
 	/* max data */
 	if (mbps > model.max_mbps) {
@@ -136,7 +129,7 @@ static void callback(u_char *user,
 		model.aged_mbps = model.aged_db;
 		*model.age_last = now;
 	}
-	
+
 	/* clear counter */
 	model.bytes = 0;
 	model.pkts = 0;
@@ -168,7 +161,7 @@ static void callback(u_char *user,
 	self.mbps = 0.0;
 	self.max_mbps = 0.0;
 	self.aged_mbps = 0.0;
-	
+
 	return self;
 }
 
