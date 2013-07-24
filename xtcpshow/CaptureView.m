@@ -34,6 +34,10 @@ struct history_entry {
 {
 	max_hist = size;
 	cur_hist = 0;
+
+	while (cur_hist < max_hist) {
+		[self addFloat:0.0];
+	}
 }
 
 - (int)size
