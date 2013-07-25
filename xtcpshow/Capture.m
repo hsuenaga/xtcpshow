@@ -143,7 +143,9 @@ static void callback(u_char *user,
 	/* clear counter */
 	model.bytes = 0;
 	model.pkts = 0;
-	[[model controller] updateUserInterface];
+	
+	/* notify to controller */
+	[[model controller] samplingNotify];
 }
 
 /*

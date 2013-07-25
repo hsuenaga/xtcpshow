@@ -58,6 +58,24 @@ struct history_entry {
 	return max;
 }
 
+- (float)maxWithItems:(int)n
+{
+	struct history_entry *h;
+	float max = 0.0;
+	int i = 0, off;
+	
+	off = self.size - n;
+	TAILQ_FOREACH(h, &self->history, tq_link)  {
+		if (i < off) {
+			i++;
+			continue;
+		}
+		if (max < h->value)
+			max = h->value;
+	}
+	return max;
+}
+
 - (void)addFloat:(float)value
 {
 	struct history_entry *h;
@@ -90,13 +108,21 @@ struct history_entry {
 	return 0.0;
 }
 
-- (void)blockForEach:(void(^)(float, int, int))callback
+- (void)blockForEach:(int(^)(float, int))callback WithItems:(int)n
 {
 	struct history_entry *h;
-	int i = 0;
+	int i = 0, off;
 
+	off = self.size - n;
 	TAILQ_FOREACH(h, &self->history, tq_link) {
-		callback(h->value, i++, self->cur_hist);
+		if (i < off) {
+			i++;
+			continue;
+		}
+		if (callback(h->value, (i - off)) < 0) {
+			break;
+		}
+		i++;
 	}
 }
 
@@ -164,6 +190,23 @@ static void plot_trend(NSRect rect, float mbps, float max_mbps)
 	[self->hist setBufferSize:NHIST];
 }
 
+- (void)setWindowSize:(int)size
+{
+	window_size = size;
+	
+	if (window_size < 10)
+		window_size = 10;
+	else if (window_size > [self->hist size])
+		window_size = [self->hist size];
+}
+
+
+- (void)addFloatValue:(float)value
+{
+	/* delegate to history store */
+	[self->hist addFloat:value];
+}
+
 - (void)drawRect:(NSRect)rect
 {
 	NSGraphicsContext* gc = [NSGraphicsContext currentContext];
@@ -171,11 +214,11 @@ static void plot_trend(NSRect rect, float mbps, float max_mbps)
 	NSMutableDictionary *attr;
 	float mbps, trend, res, max_mbps;
 	__block float avg_mbps;
+	__block int winsz;
 
 	mbps = [[self model] mbps];
 	trend = [[self model] aged_mbps];
 	res = [[self model] resolution] * 1000; // [ms]
-	max_mbps = [self->hist max];
 	
 	/* clear screen */
 	[[NSColor blackColor] set];
@@ -183,12 +226,15 @@ static void plot_trend(NSRect rect, float mbps, float max_mbps)
 	
 	/* plot bar graph */
 	avg_mbps = 0.0;
-	[self->hist blockForEach:^(float value, int i, int max) {
-		[gc saveGraphicsState];
-		plot_mbps(rect, value, max_mbps, i, max);
+	winsz = self->window_size;
+	max_mbps = [self->hist maxWithItems:winsz];
+	[self->hist blockForEach:^(float value, int i) {
 		avg_mbps += value;
+		[gc saveGraphicsState];
+		plot_mbps(rect, value, max_mbps, i, winsz);
 		[gc restoreGraphicsState];
-	}];
+		return 0;
+	} WithItems:winsz];
 	if ([self->hist size] > 0)
 		avg_mbps = avg_mbps / (float)[self->hist size];
 	else
@@ -204,8 +250,5 @@ static void plot_trend(NSRect rect, float mbps, float max_mbps)
 
 	/* plot trend line */
 	plot_trend(rect, avg_mbps, max_mbps);
-	
-	/* update history */
-	[self->hist addFloat:mbps];
 }
 @end

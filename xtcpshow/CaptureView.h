@@ -21,15 +21,19 @@
 - (void)setBufferSize:(int)size;
 - (int)size;
 - (float)max;
+- (float)maxWithItems:(int)n;
 - (void)addFloat:(float)value;
 - (float)floatAtIndex:(int)index;
-- (void)blockForEach:(void (^)(float, int, int))callback;
+- (void)blockForEach:(int (^)(float, int))callback WithItems:(int)n;
 @end
 
 @interface CaptureView : NSView {
 	CaptureHistory *hist;
+	int window_size;
 }
 @property (weak) TCPShowModel *model;
 - (void)allocHist;
+- (void)addFloatValue:(float)value;
+- (void)setWindowSize:(int)size;
 - (void)drawRect:(NSRect)rect;
 @end

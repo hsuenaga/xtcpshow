@@ -22,11 +22,14 @@
 @property (weak) IBOutlet CaptureView *graphView;
 @property (weak) IBOutlet NSTextField *deviceField;
 @property (weak) IBOutlet NSTextField *filterField;
+@property (weak) IBOutlet NSSlider *zoomBar;
 
 @property (strong) TCPShowModel *model;
 
 - (IBAction)startCapture:(id)sender;
 - (IBAction)stopCapture:(id)sender;
+- (IBAction)changeZoom:(id)sender;
+- (void) samplingNotify;
 - (void) updateUserInterface;
 
 @end

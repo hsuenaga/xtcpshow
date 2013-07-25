@@ -33,6 +33,7 @@
 	    [[[self deviceField] stringValue] cStringUsingEncoding:NSASCIIStringEncoding];
 	self.model.filter =
 	    [[[self filterField] stringValue] cStringUsingEncoding:NSASCIIStringEncoding];
+	[[self graphView] setWindowSize:[[self zoomBar] intValue]];
 	[[self startButton] setEnabled:FALSE];
 	[[self stopButton] setEnabled:TRUE];
 	if ([self.model startCapture] < 0) {
@@ -50,18 +51,24 @@
 	[self updateUserInterface];
 }
 
+- (IBAction)changeZoom:(id)sender {
+	[[self graphView] setWindowSize:[sender intValue]];
+	[self updateUserInterface];
+}
+
+- (void)samplingNotify
+{
+	[[self graphView] addFloatValue:[self.model mbps]];
+
+	[self updateUserInterface];
+}
+
 - (void)updateUserInterface {
-	float newValue, newMax, newAge;
-	
-	newValue = [self.model mbps];
-	newMax = [self.model max_mbps];
-	newAge = [self.model aged_mbps];
-	
-	[self.textField setFloatValue:newValue];
-	[self.maxField setFloatValue:newMax];
-	[self.ageField setFloatValue:newAge];
+	[self.textField setFloatValue:[self.model mbps]];
+	[self.maxField setFloatValue:[self.model max_mbps]];
+	[self.ageField setFloatValue:[self.model aged_mbps]];
+
 	[self.graphView setNeedsDisplay:YES];
-//	NSLog(@"got mbps from model: %f [mbps]", newValue);
 }
 
 @end
