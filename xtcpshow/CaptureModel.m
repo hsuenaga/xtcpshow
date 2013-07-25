@@ -74,6 +74,7 @@ static int set_filter(id, const char *);
 	op.model.aged_mbps = 0.0;
 	op.model.bytes = 0;
 	op.model.pkts = 0;
+	[op setQueuePriority:NSOperationQueuePriorityVeryHigh];
 	[self->capture_cue addOperation:op];
 	
 	return 0;

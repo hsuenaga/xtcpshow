@@ -14,17 +14,15 @@
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
-	// Insert code here to initialize your application
-	CaptureModel *model;
-	
-	model = [[CaptureModel alloc] init];
-	[model setController:self];
-	[[self graphView] allocHist];
-	[[self graphView] setModel:model];
-	[self setModel:model];
+	// Setup Model object
+	[self setModel:[[CaptureModel alloc] init]];
+	[[self model] setController:self]; // weak
 
+	// widget initialization
+	[[self graphView] allocHist];
 	[[self startButton] setEnabled:TRUE];
 	[[self stopButton] setEnabled:FALSE];
+
 	[self updateUserInterface];
 }
 

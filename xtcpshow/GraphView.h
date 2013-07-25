@@ -11,7 +11,6 @@
 #define MIN_FILTER (1.0) // [Mbps]
 
 @class GraphData;
-@class TCPShowModel;
 
 @interface GraphView : NSView {
 	GraphData *data;
@@ -20,7 +19,6 @@
 	float resolution;
 	int window_size;
 }
-@property (weak) TCPShowModel *model;
 - (void)allocHist;
 - (void)setWindowSize:(int)size;
 - (void)drawRect:(NSRect)rect;
