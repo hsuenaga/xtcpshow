@@ -8,8 +8,8 @@
 
 #import <Cocoa/Cocoa.h>
 
-@class TCPShowModel;
-@class CaptureView;
+@class CaptureModel;
+@class GraphView;
 
 @interface AppDelegate : NSObject <NSApplicationDelegate>
 
@@ -19,12 +19,12 @@
 @property (weak) IBOutlet NSTextField *ageField;
 @property (weak) IBOutlet NSButton *startButton;
 @property (weak) IBOutlet NSButton *stopButton;
-@property (weak) IBOutlet CaptureView *graphView;
 @property (weak) IBOutlet NSTextField *deviceField;
 @property (weak) IBOutlet NSTextField *filterField;
 @property (weak) IBOutlet NSSlider *zoomBar;
+@property (weak) IBOutlet GraphView *graphView;
 
-@property (strong) TCPShowModel *model;
+@property (strong) CaptureModel *model;
 
 - (IBAction)startCapture:(id)sender;
 - (IBAction)stopCapture:(id)sender;

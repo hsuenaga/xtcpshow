@@ -7,17 +7,17 @@
 //
 
 #import "AppDelegate.h"
-#import "Capture.h"
-#import "CaptureView.h"
+#import "CaptureModel.h"
+#import "GraphView.h"
 
 @implementation AppDelegate
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
 	// Insert code here to initialize your application
-	TCPShowModel *model;
+	CaptureModel *model;
 	
-	model = [[TCPShowModel alloc] init];
+	model = [[CaptureModel alloc] init];
 	[model setController:self];
 	[[self graphView] allocHist];
 	[[self graphView] setModel:model];
@@ -58,7 +58,9 @@
 
 - (void)samplingNotify
 {
-	[[self graphView] addFloatValue:[self.model mbps]];
+	[[self graphView] addSnap:[self.model mbps]
+			trendData:[self.model aged_mbps]
+		       resolusion:[self.model resolution]];
 
 	[self updateUserInterface];
 }
@@ -67,7 +69,6 @@
 	[self.textField setFloatValue:[self.model mbps]];
 	[self.maxField setFloatValue:[self.model max_mbps]];
 	[self.ageField setFloatValue:[self.model aged_mbps]];
-
 	[self.graphView setNeedsDisplay:YES];
 }
 

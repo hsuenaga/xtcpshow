@@ -1,5 +1,5 @@
 //
-//  Capture.h
+//  CaptureModel.h
 //  xtcpshow
 //
 //  Created by SUENAGA Hiroki on 2013/07/19.
@@ -13,15 +13,8 @@
 #define SNAPLEN 64
 #define NPKT 1000
 #define TICK 10 /* [ms] */
-#define TIMESLOT (0.05) /* [sec] */
-#define AGESLOT (1.0) /* [sec] */
 
-@interface CaptureOperation : NSOperation
-@property (strong) TCPShowModel *model;
-- (void)main;
-@end
-
-@interface TCPShowModel : NSObject {
+@interface CaptureModel : NSObject {
 	NSOperationQueue *capture_cue;
 	struct timeval timestamp_store;
 	struct timeval agerate_store;
