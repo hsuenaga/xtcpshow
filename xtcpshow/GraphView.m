@@ -35,7 +35,7 @@ static void plot_mbps(NSRect rect, float mbps, float max_mbps,
 		return;
 
 	[[NSColor greenColor] set];
-//	[path setLineWidth:(w / 2)];
+//	[path setLineWidth:(3.0)];
 	[path moveToPoint:NSMakePoint(l, 0.0)];
 	[path lineToPoint:NSMakePoint(l, h)];
 	[path stroke];
@@ -66,7 +66,7 @@ static void plot_trend(NSRect rect, float mbps, float max_mbps)
 	self->data = [[GraphData alloc] init];
 	if (self->data == nil)
 		NSLog(@"cannot alloc history");
-	[self->data setBufferSize:NHIST];
+	[self->data setBufferSize:DEF_BUFSIZ];
 }
 
 - (void)setWindowSize:(int)size
@@ -79,6 +79,15 @@ static void plot_trend(NSRect rect, float mbps, float max_mbps)
 		window_size = [self->data size];
 }
 
+- (void)setSMASize:(int)size
+{
+	sma_size = size;
+	if (sma_size < 1)
+		sma_size = 1;
+	else if (sma_size > [self->data size])
+		sma_size = [self->data size];
+}
+
 - (void)drawRect:(NSRect)rect
 {
 	NSGraphicsContext* gc = [NSGraphicsContext currentContext];
@@ -87,6 +96,7 @@ static void plot_trend(NSRect rect, float mbps, float max_mbps)
 	float res, max_mbps;
 	__block float avg_mbps;
 	__block int winsz;
+	int smasz;
 
 	
 	NSDisableScreenUpdates();
@@ -99,14 +109,15 @@ static void plot_trend(NSRect rect, float mbps, float max_mbps)
 	/* plot bar graph */
 	avg_mbps = 0.0;
 	winsz = self->window_size;
-	max_mbps = [self->data maxWithItems:winsz];
+	smasz = self->sma_size;
+	max_mbps = [self->data maxWithItems:winsz withSMA:smasz];
 	[self->data blockForEach:^(float value, int i) {
 		avg_mbps += value;
 		[gc saveGraphicsState];
 		plot_mbps(rect, value, max_mbps, i, winsz);
 		[gc restoreGraphicsState];
 		return 0;
-	} WithItems:winsz];
+	} WithItems:winsz WithSMA:smasz];
 	if ([self->data size] > 0)
 		avg_mbps = avg_mbps / (float)[self->data size];
 	else
@@ -114,11 +125,11 @@ static void plot_trend(NSRect rect, float mbps, float max_mbps)
 	
 	/* bar graph params */
 	title =
-	[NSString stringWithFormat:@" MAX %3.3f [Mbps] / AVG %3.3f [Mbps] / Scale %2.1f [ms] ",
-	 max_mbps, avg_mbps, (res * winsz)];
+	[NSString stringWithFormat:@" MAX %3.3f [Mbps] / AVG %3.3f [Mbps] / Scale %2.1f [ms] / SMA %2.1f [ms]",
+	 max_mbps, avg_mbps, (res * winsz), (res * smasz)];
 	attr = [[NSMutableDictionary alloc] init];
 	[attr setValue:[NSColor whiteColor] forKey:NSForegroundColorAttributeName];
-	[attr setValue:[NSFont fontWithName:@"Menlo Regular" size:16] forKey:NSFontAttributeName];
+	[attr setValue:[NSFont fontWithName:@"Menlo Regular" size:14] forKey:NSFontAttributeName];
 	[title drawAtPoint:NSMakePoint(0.0, 0.0) withAttributes:attr];
 
 	/* plot trend line */

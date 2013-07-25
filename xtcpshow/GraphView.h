@@ -18,9 +18,11 @@
 	float trend_mbps;
 	float resolution;
 	int window_size;
+	int sma_size;
 }
 - (void)allocHist;
 - (void)setWindowSize:(int)size;
+- (void)setSMASize:(int)size;
 - (void)drawRect:(NSRect)rect;
 
 - (void)addSnap:(float)snap trendData:(float)trend resolusion:(float)res;

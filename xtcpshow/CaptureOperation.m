@@ -31,6 +31,7 @@ static float tv2floatSec(struct timeval *);
 	NSLog(@"caputer thread");
 	p = [[self model] pcap];
 	[[self model] setPcap:NULL];
+	[self.model setTarget_resolution:TIMESLOT];
 	*self.model.last = now;
 	while (p) {
 		dispatch(p, self);

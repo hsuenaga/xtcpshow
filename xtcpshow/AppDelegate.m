@@ -32,6 +32,7 @@
 	self.model.filter =
 	    [[[self filterField] stringValue] cStringUsingEncoding:NSASCIIStringEncoding];
 	[[self graphView] setWindowSize:[[self zoomBar] intValue]];
+	[[self graphView] setSMASize:[[self smoothBar] intValue]];
 	[[self startButton] setEnabled:FALSE];
 	[[self stopButton] setEnabled:TRUE];
 	if ([self.model startCapture] < 0) {
@@ -54,11 +55,16 @@
 	[self updateUserInterface];
 }
 
+- (IBAction)changeSmooth:(id)sender {
+	[[self graphView] setSMASize:[sender intValue]];
+	[self updateUserInterface];
+}
+
 - (void)samplingNotify
 {
 	[[self graphView] addSnap:[self.model mbps]
 			trendData:[self.model aged_mbps]
-		       resolusion:[self.model resolution]];
+		       resolusion:[self.model target_resolution]];
 
 	[self updateUserInterface];
 }

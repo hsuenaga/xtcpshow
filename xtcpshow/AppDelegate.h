@@ -22,6 +22,7 @@
 @property (weak) IBOutlet NSTextField *deviceField;
 @property (weak) IBOutlet NSTextField *filterField;
 @property (weak) IBOutlet NSSlider *zoomBar;
+@property (weak) IBOutlet NSSlider *smoothBar;
 @property (weak) IBOutlet GraphView *graphView;
 
 @property (strong) CaptureModel *model;
@@ -29,6 +30,7 @@
 - (IBAction)startCapture:(id)sender;
 - (IBAction)stopCapture:(id)sender;
 - (IBAction)changeZoom:(id)sender;
+- (IBAction)changeSmooth:(id)sender;
 - (void) samplingNotify;
 - (void) updateUserInterface;
 

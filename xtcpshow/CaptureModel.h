@@ -12,7 +12,7 @@
 
 #define SNAPLEN 64
 #define NPKT 1000
-#define TICK 10 /* [ms] */
+#define TICK 1 /* [ms] */
 
 @interface CaptureModel : NSObject {
 	NSOperationQueue *capture_cue;
@@ -47,6 +47,7 @@
 @property (assign) float aged_db;
 @property (assign) float aged_mbps;
 @property (assign) float resolution;
+@property (assign) float target_resolution;
 
 /*
  * connection to controller

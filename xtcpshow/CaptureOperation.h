@@ -10,7 +10,7 @@
 #import <Foundation/Foundation.h>
 #import "AppDelegate.h"
 
-#define TIMESLOT (0.05) /* [sec] */
+#define TIMESLOT (0.01) /* [sec] */
 #define AGESLOT (1.0) /* [sec] */
 
 @class CaptureModel;

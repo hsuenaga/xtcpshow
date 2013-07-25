@@ -53,24 +53,6 @@ struct history_entry {
 	return max;
 }
 
-- (float)maxWithItems:(int)n
-{
-	struct history_entry *h;
-	float max = 0.0;
-	int i = 0, off;
-	
-	off = self.size - n;
-	TAILQ_FOREACH(h, &self->history, tq_link)  {
-		if (i < off) {
-			i++;
-			continue;
-		}
-		if (max < h->value)
-			max = h->value;
-	}
-	return max;
-}
-
 - (void)addFloat:(float)value
 {
 	struct history_entry *h;
@@ -104,21 +86,67 @@ struct history_entry {
 }
 
 - (void)blockForEach:(int(^)(float, int))callback WithItems:(int)n
+	     WithSMA:(int)sma
 {
-	struct history_entry *h;
+	struct hist_head sma_hd;
+	struct history_entry *h, *sma_h;
+	float sma_sum;
 	int i = 0, off;
-
+	
+	if (sma < 1)
+		sma = 1;
+	TAILQ_INIT(&sma_hd);
+	for (i = 0; i < sma; i++) {
+		sma_h = (struct history_entry *)malloc(sizeof *sma_h);
+		sma_h->value = 0.0;
+		TAILQ_INSERT_HEAD(&sma_hd, sma_h, tq_link);
+	}
+	
 	off = self.size - n;
+	sma_sum = 0.0;
 	TAILQ_FOREACH(h, &self->history, tq_link) {
+		float value;
+		
+		/* delete last SMA value */
+		sma_h = TAILQ_FIRST(&sma_hd);
+		TAILQ_REMOVE(&sma_hd, sma_h, tq_link);
+		sma_sum -= sma_h->value;
+		
+		/* setup new SMA value */
+		sma_h->value = h->value;
+
+		/* update SMA */
+		TAILQ_INSERT_TAIL(&sma_hd, sma_h, tq_link);
+		sma_sum += sma_h->value;
+		value = sma_sum / (float)sma;
+		
 		if (i < off) {
 			i++;
 			continue;
 		}
-		if (callback(h->value, (i - off)) < 0) {
+		if (callback(value, (i - off)) < 0) {
 			break;
 		}
 		i++;
 	}
+	
+	while ( (sma_h = TAILQ_FIRST(&sma_hd))) {
+		TAILQ_REMOVE(&sma_hd, sma_h, tq_link);
+		free(sma_h);
+	}
+}
+
+- (float)maxWithItems:(int)n withSMA:(int)sma
+{
+	__block float max = 0.0;
+	
+	[self blockForEach:^(float value, int idx) {
+		if (max < value)
+			max = value;
+		return 0;
+	} WithItems:n WithSMA:sma];
+			    
+	return max;
 }
 
 - (void)dealloc
