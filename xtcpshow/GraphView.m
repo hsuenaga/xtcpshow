@@ -102,11 +102,10 @@ static void plot_trend(NSRect rect, float y_max, float y_avg, float y_scale)
 	NSString *title;
 	NSMutableDictionary *attr;
 	NSRect rect = [self bounds];
-	float res, y_scale;
+	float res, y_scale, auto_range;
 	__block float y_max, y_avg;
 	__block int winsz;
 	int smasz;
-	int auto_range;
 
 	NSDisableScreenUpdates();
 	res = self->resolution * 1000.0; // [ms]
@@ -120,7 +119,7 @@ static void plot_trend(NSRect rect, float y_max, float y_avg, float y_scale)
 	smasz = self->sma_size;
 	y_scale = [self->data maxWithItems:winsz withSMA:smasz];
 	if (y_scale < 5.0)
-		auto_range = 1;
+		auto_range = 2.5;
 	else
 		auto_range = 5;
 	y_scale = (auto_range * floor(y_scale / auto_range)) + auto_range;
