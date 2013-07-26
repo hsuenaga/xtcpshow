@@ -5,10 +5,16 @@
 //  Created by SUENAGA Hiroki on 2013/07/19.
 //  Copyright (c) 2013年 SUENAGA Hiroki. All rights reserved.
 //
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <net/if.h>
+#include <ifaddrs.h>
 
 #import "AppDelegate.h"
 #import "CaptureModel.h"
 #import "GraphView.h"
+
+static void setup_interface(NSPopUpButton *);
 
 @implementation AppDelegate
 
@@ -21,32 +27,43 @@
 	// widget initialization
 	[[self graphView] allocHist];
 	[[self startButton] setEnabled:TRUE];
-	[[self stopButton] setEnabled:FALSE];
+	
+	// setup intrface labels
+	setup_interface([self deviceSelector]);
 
 	[self updateUserInterface];
 }
 
 - (IBAction)startCapture:(id)sender {
-	self.model.device =
-	    [[[self deviceField] stringValue] cStringUsingEncoding:NSASCIIStringEncoding];
-	self.model.filter =
-	    [[[self filterField] stringValue] cStringUsingEncoding:NSASCIIStringEncoding];
-	[[self graphView] setWindowSize:[[self zoomBar] intValue]];
-	[[self graphView] setSMASize:[[self smoothBar] intValue]];
-	[[self startButton] setEnabled:FALSE];
-	[[self stopButton] setEnabled:TRUE];
-	if ([self.model startCapture] < 0) {
-		[[self startButton] setEnabled:TRUE];
-		[[self stopButton] setEnabled:FALSE];
-		return;
+	BOOL input_enabled;
+	
+	if ([self.model captureEnabled]) {
+		/* stop capture */
+		[self.model stopCapture];
+		[[self startButton] setTitle:@"START"];
+		input_enabled = TRUE;
 	}
-	[self updateUserInterface];
-}
+	else {
+		/* start capture */
+		self.model.device =
+		[[self.deviceSelector titleOfSelectedItem] cStringUsingEncoding:NSASCIIStringEncoding];
+		self.model.filter =
+		[[[self filterField] stringValue] cStringUsingEncoding:NSASCIIStringEncoding];
+		[[self graphView] setWindowSize:[[self zoomBar] intValue]];
+		[[self graphView] setSMASize:[[self smoothBar] intValue]];
+				
+		[[self startButton] setTitle:@"STOP"];
+		input_enabled = FALSE;
 
-- (IBAction)stopCapture:(id)sender {
-	[[self stopButton] setEnabled:FALSE];
-	[[self startButton] setEnabled:TRUE];
-	[self.model stopCapture];
+		if ([self.model startCapture] < 0) {
+			/* XXX: report error */
+			[[self startButton] setTitle:@"START"];
+			input_enabled = TRUE;
+		}
+	}
+
+	[[self deviceSelector] setEnabled:input_enabled];
+	[[self filterField] setEnabled:input_enabled];
 	[self updateUserInterface];
 }
 
@@ -70,10 +87,62 @@
 }
 
 - (void)updateUserInterface {
-	[self.textField setFloatValue:[self.model mbps]];
+	[self.snapshotField setFloatValue:[self.model mbps]];
 	[self.maxField setFloatValue:[self.model max_mbps]];
-	[self.ageField setFloatValue:[self.model aged_mbps]];
+	[self.trendField setFloatValue:[self.model aged_mbps]];
+	[self.totalpktField setIntegerValue:[self.model total_pkts]];
 	[self.graphView setNeedsDisplay:YES];
 }
-
 @end
+
+/*
+ * C API bridge
+ */
+static void setup_interface(NSPopUpButton *btn)
+{
+	struct ifaddrs *ifap0, *ifap;
+	
+	if (getifaddrs(&ifap0) < 0)
+		return;
+	
+	[btn removeAllItems];
+	
+	for (ifap = ifap0; ifap; ifap = ifap->ifa_next) {
+		NSString *if_name, *exist_name;
+		NSArray *name_array;
+		NSEnumerator *enumerator;
+		
+		if (ifap->ifa_flags & IFF_LOOPBACK)
+			continue;
+		if (!(ifap->ifa_flags & IFF_UP))
+			continue;
+		if (!(ifap->ifa_flags & IFF_RUNNING))
+			continue;
+		
+		if_name = [NSString
+			   stringWithCString:ifap->ifa_name
+			   encoding:NSASCIIStringEncoding];
+		name_array = [btn itemTitles];
+		enumerator = [name_array objectEnumerator];
+		while (exist_name = [enumerator nextObject]) {
+			if ([if_name isEqualToString:exist_name]) {
+				if_name = nil;
+				break;
+			}
+		}
+		if (if_name == nil)
+			continue;
+		
+		[btn addItemWithTitle:if_name];
+		if ([if_name isEqualToString:@"en0"])
+			[btn selectItemWithTitle:if_name];
+		else {
+			NSRange range;
+			range = [if_name rangeOfString:@"en"];
+			if (range.location != NSNotFound)
+				[btn selectItemWithTitle:if_name];
+		}
+	}
+	
+	freeifaddrs(ifap0);
+}

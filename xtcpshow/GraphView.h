@@ -7,9 +7,6 @@
 //
 #import <Cocoa/Cocoa.h>
 
-#define NHIST 500
-#define MIN_FILTER (1.0) // [Mbps]
-
 @class GraphData;
 
 @interface GraphView : NSView {

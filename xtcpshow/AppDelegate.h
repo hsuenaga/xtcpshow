@@ -13,25 +13,34 @@
 
 @interface AppDelegate : NSObject <NSApplicationDelegate>
 
+/* Main window */
 @property (assign) IBOutlet NSWindow *window;
-@property (weak) IBOutlet NSTextField *textField;
-@property (weak) IBOutlet NSTextField *maxField;
-@property (weak) IBOutlet NSTextField *ageField;
-@property (weak) IBOutlet NSButton *startButton;
-@property (weak) IBOutlet NSButton *stopButton;
-@property (weak) IBOutlet NSTextField *deviceField;
+
+/* Configuration TAB */
+@property (weak) IBOutlet NSPopUpButton *deviceSelector;
 @property (weak) IBOutlet NSTextField *filterField;
+
+/* Status TAB */
+@property (weak) IBOutlet NSTextField *snapshotField;
+@property (weak) IBOutlet NSTextField *maxField;
+@property (weak) IBOutlet NSTextField *trendField;
+@property (weak) IBOutlet NSTextField *totalpktField;
+
+/* Graph BOX */
+@property (weak) IBOutlet NSButton *startButton;
 @property (weak) IBOutlet NSSlider *zoomBar;
 @property (weak) IBOutlet NSSlider *smoothBar;
 @property (weak) IBOutlet GraphView *graphView;
 
-@property (strong) CaptureModel *model;
-
+/* Action from view */
 - (IBAction)startCapture:(id)sender;
-- (IBAction)stopCapture:(id)sender;
 - (IBAction)changeZoom:(id)sender;
 - (IBAction)changeSmooth:(id)sender;
+
+/* the model */
+@property (strong) CaptureModel *model;
+
+/* notify from model, controller(myself), ... */
 - (void) samplingNotify;
 - (void) updateUserInterface;
-
 @end

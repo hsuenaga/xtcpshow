@@ -24,6 +24,7 @@ static int set_filter(id, const char *);
 {
 	/* thread */
 	self->capture_cue = [[NSOperationQueue alloc] init];
+	self->running = FALSE;
 	
 	/* pcap binding */
 	self.pcap = NULL;
@@ -43,7 +44,7 @@ static int set_filter(id, const char *);
 	self.mbps = 0.0;
 	self.max_mbps = 0.0;
 	self.aged_mbps = 0.0;
-
+	
 	return self;
 }
 
@@ -76,6 +77,7 @@ static int set_filter(id, const char *);
 	op.model.pkts = 0;
 	[op setQueuePriority:NSOperationQueuePriorityVeryHigh];
 	[self->capture_cue addOperation:op];
+	self->running = TRUE;
 	
 	return 0;
 }
@@ -84,8 +86,13 @@ static int set_filter(id, const char *);
 {
 	NSLog(@"Stop capture thread");
 	[self->capture_cue cancelAllOperations];
+	self->running = FALSE;
 }
 
+- (BOOL) captureEnabled
+{
+	return self->running;
+}
 
 - (void) dealloc
 {

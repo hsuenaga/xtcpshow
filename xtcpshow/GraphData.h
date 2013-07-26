@@ -8,8 +8,8 @@
 #include <sys/queue.h>
 #import <Cocoa/Cocoa.h>
 
-#define DEF_BUFSIZ 1000
-#define MIN_FILTER (1.0) // [Mbps]
+#define DEF_BUFSIZ 2000
+#define MIN_FILTER (0.001) // = 1 [kbps]
 
 @interface GraphData : NSObject {
 	TAILQ_HEAD(hist_head, history_entry) history;

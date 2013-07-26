@@ -19,6 +19,7 @@
 	struct timeval timestamp_store;
 	struct timeval agerate_store;
 	char errbuf_store[PCAP_ERRBUF_SIZE];
+	BOOL running;
 }
 
 /*
@@ -56,4 +57,5 @@
 
 - (int)startCapture;
 - (void)stopCapture;
+- (BOOL)captureEnabled;
 @end

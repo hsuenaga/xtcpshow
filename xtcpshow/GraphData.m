@@ -101,7 +101,7 @@ struct history_entry {
 		sma_h->value = 0.0;
 		TAILQ_INSERT_HEAD(&sma_hd, sma_h, tq_link);
 	}
-	
+
 	off = self.size - n;
 	sma_sum = 0.0;
 	TAILQ_FOREACH(h, &self->history, tq_link) {
@@ -111,9 +111,15 @@ struct history_entry {
 		sma_h = TAILQ_FIRST(&sma_hd);
 		TAILQ_REMOVE(&sma_hd, sma_h, tq_link);
 		sma_sum -= sma_h->value;
-		
+
+		if (sma_sum < MIN_FILTER)
+			sma_sum = 0.0;
+
 		/* setup new SMA value */
-		sma_h->value = h->value;
+		if (h->value < MIN_FILTER)
+			sma_h->value = 0.0;
+		else
+			sma_h->value = h->value;
 
 		/* update SMA */
 		TAILQ_INSERT_TAIL(&sma_hd, sma_h, tq_link);

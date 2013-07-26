@@ -5,6 +5,7 @@
 //  Created by SUENAGA Hiroki on 2013/07/23.
 //  Copyright (c) 2013年 SUENAGA Hiroki. All rights reserved.
 //
+#include "math.h"
 
 #import "GraphView.h"
 #import "GraphData.h"
@@ -19,14 +20,16 @@ static void plot_trend(NSRect, float, float);
 static void plot_mbps(NSRect rect, float mbps, float max_mbps,
 		      unsigned int n, unsigned int max_n)
 {
-	NSBezierPath *path = [NSBezierPath bezierPath];
+//	NSBezierPath *path = [NSBezierPath bezierPath];
+	NSGradient *grad;
+	NSRect bar;
 	float l, r, w, h;
 
 	/* width and height of bar */
 	w = rect.size.width / (float)max_n;
 	h = rect.size.height * (mbps / max_mbps);
-	if (h < MIN_FILTER)
-		return;
+	if (h < 1.0)
+		return; /* less than 1 pixel */
 
 	/* left and right of bar */
 	l = w * (float)n;
@@ -34,18 +37,20 @@ static void plot_mbps(NSRect rect, float mbps, float max_mbps,
 	if (r > rect.size.width)
 		return;
 
-	[[NSColor greenColor] set];
-//	[path setLineWidth:(3.0)];
-	[path moveToPoint:NSMakePoint(l, 0.0)];
-	[path lineToPoint:NSMakePoint(l, h)];
-	[path stroke];
-//	NSRectFill(NSMakeRect(l, 0.0, w, h));
+	bar.origin.x = l;
+	bar.origin.y = 0;
+	bar.size.width = w;
+	bar.size.height = h;
+
+	grad = [[NSGradient alloc]
+		initWithStartingColor:[NSColor blackColor]
+		endingColor:[NSColor greenColor]];
+	[grad drawInRect:bar angle:90.0];
+	
+//	[[NSColor greenColor] set];
 //	[path moveToPoint:NSMakePoint(l, 0.0)];
 //	[path lineToPoint:NSMakePoint(l, h)];
-//	[path lineToPoint:NSMakePoint(r, h)];
-//	[path lineToPoint:NSMakePoint(r, 0.0)];
-//	[path closePath];
-//	[path fill];
+//	[path stroke];
 }
 
 static void plot_trend(NSRect rect, float mbps, float max_mbps)
@@ -88,29 +93,58 @@ static void plot_trend(NSRect rect, float mbps, float max_mbps)
 		sma_size = [self->data size];
 }
 
-- (void)drawRect:(NSRect)rect
+- (void)drawRect:(NSRect)dirty_rect
 {
 	NSGraphicsContext* gc = [NSGraphicsContext currentContext];
 	NSString *title;
 	NSMutableDictionary *attr;
+	NSRect rect = [self bounds];
 	float res, max_mbps;
 	__block float avg_mbps;
 	__block int winsz;
 	int smasz;
 
-	
 	NSDisableScreenUpdates();
 	res = self->resolution * 1000.0; // [ms]
 
 	/* clear screen */
 	[[NSColor blackColor] set];
-	NSRectFill(rect);
-	
-	/* plot bar graph */
+	NSRectFill(rect); // rect may smaller than widget size.
+
+	/* caclulate size */
 	avg_mbps = 0.0;
 	winsz = self->window_size;
 	smasz = self->sma_size;
 	max_mbps = [self->data maxWithItems:winsz withSMA:smasz];
+	max_mbps = floor(max_mbps / 5.0) + 5.0;
+	
+	/* show matrix */
+	[[NSColor whiteColor] set];
+	for (int i = 1; i < 5; i++) {
+		CGFloat pattern[2] = {5.0, 5.0};
+		NSBezierPath *path;
+		float y = (rect.size.height / 5.0) * (float)i;
+		
+		path = [NSBezierPath bezierPath];
+		[path setLineDash:pattern count:2 phase:0.0];
+		[path moveToPoint:NSMakePoint(0, y)];
+		[path lineToPoint:NSMakePoint(rect.size.width, y)];
+		[path stroke];
+	}
+	for (int i = 1; i < 5; i++) {
+		CGFloat pattern[2] = {5.0, 5.0};
+		NSBezierPath *path;
+		float x = (rect.size.width / 5.0) * (float)i;
+		
+		path = [NSBezierPath bezierPath];
+		[path setLineDash:pattern count:2 phase:0.0];
+		[path moveToPoint:NSMakePoint(x, 0)];
+		[path lineToPoint:NSMakePoint(x, rect.size.height)];
+		[path stroke];
+	}
+	
+	/* plot bar graph */
+	[[NSColor greenColor] set];
 	[self->data blockForEach:^(float value, int i) {
 		avg_mbps += value;
 		[gc saveGraphicsState];
@@ -129,7 +163,7 @@ static void plot_trend(NSRect rect, float mbps, float max_mbps)
 	 max_mbps, avg_mbps, (res * winsz), (res * smasz)];
 	attr = [[NSMutableDictionary alloc] init];
 	[attr setValue:[NSColor whiteColor] forKey:NSForegroundColorAttributeName];
-	[attr setValue:[NSFont fontWithName:@"Menlo Regular" size:14] forKey:NSFontAttributeName];
+	[attr setValue:[NSFont fontWithName:@"Menlo Regular" size:12] forKey:NSFontAttributeName];
 	[title drawAtPoint:NSMakePoint(0.0, 0.0) withAttributes:attr];
 
 	/* plot trend line */
