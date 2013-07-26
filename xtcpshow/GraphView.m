@@ -103,6 +103,7 @@ static void plot_trend(NSRect rect, float mbps, float max_mbps)
 	__block float avg_mbps;
 	__block int winsz;
 	int smasz;
+	int auto_range;
 
 	NSDisableScreenUpdates();
 	res = self->resolution * 1000.0; // [ms]
@@ -116,7 +117,11 @@ static void plot_trend(NSRect rect, float mbps, float max_mbps)
 	winsz = self->window_size;
 	smasz = self->sma_size;
 	max_mbps = [self->data maxWithItems:winsz withSMA:smasz];
-	max_mbps = floor(max_mbps / 5.0) + 5.0;
+	if (max_mbps < 5.0)
+		auto_range = 1;
+	else
+		auto_range = 5;
+	max_mbps = floor(max_mbps / auto_range) + auto_range;
 	
 	/* show matrix */
 	[[NSColor whiteColor] set];
