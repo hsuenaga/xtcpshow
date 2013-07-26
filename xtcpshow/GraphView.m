@@ -121,7 +121,7 @@ static void plot_trend(NSRect rect, float mbps, float max_mbps)
 		auto_range = 1;
 	else
 		auto_range = 5;
-	max_mbps = floor(max_mbps / auto_range) + auto_range;
+	max_mbps = (auto_range * floor(max_mbps / auto_range)) + auto_range;
 	
 	/* show matrix */
 	[[NSColor whiteColor] set];
