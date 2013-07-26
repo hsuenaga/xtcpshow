@@ -169,7 +169,7 @@ static void plot_trend(NSRect rect, float y_max, float y_avg, float y_scale)
 	
 	/* bar graph params */
 	title =
-	[NSString stringWithFormat:@" Y-Scale %6.3f [Mbps] / X-Scale %6.1f [ms] / SMA %6.1f [ms] / Avg %6.3f [Mbps] ",
+	[NSString stringWithFormat:@" Y-Range %6.3f [Mbps] / X-Range %6.1f [ms] / SMA %6.1f [ms] / Avg %6.3f [Mbps] ",
 	 y_scale, (res * winsz), (res * smasz), y_avg];
 	attr = [[NSMutableDictionary alloc] init];
 	[attr setValue:[NSColor whiteColor] forKey:NSForegroundColorAttributeName];
