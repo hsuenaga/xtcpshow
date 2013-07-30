@@ -15,13 +15,15 @@
 	TAILQ_HEAD(hist_head, history_entry) history;
 	int max_hist;
 	int cur_hist;
+	int sma_size;
 }
 - (void)setBufferSize:(int)size;
+- (void)setSMASize:(int)size;
 - (int)size;
 - (float)max;
 - (void)addFloat:(float)value;
 - (float)floatAtIndex:(int)index;
-- (void)blockForEach:(int (^)(float, int))callback WithItems:(int)n WithSMA:(int)sma;
-- (float)maxWithItems:(int)n withSMA:(int)sma;
+- (void)forEach:(int (^)(float, int))callback withRange:(int)n withWidth:(int)w;
+- (float)maxWithRange:(int)n;
 
 @end

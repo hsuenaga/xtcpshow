@@ -16,6 +16,10 @@ struct history_entry {
 	TAILQ_ENTRY(history_entry) tq_link;
 };
 
+static float sma_init_sum(struct hist_head *, int);
+static float sma_update_sum(struct hist_head *, float, float);
+static void sma_free_sum(struct hist_head *);
+
 @implementation GraphData
 - (GraphData *)init
 {
@@ -33,6 +37,11 @@ struct history_entry {
 	while (cur_hist < max_hist) {
 		[self addFloat:0.0];
 	}
+}
+
+- (void)setSMASize:(int)size
+{
+	sma_size = size;
 }
 
 - (int)size
@@ -85,72 +94,55 @@ struct history_entry {
 	return 0.0;
 }
 
-- (void)blockForEach:(int(^)(float, int))callback WithItems:(int)n
-	     WithSMA:(int)sma
+- (void)forEach:(int(^)(float, int))callback withRange:(int)n withWidth:(int)w
 {
-	struct hist_head sma_hd;
-	struct history_entry *h, *sma_h;
-	float sma_sum;
-	int i = 0, off;
+	struct hist_head sma_db;
+	struct history_entry *h;
+	float sma_sum, unit;
+	int i, last_block, off;
+
+	sma_sum = sma_init_sum(&sma_db, sma_size);
+	if (sma_sum == NAN)
+		return;
 	
-	if (sma < 1)
-		sma = 1;
-	TAILQ_INIT(&sma_hd);
-	for (i = 0; i < sma; i++) {
-		sma_h = (struct history_entry *)malloc(sizeof *sma_h);
-		sma_h->value = 0.0;
-		TAILQ_INSERT_HEAD(&sma_hd, sma_h, tq_link);
-	}
-
 	off = self.size - n;
-	sma_sum = 0.0;
+	unit = (float)n / (float)w;
+	i = 0;
+	last_block = -1;
 	TAILQ_FOREACH(h, &self->history, tq_link) {
-		float value;
+		float sma;
+		int next_block;
 		
-		/* delete last SMA value */
-		sma_h = TAILQ_FIRST(&sma_hd);
-		TAILQ_REMOVE(&sma_hd, sma_h, tq_link);
-		sma_sum -= sma_h->value;
-
-		if (sma_sum < MIN_FILTER)
-			sma_sum = 0.0;
-
-		/* setup new SMA value */
-		if (h->value < MIN_FILTER)
-			sma_h->value = 0.0;
-		else
-			sma_h->value = h->value;
-
-		/* update SMA */
-		TAILQ_INSERT_TAIL(&sma_hd, sma_h, tq_link);
-		sma_sum += sma_h->value;
-		value = sma_sum / (float)sma;
-		
-		if (i < off) {
-			i++;
+		/* update SMA  */
+		sma_sum = sma_update_sum(&sma_db, h->value, sma_sum);
+		sma = sma_sum / (float)sma_size;
+		if (off > 0) {
+			/* skip */
+			off--;
 			continue;
 		}
-		if (callback(value, (i - off)) < 0) {
-			break;
+		next_block = (int)(floor((float)i / unit));
+		if (next_block != last_block) {
+			if (callback(sma, next_block) < 0) {
+				break;
+			}
+			last_block = next_block;
 		}
 		i++;
 	}
 	
-	while ( (sma_h = TAILQ_FIRST(&sma_hd))) {
-		TAILQ_REMOVE(&sma_hd, sma_h, tq_link);
-		free(sma_h);
-	}
+	sma_free_sum(&sma_db);
 }
 
-- (float)maxWithItems:(int)n withSMA:(int)sma
+- (float)maxWithRange:(int)n
 {
 	__block float max = 0.0;
 	
-	[self blockForEach:^(float value, int idx) {
+	[self forEach:^(float value, int idx) {
 		if (max < value)
 			max = value;
 		return 0;
-	} WithItems:n WithSMA:sma];
+	} withRange:n withWidth:n];
 			    
 	return max;
 }
@@ -165,3 +157,53 @@ struct history_entry {
 	}
 }
 @end
+
+static float sma_init_sum(struct hist_head *hd, int size)
+{
+	if (size < 1)
+		size = 1;
+	
+	TAILQ_INIT(hd);
+	for (int i = 0; i < size; i++) {
+		struct history_entry *ent =
+		    (struct history_entry *)malloc(sizeof(*ent));
+		if (ent == NULL)
+			return NAN;
+		ent->value = 0.0;
+		TAILQ_INSERT_HEAD(hd, ent, tq_link);
+	}
+
+	return 0.0;
+}
+
+static float sma_update_sum(struct hist_head *hd,
+			    float value, float sum)
+{
+	struct history_entry *ent;
+	
+	/* sub old value */
+	ent = TAILQ_FIRST(hd);
+	TAILQ_REMOVE(hd, ent, tq_link);
+	sum = sum - ent->value;
+	if (sum < MIN_FILTER)
+		sum = 0.0;
+	
+	/* add new value */
+	ent->value = value;
+	TAILQ_INSERT_TAIL(hd, ent, tq_link);
+	sum = sum + ent->value;
+	
+	if (sum < MIN_FILTER)
+		return 0.0;
+	return sum;
+}
+
+static void sma_free_sum(struct hist_head *hd)
+{
+	struct history_entry *ent;
+	
+	while ( (ent = TAILQ_FIRST(hd))) {
+		TAILQ_REMOVE(hd, ent, tq_link);
+		free(ent);
+	}
+}

@@ -10,65 +10,83 @@
 #import "GraphView.h"
 #import "GraphData.h"
 
-static void plot_mbps(NSRect, float, float,
-		      unsigned int, unsigned int);
-static void plot_trend(NSRect, float, float, float);
-
-/*
- * plot bar graph
- */
-static void plot_mbps(NSRect rect, float mbps, float max_mbps,
-		      unsigned int n, unsigned int max_n)
+@implementation GraphView
+- (void)drawText: (NSString *)t atPoint:(NSPoint) p
 {
-//	NSBezierPath *path = [NSBezierPath bezierPath];
+	NSMutableDictionary *attr;
+	
+	attr = [[NSMutableDictionary alloc] init];
+	[attr setValue:[NSColor whiteColor] forKey:NSForegroundColorAttributeName];
+	[attr setValue:[NSFont fontWithName:@"Menlo Regular" size:12] forKey:NSFontAttributeName];
+	[t drawAtPoint:p withAttributes:attr];
+}
+
+- (void)plotBPS:(float)mbps maxBPS:(float)max_mbps atPos:(unsigned int)n maxPos:(int)max_n
+{
 	NSGradient *grad;
-	NSRect bar;
+	NSRect bar, rect;
 	float l, r, w, h;
+	
+	rect = [self bounds];
 
 	/* width and height of bar */
-	w = rect.size.width / (float)max_n;
-	h = rect.size.height * (mbps / max_mbps);
+	h = floor(rect.size.height * (mbps / max_mbps));
 	if (h < 1.0)
-		return; /* less than 1 pixel */
-
+		return; // less than 1 pixel
+	w = floor(rect.size.width / (float)max_n);
+	if (w < 1.0)
+		w = 1.0;
+	
 	/* left and right of bar */
-	l = w * (float)n;
-	r = l + w;
+	l = floor(w * (float)n);
+	r = floor(l + w);
 	if (r > rect.size.width)
 		return;
-
+	
 	bar.origin.x = l;
 	bar.origin.y = 0;
-	bar.size.width = w;
+	bar.size.width = w + 1.0;
 	bar.size.height = h;
-
+	
 	grad = [[NSGradient alloc]
 		initWithStartingColor:[NSColor blackColor]
 		endingColor:[NSColor greenColor]];
 	[grad drawInRect:bar angle:90.0];
 }
 
-static void plot_trend(NSRect rect, float y_max, float y_avg, float y_scale)
+- (void)plotTrend:(float)y_max withAvg:(float)y_avg withRange:(float)y_range
 {
+	NSRect rect;
 	NSBezierPath *path;
+	NSString *marker;
 	float y;
 	
+	rect = [self bounds];
+
 	[[NSColor redColor] set];
 	path = [NSBezierPath bezierPath];
-	y = rect.size.height * (y_avg / y_scale);
+	y = rect.size.height * (y_avg / y_range);
 	[path moveToPoint:NSMakePoint(0.0, y)];
 	[path lineToPoint:NSMakePoint(rect.size.width, y)];
 	[path stroke];
 	
 	[[NSColor blueColor] set];
 	path = [NSBezierPath bezierPath];
-	y = rect.size.height * (y_max / y_scale);
+	y = rect.size.height * (y_max / y_range);
 	[path moveToPoint:NSMakePoint(0.0, y)];
 	[path lineToPoint:NSMakePoint(rect.size.width, y)];
 	[path stroke];
+	
+	/* max maker */
+	if (y < (rect.size.height / 5))
+		y = (rect.size.height / 5);
+	else if (y > ((rect.size.height / 5) * 4))
+		y = (rect.size.height / 5) * 4;
+	
+	marker = [NSString stringWithFormat:@" Max %6.3f", y_max];
+	[self drawText:marker atPoint:NSMakePoint(0.0, y)];
 }
 
-@implementation GraphView
 - (void)allocHist
 {
 	self->data = [[GraphData alloc] init];
@@ -99,12 +117,11 @@ static void plot_trend(NSRect rect, float y_max, float y_avg, float y_scale)
 - (void)drawRect:(NSRect)dirty_rect
 {
 	NSGraphicsContext* gc = [NSGraphicsContext currentContext];
-	NSString *title;
-	NSMutableDictionary *attr;
 	NSRect rect = [self bounds];
-	float res, y_scale, auto_range;
+	NSString *title;
+	float res, y_range, x_range, auto_range;
 	__block float y_max, y_avg;
-	__block int winsz;
+	__block int winsz, width;
 	int smasz;
 
 	NSDisableScreenUpdates();
@@ -112,17 +129,23 @@ static void plot_trend(NSRect rect, float y_max, float y_avg, float y_scale)
 
 	/* clear screen */
 	[[NSColor blackColor] set];
-	NSRectFill(rect); // rect may smaller than widget size.
+	NSRectFill(rect);
 
 	/* caclulate size */
 	winsz = self->window_size;
 	smasz = self->sma_size;
-	y_scale = [self->data maxWithItems:winsz withSMA:smasz];
-	if (y_scale < 5.0)
+	[self->data setSMASize:sma_size];
+	
+	/* auto ranging */
+	y_max = [self->data maxWithRange:winsz];
+	if (y_max < 1.0)
+		auto_range = 1.0;
+	else if (y_max < 5.0)
 		auto_range = 2.5;
 	else
-		auto_range = 5;
-	y_scale = (auto_range * floor(y_scale / auto_range)) + auto_range;
+		auto_range = 5.0;
+	y_range = (auto_range * (floor(y_max / auto_range) + 1.0));
+	x_range = res * winsz;
 	
 	/* show matrix */
 	[[NSColor whiteColor] set];
@@ -148,20 +171,23 @@ static void plot_trend(NSRect rect, float y_max, float y_avg, float y_scale)
 		[path lineToPoint:NSMakePoint(x, rect.size.height)];
 		[path stroke];
 	}
-	
+
 	/* plot bar graph */
-	y_max = 0.0;
 	y_avg = 0.0;
+	width = rect.size.width;
 	[[NSColor greenColor] set];
-	[self->data blockForEach:^(float value, int i) {
-		if (y_max < value)
-			y_max = value;
+	[self->data forEach:^(float value, int w) {
 		y_avg += value;
 		[gc saveGraphicsState];
-		plot_mbps(rect, value, y_scale, i, winsz);
+		[self plotBPS:value
+		       maxBPS:y_range
+			atPos:w
+		       maxPos:width];
 		[gc restoreGraphicsState];
 		return 0;
-	} WithItems:winsz WithSMA:smasz];
+	} withRange:winsz withWidth:width];
+	
+	/* caclulate total average */
 	if ([self->data size] > 0)
 		y_avg = y_avg / (float)[self->data size];
 	else
@@ -170,15 +196,11 @@ static void plot_trend(NSRect rect, float y_max, float y_avg, float y_scale)
 	/* bar graph params */
 	title =
 	[NSString stringWithFormat:@" Y-Range %6.3f [Mbps] / X-Range %6.1f [ms] / SMA %6.1f [ms] / Avg %6.3f [Mbps] ",
-	 y_scale, (res * winsz), (res * smasz), y_avg];
-	attr = [[NSMutableDictionary alloc] init];
-	[attr setValue:[NSColor whiteColor] forKey:NSForegroundColorAttributeName];
-	[attr setValue:[NSFont fontWithName:@"Menlo Regular" size:12] forKey:NSFontAttributeName];
-	[title drawAtPoint:NSMakePoint(0.0, 0.0) withAttributes:attr];
-
-	/* plot trend line */
-	plot_trend(rect, y_max, y_avg, y_scale);
+	 y_range, x_range, (res * smasz), y_avg];
+	[self drawText:title atPoint:NSMakePoint(0.0, 0.0)];
 	
+	/* plot trend line */
+	[self plotTrend:y_max withAvg:y_avg withRange:y_range];
 	NSEnableScreenUpdates();
 }
 

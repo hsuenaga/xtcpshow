@@ -17,6 +17,9 @@
 	int window_size;
 	int sma_size;
 }
+- (void)drawText: (NSString *)t atPoint:(NSPoint)p;
+- (void)plotBPS: (float)mbps maxBPS:(float)max_mbps atPos:(unsigned int)n maxPos:(int)max_n;
+- (void)plotTrend: (float)y_max withAvg:(float)y_avg withRange:(float)y_range;
 - (void)allocHist;
 - (void)setWindowSize:(int)size;
 - (void)setSMASize:(int)size;
