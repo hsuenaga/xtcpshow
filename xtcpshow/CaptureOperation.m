@@ -31,8 +31,9 @@ static float tv2floatSec(struct timeval *);
 	NSLog(@"caputer thread");
 	p = [[self model] pcap];
 	[[self model] setPcap:NULL];
-	[self.model setTarget_resolution:TIMESLOT];
+	[[self model] setTarget_resolution:(TIMESLOT * 1000.0)]; // [ms]
 	*self.model.last = now;
+	*self.model.age_last = now;
 	while (p) {
 		dispatch(p, self);
 		if ([self isCancelled] == YES)
@@ -60,8 +61,6 @@ static int dispatch(pcap_t *pcap, id obj) {
 	CaptureOperation *op = (CaptureOperation *)obj;
 	u_char *user;
 	int n;
-	
-	
 	if (pcap == NULL) {
 		NSLog(@"pcap not initialized.");
 		return -1;
@@ -87,36 +86,40 @@ static void callback(u_char *user,
 	CaptureOperation *op;
 	CaptureModel *model;
 	struct timeval now, delta;
-	float fDelta, mbps, bps;
+	float fDelta, fDeltaAge, mbps, bps;
 
-	if (user == NULL)
+	if (user == NULL) {
+		NSLog(@"empty context");
 		return;
+	}
 	op = (__bridge CaptureOperation *)((void *)user);
-	if (op == nil)
+	if (op == nil) {
+		NSLog(@"empty operation");
 		return;
+	}
 	model = [op model];
-	if (model == nil)
+	if (model == nil) {
+		NSLog(@"No model attached");
 		return;
+	}
 	
 	gettimeofday(&now, NULL);
 	timersub(&now, model.last, &delta);
 	fDelta = tv2floatSec(&delta);
-	
-	if (fDelta < TIMESLOT) {
-		if (hdr && bytes) {
-			model.bytes += hdr->len;
-			model.pkts++;
-			model.total_pkts++;
-		}
-		return;
+	if (hdr && bytes) {
+		model.bytes += hdr->len;
+		model.pkts++;
+		model.total_pkts++;
 	}
+	if (fDelta < TIMESLOT)
+		return;
 
 	/* timeslot expired */
 	*model.last = now;
 	bps = ((float)model.bytes * 8.0) / fDelta;
 	mbps = bps / (1000.0 * 1000.0);
 	model.mbps = mbps;
-	model.resolution = fDelta;
+	model.resolution = fDelta * 1000.0; // [ms]
 	
 	/* max data */
 	if (mbps > model.max_mbps) {
@@ -126,8 +129,8 @@ static void callback(u_char *user,
 	/* aging data */
 	model.aged_db = (model.aged_db * 0.5) + (mbps * 0.5);
 	timersub(&now, model.age_last, &delta);
-	fDelta = tv2floatSec(&delta);
-	if (fDelta > AGESLOT) {
+	fDeltaAge = tv2floatSec(&delta);
+	if (fDeltaAge > AGESLOT) {
 		model.aged_mbps = model.aged_db;
 		*model.age_last = now;
 	}
@@ -137,7 +140,12 @@ static void callback(u_char *user,
 	model.pkts = 0;
 	
 	/* notify to controller */
-	[[model controller] samplingNotify];
+	while (fDelta > TIMESLOT) {
+		[[model controller] samplingNotify];
+		fDelta -= TIMESLOT;
+		/* send padding */
+		model.mbps = 0.0;
+	}
 }
 
 static float tv2floatSec(struct timeval *tv)
@@ -145,7 +153,7 @@ static float tv2floatSec(struct timeval *tv)
 	float sec;
 	
 	sec = (float)tv->tv_sec;
-	sec += (float)tv->tv_usec / (1000.0 * 1000.0);
+	sec += (float)tv->tv_usec / (1000.0 * 1000.0); // [sec]
 	
 	return sec;
 }

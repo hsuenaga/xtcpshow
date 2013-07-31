@@ -75,7 +75,7 @@ static int set_filter(id, const char *);
 	op.model.aged_mbps = 0.0;
 	op.model.bytes = 0;
 	op.model.pkts = 0;
-	[op setQueuePriority:NSOperationQueuePriorityVeryHigh];
+	[op setQueuePriority:NSOperationQueuePriorityHigh];
 	[self->capture_cue addOperation:op];
 	self->running = TRUE;
 	
@@ -92,6 +92,20 @@ static int set_filter(id, const char *);
 - (BOOL) captureEnabled
 {
 	return self->running;
+}
+
+- (void) resetCounter
+{
+	self.total_pkts = 0;
+	self.drop_pkts = 0;
+	self.bytes = 0;
+	self.pkts = 0;
+	self.mbps = 0.0;
+	self.max_mbps = 0.0;
+	self.aged_db = 0.0;
+	self.aged_mbps = 0.0;
+	self.resolution = 0.0;
+	self.target_resolution = 0.0;
 }
 
 - (void) dealloc

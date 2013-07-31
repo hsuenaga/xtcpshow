@@ -26,6 +26,7 @@ static void setup_interface(NSPopUpButton *);
 
 	// widget initialization
 	[[self graphView] allocHist];
+	[[self graphView] allocGraphImage];
 	[[self startButton] setEnabled:TRUE];
 	
 	// setup intrface labels
@@ -45,6 +46,8 @@ static void setup_interface(NSPopUpButton *);
 	}
 	else {
 		/* start capture */
+		[self.model resetCounter];
+		
 		self.model.device =
 		[[self.deviceSelector titleOfSelectedItem] cStringUsingEncoding:NSASCIIStringEncoding];
 		self.model.filter =
@@ -87,10 +90,18 @@ static void setup_interface(NSPopUpButton *);
 }
 
 - (void)updateUserInterface {
-	[self.snapshotField setFloatValue:[self.model mbps]];
-	[self.maxField setFloatValue:[self.model max_mbps]];
-	[self.trendField setFloatValue:[self.model aged_mbps]];
-	[self.totalpktField setIntegerValue:[self.model total_pkts]];
+	[self.snapshotField
+	 setFloatValue:[self.model mbps]];
+	[self.maxField
+	 setFloatValue:[self.model max_mbps]];
+	[self.trendField
+	 setFloatValue:[self.model aged_mbps]];
+	[self.totalpktField
+	 setIntegerValue:[self.model total_pkts]];
+	[self.samplingTargetField
+	 setFloatValue:[self.model target_resolution]];
+	[self.samplingField
+	 setFloatValue:[self.model resolution]];
 	[self.graphView setNeedsDisplay:YES];
 }
 @end

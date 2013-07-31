@@ -25,6 +25,8 @@
 @property (weak) IBOutlet NSTextField *maxField;
 @property (weak) IBOutlet NSTextField *trendField;
 @property (weak) IBOutlet NSTextField *totalpktField;
+@property (weak) IBOutlet NSTextField *samplingField;
+@property (weak) IBOutlet NSTextField *samplingTargetField;
 
 /* Graph BOX */
 @property (weak) IBOutlet NSButton *startButton;

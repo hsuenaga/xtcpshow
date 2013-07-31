@@ -58,4 +58,5 @@
 - (int)startCapture;
 - (void)stopCapture;
 - (BOOL)captureEnabled;
+- (void)resetCounter;
 @end
