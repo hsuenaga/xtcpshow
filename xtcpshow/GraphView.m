@@ -290,8 +290,11 @@
 	
 	/* plot bar graph */
 	[self redrawGraphImage];
+#ifdef USE_BACKBUFFER
 	[image drawAtPoint:NSMakePoint(0.0, 0.0)
-		  fromRect:rect operation:NSCompositeSourceOver fraction:1.0];
+		  fromRect:rect operation:NSCompositeSourceOver
+		  fraction:1.0];
+#endif
 	
 	/* bar graph params */
 	title =
