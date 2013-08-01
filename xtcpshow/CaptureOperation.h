@@ -11,11 +11,30 @@
 #import "AppDelegate.h"
 
 #define TIMESLOT (0.01) /* [sec] (= 10[ms])*/
-#define AGESLOT (1.0) /* [sec] */
+#define HOLDSLOT (1.0) /* [sec] */
 
 @class CaptureModel;
 
-@interface CaptureOperation : NSOperation
+@interface CaptureOperation : NSOperation {
+	char errbuf[PCAP_ERRBUF_SIZE];
+	pcap_t *pcap;
+	struct timeval tv_last_tick;
+	struct timeval tv_peek_hold;
+	float last_tick;
+	float last_peek_hold;
+	BOOL terminate;
+}
 @property (weak) CaptureModel *model;
+@property (assign) const char *source;
+@property (assign) const char *filter;
+
 - (void)main;
+- (float)elapsed:(struct timeval *)last;
+- (BOOL)tick_expired;
+- (BOOL)peek_hold_expired;
+- (void)sendNotify;
+- (void)sendError;
+
+- (BOOL)allocPcap;
+- (BOOL)attachFilter;
 @end

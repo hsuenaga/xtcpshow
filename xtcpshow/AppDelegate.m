@@ -83,9 +83,17 @@ static void setup_interface(NSPopUpButton *);
 - (void)samplingNotify
 {
 	[[self graphView] addSnap:[self.model mbps]
-			trendData:[self.model aged_mbps]
+			trendData:[self.model peek_hold_mbps]
 		       resolusion:[self.model target_resolution]];
 
+	[self updateUserInterface];
+}
+
+- (void)samplingError
+{
+	[[self startButton] setTitle:@"START"];
+	[[self deviceSelector] setEnabled:YES];
+	[[self filterField] setEnabled:YES];
 	[self updateUserInterface];
 }
 
@@ -95,7 +103,7 @@ static void setup_interface(NSPopUpButton *);
 	[self.maxField
 	 setFloatValue:[self.model max_mbps]];
 	[self.trendField
-	 setFloatValue:[self.model aged_mbps]];
+	 setFloatValue:[self.model peek_hold_mbps]];
 	[self.totalpktField
 	 setIntegerValue:[self.model total_pkts]];
 	[self.samplingTargetField

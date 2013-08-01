@@ -44,5 +44,6 @@
 
 /* notify from model, controller(myself), ... */
 - (void) samplingNotify;
+- (void) samplingError;
 - (void) updateUserInterface;
 @end
