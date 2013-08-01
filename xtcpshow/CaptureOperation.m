@@ -17,6 +17,25 @@
  * Capture thread
  */
 @implementation CaptureOperation
+- (CaptureOperation *)init
+{
+	self = [super init];
+	source_interface = NULL;
+	filter_program = NULL;
+
+	return self;
+}
+
+- (void)dealloc
+{
+	if (source_interface)
+		free(source_interface);
+	if (filter_program)
+		free(filter_program);
+	source_interface = NULL;
+	filter_program = NULL;
+}
+
 - (void) main
 {
 	struct pcap_stat ps;
@@ -25,7 +44,7 @@
 	
 	NSLog(@"caputer thread");
 	[[self model] setTarget_resolution:(TIMESLOT * 1000.0)];
-	
+
 	// initialize libpcap
 	if (![self allocPcap]) {
 		NSLog(@"cannot initialize libpcap");
@@ -125,6 +144,26 @@
 	NSLog(@"done thread");
 }
 
+- (void)setSource:(const char *)source
+{
+	if (source_interface) {
+		free(source_interface);
+		source_interface = NULL;
+	}
+	if (source)
+		source_interface = strdup(source);
+}
+
+- (void)setFilter:(const char *)filter
+{
+	if (filter_program) {
+		free(filter_program);
+		filter_program = NULL;
+	}
+	if (filter)
+		filter_program = strdup(filter);
+}
+
 - (float)elapsed:(struct timeval *)last
 {
 	struct timeval now, delta;
@@ -192,8 +231,13 @@
 {
 	int r;
 	
+	if (source_interface == NULL) {
+		NSLog(@"No source interface");
+		return FALSE;
+	}
+	
 	NSLog(@"initializing libpcap...");
-	pcap = pcap_create(self.source, errbuf);
+	pcap = pcap_create(source_interface, errbuf);
 	if (pcap == NULL) {
 		NSLog(@"pcap_create() failed.");
 		goto error;
@@ -237,12 +281,16 @@ error:
 - (BOOL)attachFilter
 {
 	struct bpf_program filter;
-	const char *prog = [self filter];
-	
-	if (pcap_compile(pcap, &filter,
-			 prog, 0, PCAP_NETMASK_UNKNOWN) != 0) {
+
+	if (filter_program == NULL) {
+		NSLog(@"No filter program");
+		return FALSE;
+	}
+	if (pcap_compile(pcap, &filter, filter_program,
+			 0, PCAP_NETMASK_UNKNOWN) != 0) {
 		NSLog(@"pcap_compile() failed: %s",
 		      pcap_geterr(pcap));
+		NSLog(@"program: %s", filter_program);
 		return FALSE;
 	}
 	

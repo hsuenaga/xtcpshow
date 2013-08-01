@@ -13,13 +13,15 @@
 @implementation CaptureModel
 - (CaptureModel *) init
 {
+	self = [super init];
+
 	/* thread */
 	capture_cue = [[NSOperationQueue alloc] init];
 	running = FALSE;
 	
 	/* pcap */
 	self.device = NULL;
-	self.filter = NULL;
+	self.filter = "tcp";
 	
 	/* raw traffic */
 	self.total_pkts = 0;

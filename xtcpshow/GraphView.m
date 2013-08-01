@@ -69,21 +69,9 @@
 
 - (void)redrawGraphImage
 {
-	NSGraphicsContext *gc;
 	__block float sum = 0.0;
 
-#ifdef USE_BACKBUFFER
-	if (needRedrawImage == FALSE)
-		return;
-	
-	gc = [NSGraphicsContext
-	      graphicsContextWithBitmapImageRep:image_rep];
-	[NSGraphicsContext setCurrentContext:gc];
-	[self clearGraphImage];
-#else
-	gc = nil;
 	[NSGraphicsContext saveGraphicsState];
-#endif
 	[self->data forEach:^(float value, int w) {
 		sum += value;
 		[self plotBPS:value
@@ -242,19 +230,12 @@
 
 - (void)drawAll
 {
-#ifdef USE_BACKBUFFER
-	NSGraphicsContext *gc;
-#endif
 	NSRect rect = [self bounds];
 	NSString *title;
 	int smasz;
 
 	[NSGraphicsContext saveGraphicsState];
-#ifdef USE_BACKBUFFER
-	gc = [NSGraphicsContext graphicsContextWithBitmapImageRep:backbuffer_rep];
-	
-	[NSGraphicsContext setCurrentContext:gc];
-#endif
+
 	/* clear screen */
 	[[NSColor clearColor] set];
 	NSRectFill(rect);
@@ -290,11 +271,6 @@
 	
 	/* plot bar graph */
 	[self redrawGraphImage];
-#ifdef USE_BACKBUFFER
-	[image drawAtPoint:NSMakePoint(0.0, 0.0)
-		  fromRect:rect operation:NSCompositeSourceOver
-		  fraction:1.0];
-#endif
 	
 	/* bar graph params */
 	title =
@@ -318,12 +294,6 @@
 	NSDisableScreenUpdates();
 	if (needRedrawAll)
 		[self drawAll];
-#ifdef USE_BACKBUFFER
-	[backbuffer drawAtPoint:NSMakePoint(dirty_rect.origin.x, dirty_rect.origin.y)
-		       fromRect:dirty_rect
-		      operation:NSCompositeCopy
-		       fraction:1.0];
-#endif
 	NSEnableScreenUpdates();
 }
 

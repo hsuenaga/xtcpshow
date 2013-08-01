@@ -37,7 +37,7 @@
  * connection to controller
  */
 @property (weak) AppDelegate *controller;
-
+- (CaptureModel *)init;
 - (int)startCapture;
 - (void)stopCapture;
 - (BOOL)captureEnabled;

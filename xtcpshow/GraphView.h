@@ -9,8 +9,6 @@
 
 @class GraphData;
 
-#undef USE_BACKBUFFER
-
 @interface GraphView : NSView {
 	BOOL needRedrawImage;
 	BOOL needRedrawAll;

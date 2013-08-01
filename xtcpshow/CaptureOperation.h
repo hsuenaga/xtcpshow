@@ -17,6 +17,8 @@
 
 @interface CaptureOperation : NSOperation {
 	char errbuf[PCAP_ERRBUF_SIZE];
+	char *source_interface;
+	char *filter_program;
 	pcap_t *pcap;
 	struct timeval tv_last_tick;
 	struct timeval tv_peek_hold;
@@ -25,10 +27,13 @@
 	BOOL terminate;
 }
 @property (weak) CaptureModel *model;
-@property (assign) const char *source;
-@property (assign) const char *filter;
 
+- (CaptureOperation *)init;
+- (void)dealloc;
 - (void)main;
+- (void)setSource:(const char *)source;
+- (void)setFilter:(const char *)filter;
+
 - (float)elapsed:(struct timeval *)last;
 - (BOOL)tick_expired;
 - (BOOL)peek_hold_expired;
