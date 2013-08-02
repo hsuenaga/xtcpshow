@@ -93,21 +93,10 @@
 //
 - (void)clipQueueHead:(NSRange)range
 {
-	DataQueue *dst;
-	__block NSUInteger length = range.length;
-	
-	dst = [[DataQueue alloc] init];
-	[_data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
-		if (idx < range.location)
-			return;
-		if (length-- == 0) {
-			*stop = TRUE;
-			return;
-		}
-		[dst addFloatValue:value];
-	}];
-	
-	_data = dst;
+	if (range.location != 0)
+		[_data removeFromHead:range.location];
+	if (range.length != 0)
+		[_data clipFromHead:range.length];
 }
 
 //

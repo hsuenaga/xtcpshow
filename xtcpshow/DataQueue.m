@@ -105,6 +105,39 @@
 	_sum = 0.0;
 }
 
+- (void)removeFromHead:(size_t)size
+{
+	struct DataQueueEntry *entry;
+	
+	while (size-- && !STAILQ_EMPTY(&head)) {
+		entry = STAILQ_FIRST(&head);
+		STAILQ_REMOVE_HEAD(&head, chain);
+		free(entry);
+	}
+}
+
+- (void)clipFromHead:(size_t)size
+{
+	struct DataQueueEntry *entry;
+	struct DataQueueHead temp;
+	
+	STAILQ_INIT(&temp);
+	
+	while(size-- && !STAILQ_EMPTY(&head)) {
+		entry = STAILQ_FIRST(&head);
+		STAILQ_REMOVE_HEAD(&head, chain);
+		STAILQ_INSERT_TAIL(&temp, entry, chain);
+	}
+	
+	while(!STAILQ_EMPTY(&head)) {
+		entry = STAILQ_FIRST(&head);
+		STAILQ_REMOVE_HEAD(&head, chain);
+		free(entry);
+	}
+	
+	memcpy(&head, &temp, sizeof(head));
+}
+
 - (BOOL)isEmpty
 {
 	if (STAILQ_EMPTY(&head))
