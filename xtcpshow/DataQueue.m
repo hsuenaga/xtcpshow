@@ -18,6 +18,17 @@
 	return self;
 }
 
+- (void)dealloc
+{
+	struct DataQueueEntry *entry;
+
+	while (!STAILQ_EMPTY(&head)) {
+		entry = STAILQ_FIRST(&head);
+		STAILQ_REMOVE_HEAD(&head, chain);
+		free(entry);
+	}
+}
+
 - (BOOL)addFloatValue:(float)value
 {
 	struct DataQueueEntry *entry;

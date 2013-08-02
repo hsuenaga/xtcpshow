@@ -11,12 +11,13 @@
 #import "DataQueue.h"
 
 @interface DataResampler : NSObject {
-	DataQueue *original;
+	BOOL write_protect;
 }
 
 @property (strong, readonly) DataQueue *data;
 
 - (void)importData:(DataQueue *)data;
+- (void)makeMutable;
 - (void)purgeData;
 
 - (void)scaleQueue:(float)scale;

@@ -14,13 +14,29 @@
 @implementation DataResampler
 - (void)importData:(DataQueue *)data
 {
-	original = data;
+	write_protect = TRUE;
 	_data = data;
+}
+
+- (void)makeMutable
+{
+	DataQueue *dst;
+	
+	if (!write_protect)
+		return;
+	if (_data == nil)
+		return;
+	
+	[_data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
+		[dst addFloatValue:value];
+	}];
+	write_protect = FALSE;
+	_data = dst;
 }
 
 - (void)purgeData
 {
-	original = nil;
+	write_protect = FALSE;
 	_data = nil;
 }
 
@@ -76,7 +92,8 @@
 		}
 		last_idx = dst_idx;
 	}];
-
+	
+	write_protect = FALSE;
 	_data = dst;
 }
 
@@ -93,6 +110,7 @@
 //
 - (void)clipQueueHead:(NSRange)range
 {
+	[self makeMutable];
 	if (range.location != 0)
 		[_data removeFromHead:range.location];
 	if (range.length != 0)
@@ -113,6 +131,7 @@
 {
 	NSRange reverse = range;
 	
+	[self makeMutable];
 	if ([self.data count] < (range.location + range.length)) {
 		if (range.location > [self.data count])
 			return;
@@ -136,7 +155,8 @@
 		[sma shiftFloatValueWithNewValue:value];
 		[dst addFloatValue:[sma averageFloatValue]];
 	}];
-
+	
+	write_protect = FALSE;
 	_data = dst;
 }
 
