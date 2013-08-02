@@ -6,26 +6,24 @@
 //  Copyright (c) 2013年 SUENAGA Hiroki. All rights reserved.
 //
 #import <Foundation/Foundation.h>
+#import "DataQueue.h"
 #import "AppDelegate.h"
 
-#define SNAPLEN 64
-#define NPKT 1000
-#define TICK 1 /* [ms] */
+#define DEF_HISTORY 2000
 
 @interface CaptureModel : NSObject {
 	NSOperationQueue *capture_cue;
 	BOOL running;
 }
 
-/*
- * pcap binding
- */
+// pcap binding
 @property (assign) const char *device;
 @property (assign) const char *filter;
 
-/*
- * traffic data reported by capture thread
- */
+// data size
+@property (assign) size_t history_size;
+
+// traffic data reported by capture thread
 @property (atomic, assign) uint32_t total_pkts;
 @property (atomic, assign) float mbps;
 @property (atomic, assign) float max_mbps;
@@ -33,14 +31,16 @@
 @property (atomic, assign) float resolution;
 @property (atomic, assign) float target_resolution;
 
-/*
- * connection to controller
- */
+// data processing (don't acccess from other thread)
+@property (strong) DataQueue *data;
+
 @property (weak) AppDelegate *controller;
+
 - (CaptureModel *)init;
 - (int)startCapture;
 - (void)stopCapture;
 - (BOOL)captureEnabled;
 - (void)resetCounter;
-
+- (void)samplingNotify;
+- (void)samplingError;
 @end

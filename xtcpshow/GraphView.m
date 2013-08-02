@@ -8,108 +8,65 @@
 #include "math.h"
 
 #import "GraphView.h"
-#import "GraphData.h"
+#import "DataQueue.h"
+#import "DataResampler.h"
 
 @implementation GraphView
-- (void)allocGraphImage
+- (void)initData
 {
-	image_size = [self bounds].size;
-	image_rep = [[NSBitmapImageRep alloc]
-		 initWithBitmapDataPlanes:NULL
-		 pixelsWide:image_size.width
-		 pixelsHigh:image_size.height
-		 bitsPerSample:8
-		 samplesPerPixel:4
-		 hasAlpha:YES
-		 isPlanar:NO
-		 colorSpaceName:NSDeviceRGBColorSpace
-		 bitmapFormat:NSAlphaFirstBitmapFormat
-		 bytesPerRow:0
-		 bitsPerPixel:0];
-	image = [[NSImage alloc] initWithSize:image_size];
-	[image addRepresentation:image_rep];
-	
-	backbuffer_rep = [[NSBitmapImageRep alloc]
-		     initWithBitmapDataPlanes:NULL
-		     pixelsWide:image_size.width
-		     pixelsHigh:image_size.height
-		     bitsPerSample:8
-		     samplesPerPixel:4
-		     hasAlpha:YES
-		     isPlanar:NO
-		     colorSpaceName:NSDeviceRGBColorSpace
-		     bitmapFormat:NSAlphaFirstBitmapFormat
-		     bytesPerRow:0
-		     bitsPerPixel:0];
-	backbuffer = [[NSImage alloc] initWithSize:image_size];
-	[backbuffer addRepresentation:backbuffer_rep];
-	
-	needRedrawAll = TRUE;
-}
-
-- (void)clearGraphImage
-{
-	NSRect rect;
-	NSGraphicsContext *gc;
-
-	[NSGraphicsContext saveGraphicsState];
-	
-	rect.origin = NSMakePoint(0.0, 0.0);
-	rect.size = image_size;
-	
-	gc= [NSGraphicsContext graphicsContextWithBitmapImageRep:image_rep];
-	if (gc == nil)
-		NSLog(@"No graph iamge");
-	[NSGraphicsContext setCurrentContext:gc];
-	[[NSColor clearColor] set];
-	NSRectFill(rect);
-	
-	[NSGraphicsContext restoreGraphicsState];
+	self.sampler = [[DataResampler alloc] init];
 }
 
 - (void)redrawGraphImage
 {
-	__block float sum = 0.0;
-
+	DataQueue *data;
+	NSRect rect;
+	
 	[NSGraphicsContext saveGraphicsState];
-	[self->data forEach:^(float value, int w) {
-		sum += value;
+	rect = [self bounds];
+	data = [[self sampler] data];
+	[data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
+		if (idx > rect.size.width) {
+			*stop = YES;
+			return;
+		}
 		[self plotBPS:value
 		       maxBPS:y_range
-			atPos:w
-		       maxPos:image_size.width];
-		return 0;
-	} withRange:window_size withWidth:image_size.width];
-	view_avg_mbps = sum / image_size.width;
-
-	needRedrawImage = FALSE;
+			atPos:(int)idx
+		       maxPos:rect.size.width];
+	}];
+	
 	[NSGraphicsContext restoreGraphicsState];
 }
 
 - (void)updateRange
 {
+	DataQueue *data;
+	float max;
 	float new_range;
 	float unit;
 
 	/* auto ranging */
-	view_max_mbps = [self->data maxWithRange:window_size];
-
-	if (view_max_mbps < 1.0) {
+	data = [self.sampler data];
+	max = [data maxFloatValue];
+	
+	if (max < 1.0) {
 		unit = 1.0;
 	}
-	else if (view_max_mbps < 5.0) {
+	else if (max < 5.0) {
 		unit = 2.5;
 	}
 	else {
 		unit = 5.0;
 	}
 	
-	new_range = (unit * (floor(view_max_mbps / unit) + 1.0));
-	if (new_range != y_range) {
+	new_range = (unit * (floor(max / unit) + 1.0));
+	if (new_range != y_range)
 		needRedrawImage = TRUE;
-	}
-	y_range = new_range;
-	x_range = resolution * window_size; // [ms]
+	
+	y_range = new_range; // [mBPS]
+	x_range = self.resolution * self.windowSize; // [ms]
+	sma_range = self.resolution * self.SMASize; // [ms]
 }
 
 - (void)drawText: (NSString *)t atPoint:(NSPoint) p
@@ -152,7 +109,7 @@
 	
 	bar.origin.x = l;
 	bar.origin.y = 0;
-	bar.size.width = w + 1.0;
+	bar.size.width = w;
 	bar.size.height = h;
 	
 	grad = [[NSGradient alloc]
@@ -163,25 +120,30 @@
 
 - (void)plotTrend
 {
+	DataQueue *data;
 	NSRect rect;
 	NSBezierPath *path;
 	NSString *marker;
-	float y;
+	float y, y_max, y_avg;
 	
 	[NSGraphicsContext saveGraphicsState];
 	
+	data = [[self sampler] data];
 	rect = [self bounds];
+	y_max = [data maxFloatValue];
+	y_avg = [data averageFloatValue];
 
 	[[NSColor redColor] set];
 	path = [NSBezierPath bezierPath];
-	y = rect.size.height * (view_avg_mbps / y_range);
+	y =
+	rect.size.height * (y_avg / y_range);
 	[path moveToPoint:NSMakePoint(0.0, y)];
 	[path lineToPoint:NSMakePoint(rect.size.width, y)];
 	[path stroke];
 	
 	[[NSColor blueColor] set];
 	path = [NSBezierPath bezierPath];
-	y = rect.size.height * (view_max_mbps / y_range);
+	y = rect.size.height * (y_max / y_range);
 	[path moveToPoint:NSMakePoint(0.0, y)];
 	[path lineToPoint:NSMakePoint(rect.size.width, y)];
 	[path stroke];
@@ -192,57 +154,28 @@
 	else if (y > ((rect.size.height / 5) * 4))
 		y = (rect.size.height / 5) * 4;
 	
-	marker = [NSString stringWithFormat:@" Max %6.3f", view_max_mbps];
+	marker = [NSString stringWithFormat:@" Max %6.3f", y_max];
 	[self drawText:marker atPoint:NSMakePoint(0.0, y)];
 	
 	[NSGraphicsContext restoreGraphicsState];
 }
 
-- (void)allocHist
-{
-	self->data = [[GraphData alloc] init];
-	if (self->data == nil)
-		NSLog(@"cannot alloc history");
-	[self->data setBufferSize:DEF_BUFSIZ];
-}
-
-- (void)setWindowSize:(int)size
-{
-	window_size = size;
-	
-	if (window_size < 10)
-		window_size = 10;
-	else if (window_size > [self->data size])
-		window_size = [self->data size];
-}
-
-- (void)setSMASize:(int)size
-{
-	sma_size = size;
-	if (sma_size < 1)
-		sma_size = 1;
-	else if (sma_size > [self->data size])
-		sma_size = [self->data size];
-
-	[self updateRange];
-	needRedrawImage = TRUE;
-}
-
 - (void)drawAll
 {
+	DataQueue *data;
 	NSRect rect = [self bounds];
 	NSString *title;
-	int smasz;
 
 	[NSGraphicsContext saveGraphicsState];
 
+	data = [[self sampler] data];
+	
 	/* clear screen */
 	[[NSColor clearColor] set];
 	NSRectFill(rect);
 	
 	/* caclulate size */
-	smasz = self->sma_size;
-	[self->data setSMASize:sma_size];
+	[self updateRange];
 	
 	/* show matrix */
 	[[NSColor whiteColor] set];
@@ -275,7 +208,8 @@
 	/* bar graph params */
 	title =
 	[NSString stringWithFormat:@" Y-Range %6.3f [Mbps] / X-Range %6.1f [ms] / SMA %6.1f [ms] / Avg %6.3f [Mbps] ",
-	 y_range, x_range, (resolution * smasz), view_avg_mbps];
+	 y_range, x_range, sma_range,
+	 [data averageFloatValue]];
 	[self drawText:title atPoint:NSMakePoint(0.0, 0.0)];
 	
 	/* plot trend line */
@@ -286,27 +220,23 @@
 
 - (void)drawRect:(NSRect)dirty_rect
 {
-	if (image == nil)
-		return;
-	if (backbuffer == nil)
-		return;
+	NSRect rect;
+	NSRange range;
+	float samples, scale;
 	
+	rect = [self bounds];
+	range.location = 0;
+	range.length = rect.size.width;
+	samples = (float)self.windowSize;
+	if (samples < 1.0)
+		samples = 1.0;
+	scale = (float)range.length / samples;
 	NSDisableScreenUpdates();
-	if (needRedrawAll)
-		[self drawAll];
+	[[self sampler] scaleQueue:scale];
+	[[self sampler] movingAverage:[self SMASize]];
+	[[self sampler] clipQueueTail:range];
+	[self drawAll];
 	NSEnableScreenUpdates();
 }
 
-- (void)addSnap:(float)snap trendData:(float)trend resolusion:(float)res
-{
-	self->snap_mbps = snap;
-	self->trend_mbps = trend;
-	self->resolution = res;
-	
-	/* delegate to history store */
-	[self->data addFloat:snap];
-	[self updateRange];
-	needRedrawImage = TRUE;
-	needRedrawAll = TRUE;
-}
 @end

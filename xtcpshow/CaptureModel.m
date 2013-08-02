@@ -5,8 +5,12 @@
 //  Created by SUENAGA Hiroki on 2013/07/19.
 //  Copyright (c) 2013年 SUENAGA Hiroki. All rights reserved.
 //
+#include "math.h"
+
 #import "CaptureModel.h"
 #import "CaptureOperation.h"
+#import "DataQueue.h"
+
 /*
  * Model object: almost values are updated by operation thread.
  */
@@ -15,22 +19,26 @@
 {
 	self = [super init];
 
-	/* thread */
+	// thread
 	capture_cue = [[NSOperationQueue alloc] init];
 	running = FALSE;
-	
-	/* pcap */
+
+	// pcap
 	self.device = NULL;
 	self.filter = "tcp";
 	
-	/* raw traffic */
+	// data size
+	self.history_size = DEF_HISTORY;
+	self.data = [[DataQueue alloc] init];
+	[self.data zeroFill:self.history_size];
+
+	// traffic data
 	self.total_pkts = 0;
-	
-	/* cooked data */
 	self.mbps = 0.0;
 	self.max_mbps = 0.0;
 	self.peek_hold_mbps = 0.0;
 	
+	// outlets
 	self.controller = nil;
 	
 	return self;
@@ -72,5 +80,16 @@
 	self.peek_hold_mbps = 0.0;
 	self.resolution = 0.0;
 	self.target_resolution = 0.0;
+}
+
+- (void) samplingNotify
+{
+	[self.data shiftFloatValueWithNewValue:[self mbps]];
+	[self.controller samplingNotify];
+}
+
+- (void) samplingError
+{
+	[self.controller samplingError];
 }
 @end

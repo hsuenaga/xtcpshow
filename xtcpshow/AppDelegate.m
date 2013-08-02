@@ -13,6 +13,7 @@
 #import "AppDelegate.h"
 #import "CaptureModel.h"
 #import "GraphView.h"
+#import "DataResampler.h"
 
 static void setup_interface(NSPopUpButton *);
 
@@ -25,8 +26,7 @@ static void setup_interface(NSPopUpButton *);
 	[[self model] setController:self]; // weak
 
 	// widget initialization
-	[[self graphView] allocHist];
-	[[self graphView] allocGraphImage];
+	[[self graphView] initData];
 	[[self startButton] setEnabled:TRUE];
 	
 	// setup intrface labels
@@ -82,10 +82,13 @@ static void setup_interface(NSPopUpButton *);
 
 - (void)samplingNotify
 {
-	[[self graphView] addSnap:[self.model mbps]
-			trendData:[self.model peek_hold_mbps]
-		       resolusion:[self.model target_resolution]];
+	CaptureModel *model = [self model];
+	GraphView *view = [self graphView];
+	DataQueue *data = [model data];
+	DataResampler *sampler = [view sampler];
 
+	[sampler importData:data];
+	[view setResolution:[model target_resolution]];
 	[self updateUserInterface];
 }
 

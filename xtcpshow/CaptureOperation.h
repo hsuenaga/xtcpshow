@@ -13,6 +13,10 @@
 #define TIMESLOT (0.01) /* [sec] (= 10[ms])*/
 #define HOLDSLOT (1.0) /* [sec] */
 
+#define CAP_TICK 1
+#define CAP_SNAPLEN 64
+#define CAP_BUFSIZ (CAP_SNAPLEN * 128)
+
 @class CaptureModel;
 
 @interface CaptureOperation : NSOperation {

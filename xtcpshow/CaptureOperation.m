@@ -205,11 +205,11 @@
 
 - (void)sendNotify
 {
-	NSObject *controller;
+	NSObject *model;
 	
-	controller = (NSObject *)[[self model] controller];
+	model = (NSObject *)[self model];
 	
-	[controller
+	[model
 	 performSelectorOnMainThread:@selector(samplingNotify)
 	 withObject:self
 	 waitUntilDone:NO];
@@ -217,11 +217,11 @@
 
 - (void)sendError
 {
-	NSObject *controller;
+	NSObject *model;
 	
-	controller = (NSObject *)[[self model] controller];
+	model = (NSObject *)[self model];
 	
-	[controller
+	[model
 	 performSelectorOnMainThread:@selector(samplingError)
 	 withObject:self
 	 waitUntilDone:NO];
@@ -243,16 +243,16 @@
 		goto error;
 	}
 	
-	if (pcap_set_snaplen(pcap, SNAPLEN) != 0) {
+	if (pcap_set_snaplen(pcap, CAP_SNAPLEN) != 0) {
 		NSLog(@"pcap_set_snaplen() failed.");
 		goto error;
 	}
-	if (pcap_set_timeout(pcap, TICK) != 0) {
+	if (pcap_set_timeout(pcap, CAP_TICK) != 0) {
 		NSLog(@"pcap_set_timeout() failed.");
 		goto error;
 	}
 	
-	if (pcap_set_buffer_size(pcap, SNAPLEN * NPKT) != 0) {
+	if (pcap_set_buffer_size(pcap, CAP_BUFSIZ) != 0) {
 		NSLog(@"pcap_set_buffer_size() failed.");
 		goto error;
 	}

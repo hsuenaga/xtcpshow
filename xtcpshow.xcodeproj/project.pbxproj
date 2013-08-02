@@ -15,9 +15,10 @@
 		4639F83B1798BA9700E59491 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4639F8391798BA9700E59491 /* MainMenu.xib */; };
 		4639F8431799095A00E59491 /* CaptureModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 4639F8421799095A00E59491 /* CaptureModel.m */; };
 		4639F847179D0D0900E59491 /* libpcap.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4639F846179D0D0900E59491 /* libpcap.dylib */; };
-		46551D4F179E6C1100F77EF1 /* GraphData.m in Sources */ = {isa = PBXBuildFile; fileRef = 46551D4E179E6C1100F77EF1 /* GraphData.m */; };
 		46583CB617A0CA41007B6572 /* GraphView.m in Sources */ = {isa = PBXBuildFile; fileRef = 46583CB517A0CA41007B6572 /* GraphView.m */; };
 		46583CBA17A0D192007B6572 /* CaptureOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 46583CB917A0D192007B6572 /* CaptureOperation.m */; };
+		466E550717AB2AA500C978C9 /* DataQueue.m in Sources */ = {isa = PBXBuildFile; fileRef = 466E550617AB2AA500C978C9 /* DataQueue.m */; };
+		466E550A17AB491800C978C9 /* DataResampler.m in Sources */ = {isa = PBXBuildFile; fileRef = 466E550917AB491800C978C9 /* DataResampler.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -37,12 +38,14 @@
 		4639F8411799095A00E59491 /* CaptureModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CaptureModel.h; sourceTree = "<group>"; };
 		4639F8421799095A00E59491 /* CaptureModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CaptureModel.m; sourceTree = "<group>"; };
 		4639F846179D0D0900E59491 /* libpcap.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libpcap.dylib; path = usr/lib/libpcap.dylib; sourceTree = SDKROOT; };
-		46551D4D179E6C1100F77EF1 /* GraphData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GraphData.h; sourceTree = "<group>"; };
-		46551D4E179E6C1100F77EF1 /* GraphData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GraphData.m; sourceTree = "<group>"; };
 		46583CB517A0CA41007B6572 /* GraphView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GraphView.m; sourceTree = "<group>"; };
 		46583CB717A0CA4D007B6572 /* GraphView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GraphView.h; sourceTree = "<group>"; };
 		46583CB817A0D187007B6572 /* CaptureOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CaptureOperation.h; sourceTree = "<group>"; };
 		46583CB917A0D192007B6572 /* CaptureOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CaptureOperation.m; sourceTree = "<group>"; };
+		466E550517AB2AA500C978C9 /* DataQueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DataQueue.h; sourceTree = "<group>"; };
+		466E550617AB2AA500C978C9 /* DataQueue.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DataQueue.m; sourceTree = "<group>"; };
+		466E550817AB491800C978C9 /* DataResampler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DataResampler.h; sourceTree = "<group>"; };
+		466E550917AB491800C978C9 /* DataResampler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DataResampler.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -103,10 +106,12 @@
 				4639F8411799095A00E59491 /* CaptureModel.h */,
 				46583CB817A0D187007B6572 /* CaptureOperation.h */,
 				4639F8421799095A00E59491 /* CaptureModel.m */,
+				466E550817AB491800C978C9 /* DataResampler.h */,
+				466E550917AB491800C978C9 /* DataResampler.m */,
+				466E550517AB2AA500C978C9 /* DataQueue.h */,
+				466E550617AB2AA500C978C9 /* DataQueue.m */,
 				46583CB917A0D192007B6572 /* CaptureOperation.m */,
-				46551D4D179E6C1100F77EF1 /* GraphData.h */,
 				46583CB717A0CA4D007B6572 /* GraphView.h */,
-				46551D4E179E6C1100F77EF1 /* GraphData.m */,
 				46583CB517A0CA41007B6572 /* GraphView.m */,
 				4639F8391798BA9700E59491 /* MainMenu.xib */,
 				4639F82B1798BA9700E59491 /* Supporting Files */,
@@ -193,9 +198,10 @@
 				4639F8311798BA9700E59491 /* main.m in Sources */,
 				4639F8381798BA9700E59491 /* AppDelegate.m in Sources */,
 				4639F8431799095A00E59491 /* CaptureModel.m in Sources */,
-				46551D4F179E6C1100F77EF1 /* GraphData.m in Sources */,
 				46583CB617A0CA41007B6572 /* GraphView.m in Sources */,
 				46583CBA17A0D192007B6572 /* CaptureOperation.m in Sources */,
+				466E550717AB2AA500C978C9 /* DataQueue.m in Sources */,
+				466E550A17AB491800C978C9 /* DataResampler.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
