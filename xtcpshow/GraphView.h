@@ -32,8 +32,8 @@
 @property (strong) DataQueue *data;
 @property (assign) int SMASize;
 @property (assign) int viewOffset;
-@property (assign) int windowOffset;
-@property (assign) int windowSize;
+@property (assign) int TargetTimeOffset;
+@property (assign) int TargetTimeLength;
 @property (assign) float resolution;
 - (void)initData;
 - (void)redrawGraphImage;

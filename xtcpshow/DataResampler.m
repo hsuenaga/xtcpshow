@@ -20,7 +20,7 @@
 
 - (void)makeMutable
 {
-	DataQueue *dst;
+	DataQueue *dst = [[DataQueue alloc] init];
 	
 	if (!write_protect)
 		return;
@@ -39,61 +39,75 @@
 	write_protect = FALSE;
 	_data = nil;
 }
-
-- (void)scaleQueue:(float)scale
+- (void)linearScaleQueue:(float)scale
 {
-	DataQueue *dst;
-	DataQueue *filter;
-	__block NSUInteger last_idx = 0;
-	__block NSUInteger last_pkts = 0;
-	__block float last_sum = 0.0;
-	__block float last_max = 0.0, max = 0.0;
+	if (scale < 1.0)
+		[self linearReduceQueue:scale];
+	else
+		[self linearExpandQueue:scale];
+}
+
+- (void)linearExpandQueue:(float)scale
+{
+	DataQueue *dst = [[DataQueue alloc] init];
+	NSUInteger dst_idx, dst_samples;
+	float src0, src1;
+	NSUInteger src0_idx;
+
+	[self makeMutable];
+	dst_samples = (float)[_data count];
+	dst_samples = (NSUInteger)(ceil((float)dst_samples * scale));
 	
-	dst = [[DataQueue alloc] init];
-	filter = [[DataQueue alloc] init];
-	[filter zeroFill:2];
-
-	[_data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
-		NSUInteger dst_idx;
-		NSUInteger advanced;
-		float f_idx;
+	src0 = [_data dequeueFloatValue];
+	src1 = [_data dequeueFloatValue];
+	src0_idx = 0;
+	for (dst_idx = 0; dst_idx < dst_samples; dst_idx++) {
+		NSUInteger pivot_idx;
+		float pivot = (float)dst_idx / scale;
+		float value;
 		
-		f_idx = (float)idx * scale;
-		dst_idx = (NSUInteger)(floor(f_idx));
-		advanced = dst_idx - last_idx;
-
-		if (last_max < value)
-			last_max = value;
-		if (max < value)
-			max = value;
-		last_sum += value;
-		last_pkts++;
-		[filter shiftFloatValueWithNewValue:value];
-		
-		if (advanced > 0) {
-			float newval;
-			
-			// select next value
-#ifdef AVERAGE_SCALING
-			newval = last_sum / (float)last_pkts;
-#else
-			newval = [filter averageFloatValue];
-#endif
-			[dst addFloatValue:newval];
-
-			// store new value.
-			while (advanced--) {
-				[dst addFloatValue:newval];
-				newval = 0.0;
-			}
-			last_max = 0.0;
-			last_sum = 0.0;
-			last_pkts = 0;
+		pivot_idx = (NSUInteger)(floor(pivot));
+		while (pivot_idx > src0_idx) {
+			/* get left side and right side value */
+			src0 = src1;
+			src1 = [_data dequeueFloatValue];
+			src0_idx++;
 		}
-		last_idx = dst_idx;
+		if (isnan(src0) || isnan(src1))
+			break;
+		
+		value = src0 * (pivot - floor(pivot));
+		value += src1 * (ceil(pivot) - pivot);
+		[dst addFloatValue:value];
+	}
+	_data = dst;
+}
+
+- (void)linearReduceQueue:(float)scale
+{
+	DataQueue *dst = [[DataQueue alloc] init];
+	__block NSUInteger dst0_idx;
+	__block float dst0, dst1;
+
+	dst0_idx = 0;
+	dst0 = dst1 = 0.0;
+	[_data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
+		NSUInteger pivot_idx;
+		float pivot;
+		
+		pivot = (float)idx * scale;
+		pivot_idx = (NSUInteger)(floor(pivot));
+		while (dst0_idx < pivot_idx) {
+			[dst addFloatValue:dst0];
+			dst0 = dst1;
+			dst1 = 0.0;
+			dst0_idx++;
+		}
+		dst0 += value * (pivot - floor(pivot));
+		dst1 += value * (ceil(pivot) - pivot);
 	}];
+	[dst addFloatValue:dst0];
 	
-	write_protect = FALSE;
 	_data = dst;
 }
 

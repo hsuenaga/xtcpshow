@@ -15,7 +15,8 @@
 - (void)initData
 {
 	self.data = nil;
-	self.windowOffset = 0;
+	self.TargetTimeOffset = 0;
+	self.TargetTimeLength = 0;
 	self.viewOffset = 0;
 }
 
@@ -76,7 +77,7 @@
 		needRedrawImage = TRUE;
 	
 	y_range = new_range; // [mBPS]
-	x_range = self.resolution * self.windowSize; // [ms]
+	x_range = self.resolution * self.TargetTimeLength; // [ms]
 	sma_range = self.resolution * self.SMASize; // [ms]
 }
 
@@ -250,9 +251,14 @@
 - (float)dataScale
 {
 	float scale;
+	float target_length;
+	
+	target_length = (float)_TargetTimeLength;
+	if (target_length < 2.0)
+		target_length = 2.0; // at least 2 sample
 	
 	scale = (float)[self bounds].size.width;
-	scale = scale / (float)[self windowSize];
+	scale = scale / target_length;
 	
 	return scale;
 }

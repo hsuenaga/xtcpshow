@@ -62,18 +62,20 @@ static void setup_interface(NSPopUpButton *);
 		[[self.deviceSelector titleOfSelectedItem] cStringUsingEncoding:NSASCIIStringEncoding];
 		self.model.filter =
 		[[[self filterField] stringValue] cStringUsingEncoding:NSASCIIStringEncoding];
-		[[self graphView] setWindowSize:[[self zoomBar] intValue]];
+		[[self graphView] setTargetTimeLength:[[self zoomBar] intValue]];
 		[[self graphView] setSMASize:[[self smoothBar] intValue]];
 				
 		[[self startButton] setTitle:@"STOP"];
 		input_enabled = FALSE;
 		
 		_timer =
-		[NSTimer scheduledTimerWithTimeInterval:(1.0f/24.0f)
+		[NSTimer timerWithTimeInterval:(1.0f/24.0f)
 					target:self
 				      selector:@selector(animationNotify:)
 				      userInfo:nil
 				       repeats:YES];
+		[[NSRunLoop currentRunLoop] addTimer:_timer
+					     forMode:NSRunLoopCommonModes];
 
 		if ([self.model startCapture] < 0) {
 			/* XXX: report error */
@@ -89,12 +91,14 @@ static void setup_interface(NSPopUpButton *);
 }
 
 - (IBAction)changeZoom:(id)sender {
-	[[self graphView] setWindowSize:[sender intValue]];
+	[[self graphView] setTargetTimeLength:[sender intValue]];
+	[self animationNotify:nil];
 	[self updateUserInterface];
 }
 
 - (IBAction)changeSmooth:(id)sender {
 	[[self graphView] setSMASize:[sender intValue]];
+	[self animationNotify:nil];
 	[self updateUserInterface];
 }
 
@@ -177,8 +181,12 @@ static void setup_interface(NSPopUpButton *);
 	
 	// XXX: really contoller's task?
 	[sampler importData:[model data]];
-	[sampler scaleQueue:[view dataScale]];
 	[sampler movingAverage:[view SMASize]];
+	[sampler linearScaleQueue:[view dataScale]];
+	[sampler movingAverage:[view SMASize]];
+	NSLog(@"scale:%f data:%lu",
+	      [view dataScale],
+	      [[sampler data] count]);
 	[sampler clipQueueTail:[view viewRange]];
 	[view setData:[sampler data]];
 	[view setResolution:[model target_resolution]];
