@@ -60,7 +60,7 @@
 	
 	_sum -= oldvalue;
 	_count--;
-	if (_count == 0)
+	if (_count == 0 || _sum < 0.0)
 		_sum = 0.0;
 	
 	return oldvalue;
@@ -80,6 +80,9 @@
 	STAILQ_INSERT_TAIL(&head, entry, chain);
 	_sum += newvalue;
 
+	if (_sum < 0.0)
+		_sum = 0;
+	
 	return oldvalue;
 }
 
@@ -123,8 +126,12 @@
 	while (size-- && !STAILQ_EMPTY(&head)) {
 		entry = STAILQ_FIRST(&head);
 		STAILQ_REMOVE_HEAD(&head, chain);
+		_sum -= entry->data;
+		_count--;
 		free(entry);
 	}
+	if (_count == 0 || _sum < 0.0)
+		_sum = 0.0;
 }
 
 - (void)clipFromHead:(size_t)size
@@ -133,11 +140,15 @@
 	struct DataQueueHead temp;
 	
 	STAILQ_INIT(&temp);
+	_count = 0;
+	_sum = 0.0;
 	
 	while(size-- && !STAILQ_EMPTY(&head)) {
 		entry = STAILQ_FIRST(&head);
 		STAILQ_REMOVE_HEAD(&head, chain);
 		STAILQ_INSERT_TAIL(&temp, entry, chain);
+		_sum += entry->data;
+		_count++;
 	}
 	
 	while(!STAILQ_EMPTY(&head)) {
@@ -145,6 +156,9 @@
 		STAILQ_REMOVE_HEAD(&head, chain);
 		free(entry);
 	}
+	
+	if (_count == 0 || _sum < 0.0)
+		_sum = 0.0;
 	
 	memcpy(&head, &temp, sizeof(head));
 }
