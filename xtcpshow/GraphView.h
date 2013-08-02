@@ -21,11 +21,12 @@
 	float x_range;
 	float sma_range;
 }
+@property (strong) DataQueue *data;
 @property (assign) int SMASize;
+@property (assign) int viewOffset;
+@property (assign) int windowOffset;
 @property (assign) int windowSize;
 @property (assign) float resolution;
-
-@property (strong) DataResampler *sampler;
 - (void)initData;
 - (void)redrawGraphImage;
 
@@ -34,7 +35,8 @@
 - (void)drawText: (NSString *)t atPoint:(NSPoint)p;
 - (void)plotBPS: (float)mbps maxBPS:(float)max_mbps atPos:(unsigned int)n maxPos:(int)max_n;
 - (void)plotTrend;
-
+- (float)dataScale;
+- (NSRange)viewRange;
 - (void)drawAll;
 - (void)drawRect:(NSRect)rect;
 @end

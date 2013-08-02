@@ -14,7 +14,9 @@
 @implementation GraphView
 - (void)initData
 {
-	self.sampler = [[DataResampler alloc] init];
+	self.data = nil;
+	self.windowOffset = 0;
+	self.viewOffset = 0;
 }
 
 - (void)redrawGraphImage
@@ -24,7 +26,7 @@
 	
 	[NSGraphicsContext saveGraphicsState];
 	rect = [self bounds];
-	data = [[self sampler] data];
+	data = [self data];
 	[data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
 		if (idx > rect.size.width) {
 			*stop = YES;
@@ -41,14 +43,12 @@
 
 - (void)updateRange
 {
-	DataQueue *data;
 	float max;
 	float new_range;
 	float unit;
 
 	/* auto ranging */
-	data = [self.sampler data];
-	max = [data maxFloatValue];
+	max = [[self data] maxFloatValue];
 	
 	if (max < 1.0) {
 		unit = 1.0;
@@ -120,7 +120,6 @@
 
 - (void)plotTrend
 {
-	DataQueue *data;
 	NSRect rect;
 	NSBezierPath *path;
 	NSString *marker;
@@ -128,10 +127,9 @@
 	
 	[NSGraphicsContext saveGraphicsState];
 	
-	data = [[self sampler] data];
 	rect = [self bounds];
-	y_max = [data maxFloatValue];
-	y_avg = [data averageFloatValue];
+	y_max = [[self data] maxFloatValue];
+	y_avg = [[self data] averageFloatValue];
 
 	[[NSColor redColor] set];
 	path = [NSBezierPath bezierPath];
@@ -162,14 +160,11 @@
 
 - (void)drawAll
 {
-	DataQueue *data;
 	NSRect rect = [self bounds];
 	NSString *title;
 
 	[NSGraphicsContext saveGraphicsState];
 
-	data = [[self sampler] data];
-	
 	/* clear screen */
 	[[NSColor clearColor] set];
 	NSRectFill(rect);
@@ -209,13 +204,32 @@
 	title =
 	[NSString stringWithFormat:@" Y-Range %6.3f [Mbps] / X-Range %6.1f [ms] / SMA %6.1f [ms] / Avg %6.3f [Mbps] ",
 	 y_range, x_range, sma_range,
-	 [data averageFloatValue]];
+	 [[self data] averageFloatValue]];
 	[self drawText:title atPoint:NSMakePoint(0.0, 0.0)];
 	
 	/* plot trend line */
 	[self plotTrend];
 	
 	[NSGraphicsContext restoreGraphicsState];
+}
+
+- (float)dataScale
+{
+	float scale;
+	
+	scale = (float)[self bounds].size.width;
+	scale = scale / (float)[self windowSize];
+	
+	return scale;
+}
+
+- (NSRange)viewRange
+{
+	NSRange range;
+	
+	range.location = [self viewOffset];
+	range.length = (int)[self bounds].size.width;
+	return range;
 }
 
 - (void)drawRect:(NSRect)dirty_rect
@@ -232,9 +246,6 @@
 		samples = 1.0;
 	scale = (float)range.length / samples;
 	NSDisableScreenUpdates();
-	[[self sampler] scaleQueue:scale];
-	[[self sampler] movingAverage:[self SMASize]];
-	[[self sampler] clipQueueTail:range];
 	[self drawAll];
 	NSEnableScreenUpdates();
 }

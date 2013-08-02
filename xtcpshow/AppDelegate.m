@@ -84,10 +84,15 @@ static void setup_interface(NSPopUpButton *);
 {
 	CaptureModel *model = [self model];
 	GraphView *view = [self graphView];
-	DataQueue *data = [model data];
-	DataResampler *sampler = [view sampler];
+	DataResampler *sampler = [[DataResampler alloc] init];
+	
+	// XXX: really contoller's task?
+	[sampler importData:[model data]];
+	[sampler scaleQueue:[view dataScale]];
+	[sampler movingAverage:[view SMASize]];
+	[sampler clipQueueTail:[view viewRange]];
+	[view setData:[sampler data]];
 
-	[sampler importData:data];
 	[view setResolution:[model target_resolution]];
 	[self updateUserInterface];
 }
