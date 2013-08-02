@@ -41,6 +41,6 @@
 - (void)stopCapture;
 - (BOOL)captureEnabled;
 - (void)resetCounter;
-- (void)samplingNotify;
+- (void)samplingNotify:(NSNumber *)number;
 - (void)samplingError;
 @end

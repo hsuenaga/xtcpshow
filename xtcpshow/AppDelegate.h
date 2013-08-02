@@ -41,9 +41,10 @@
 
 /* the model */
 @property (strong) CaptureModel *model;
+@property (strong) NSTimer *timer;
 
 /* notify from model, controller(myself), ... */
-- (void) samplingNotify;
+- (void) animationNotify:(NSTimer *)sender;
 - (void) samplingError;
 - (void) updateUserInterface;
 @end

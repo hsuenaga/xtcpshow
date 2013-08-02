@@ -32,6 +32,7 @@ static void setup_interface(NSPopUpButton *);
 	// setup intrface labels
 	setup_interface([self deviceSelector]);
 
+
 	[self updateUserInterface];
 }
 
@@ -43,6 +44,8 @@ static void setup_interface(NSPopUpButton *);
 		[self.model stopCapture];
 		[[self startButton] setTitle:@"START"];
 		input_enabled = TRUE;
+		if (_timer)
+			[_timer invalidate];
 	}
 	else {
 		/* start capture */
@@ -57,11 +60,19 @@ static void setup_interface(NSPopUpButton *);
 				
 		[[self startButton] setTitle:@"STOP"];
 		input_enabled = FALSE;
+		
+		_timer =
+		[NSTimer scheduledTimerWithTimeInterval:(1.0f/24.0f)
+					target:self
+				      selector:@selector(animationNotify:)
+				      userInfo:nil
+				       repeats:YES];
 
 		if ([self.model startCapture] < 0) {
 			/* XXX: report error */
 			[[self startButton] setTitle:@"START"];
 			input_enabled = TRUE;
+			[_timer invalidate];
 		}
 	}
 
@@ -80,7 +91,7 @@ static void setup_interface(NSPopUpButton *);
 	[self updateUserInterface];
 }
 
-- (void)samplingNotify
+- (void)animationNotify:(id)sender
 {
 	CaptureModel *model = [self model];
 	GraphView *view = [self graphView];
@@ -92,8 +103,8 @@ static void setup_interface(NSPopUpButton *);
 	[sampler movingAverage:[view SMASize]];
 	[sampler clipQueueTail:[view viewRange]];
 	[view setData:[sampler data]];
-
 	[view setResolution:[model target_resolution]];
+
 	[self updateUserInterface];
 }
 

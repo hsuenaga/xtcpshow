@@ -82,10 +82,9 @@
 	self.target_resolution = 0.0;
 }
 
-- (void) samplingNotify
+- (void) samplingNotify:(NSNumber *)number
 {
-	[self.data shiftFloatValueWithNewValue:[self mbps]];
-	[self.controller samplingNotify];
+	[self.data shiftFloatValueWithNewValue:[number floatValue]];
 }
 
 - (void) samplingError

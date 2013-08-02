@@ -124,13 +124,10 @@
 		[[self model] setResolution:(last_tick * 1000.0)];
 
 		// send notify
-		[self sendNotify];
-		last_tick -= TIMESLOT;
-
-		// send padding
 		while (last_tick > TIMESLOT) {
-			[self sendNotify];
+			[self sendNotify:mbps];
 			last_tick -= TIMESLOT;
+			mbps = 0.0;
 		}
 	}
 	// finalize
@@ -203,15 +200,11 @@
 	return TRUE;
 }
 
-- (void)sendNotify
+- (void)sendNotify:(float)mbps
 {
-	NSObject *model;
-	
-	model = (NSObject *)[self model];
-	
-	[model
-	 performSelectorOnMainThread:@selector(samplingNotify)
-	 withObject:self
+	[[self model]
+	 performSelectorOnMainThread:@selector(samplingNotify:)
+	 withObject:[NSNumber numberWithFloat:mbps]
 	 waitUntilDone:NO];
 }
 

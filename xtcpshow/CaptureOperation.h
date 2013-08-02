@@ -41,7 +41,7 @@
 - (float)elapsed:(struct timeval *)last;
 - (BOOL)tick_expired;
 - (BOOL)peek_hold_expired;
-- (void)sendNotify;
+- (void)sendNotify:(float)mbps;
 - (void)sendError;
 
 - (BOOL)allocPcap;
