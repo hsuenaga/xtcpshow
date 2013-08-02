@@ -47,26 +47,60 @@
 	float new_range;
 	float unit;
 
-	/* auto ranging */
 	max = [[self data] maxFloatValue];
+
+	/* auto ranging */
+	if (range_mode == RANGE_MANUAL) {
+		new_range = manual_range;
+	} else if (range_mode == RANGE_PEEKHOLD) {
+		if (peek_range < max)
+			peek_range = max;
+		max = peek_range;
+	}
+
+	/* scaling */
+	if (range_mode != RANGE_MANUAL) {
+		if (max < 1.0) {
+			unit = 1.0;
+		}
+		else if (max < 5.0) {
+			unit = 2.5;
+		}
+		else {
+			unit = 5.0;
+		}
+		new_range = (unit * (floor(max / unit) + 1.0));
+	}
 	
-	if (max < 1.0) {
-		unit = 1.0;
-	}
-	else if (max < 5.0) {
-		unit = 2.5;
-	}
-	else {
-		unit = 5.0;
-	}
-	
-	new_range = (unit * (floor(max / unit) + 1.0));
 	if (new_range != y_range)
 		needRedrawImage = TRUE;
 	
 	y_range = new_range; // [mBPS]
 	x_range = self.resolution * self.windowSize; // [ms]
 	sma_range = self.resolution * self.SMASize; // [ms]
+}
+
+- (void)setRange:(NSString *)mode withRange:(float)range
+{
+	if ([mode isEqualToString:@"Auto"]) {
+		NSLog(@"Auto Range mode");
+		range_mode = RANGE_AUTO;
+		peek_range = 0.0;
+		manual_range = 0.0;
+	}
+	else if ([mode isEqualToString:@"PeakHold"]) {
+		NSLog(@"Peak Hold Range mode");
+		range_mode = RANGE_PEEKHOLD;
+		peek_range = 0.0;
+		manual_range = 0.0;
+	}
+	else if ([mode isEqualToString:@"Manual"]) {
+		NSLog(@"Manual Range mode");
+		range_mode = RANGE_MANUAL;
+		peek_range = 0.0;
+		manual_range = range;
+	}
+	return;
 }
 
 - (void)drawText: (NSString *)t atPoint:(NSPoint) p
@@ -234,17 +268,6 @@
 
 - (void)drawRect:(NSRect)dirty_rect
 {
-	NSRect rect;
-	NSRange range;
-	float samples, scale;
-	
-	rect = [self bounds];
-	range.location = 0;
-	range.length = rect.size.width;
-	samples = (float)self.windowSize;
-	if (samples < 1.0)
-		samples = 1.0;
-	scale = (float)range.length / samples;
 	NSDisableScreenUpdates();
 	[self drawAll];
 	NSEnableScreenUpdates();

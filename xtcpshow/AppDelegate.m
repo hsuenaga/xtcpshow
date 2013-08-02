@@ -27,11 +27,18 @@ static void setup_interface(NSPopUpButton *);
 
 	// widget initialization
 	[[self graphView] initData];
+	[[self graphView] setRange:@"Auto" withRange:0.0];
 	[[self startButton] setEnabled:TRUE];
 	
 	// setup intrface labels
 	setup_interface([self deviceSelector]);
-
+	
+	// setup range labels
+	[_rangeSelector removeAllItems];
+	[_rangeSelector addItemWithTitle:@"Auto"];
+	[_rangeSelector addItemWithTitle:@"PeakHold"];
+	[_rangeSelector addItemWithTitle:@"Manual"];
+	[_rangeSelector selectItemWithTitle:@"Auto"];
 
 	[self updateUserInterface];
 }
@@ -89,6 +96,77 @@ static void setup_interface(NSPopUpButton *);
 - (IBAction)changeSmooth:(id)sender {
 	[[self graphView] setSMASize:[sender intValue]];
 	[self updateUserInterface];
+}
+
+- (IBAction)changeRange:(id)sender {
+	NSString *mode;
+	float range = 0.0;
+	int step;
+	
+	mode = [_rangeSelector titleOfSelectedItem];
+	range = [_rangeField floatValue];
+	if (range == NAN)
+		range = 0.0;
+	if (![mode isEqualToString:@"Manual"])
+		return;
+	
+	step = [_rangeStepper intValue];
+	if (step == 0) {
+		range = 1.0;
+	}
+	else if (step == 1) {
+		range = 2.5;
+	}
+	else {
+		range = 5.0 * (float)(step - 1);
+	}
+	[_rangeField setFloatValue:range];
+	[_graphView setRange:mode withRange:range];
+}
+
+- (IBAction)enterRange:(id)sender {
+	NSString *mode;
+	float range = 0.0;
+	
+	mode = [_rangeSelector titleOfSelectedItem];
+	range = [_rangeField floatValue];
+	if (range == NAN)
+		range = 0.0;
+	if (![mode isEqualToString:@"Manual"])
+		return;
+	
+	if (range < 2.5)
+		range = 1.0;
+	else if (range < 5.0)
+		range = 2.5;
+	else {
+		range = (floor(range / 5.0) + 1.0) * 5.0;
+	}
+	
+	[_rangeField setFloatValue:range];
+	[_graphView setRange:mode withRange:range];
+}
+
+- (IBAction)setRangeType:(id)sender {
+	NSString *mode;
+	float range = 0.0;
+	
+	mode = [_rangeSelector titleOfSelectedItem];
+	if ([mode isEqualToString:@"Manual"]) {
+		range = [_rangeField floatValue];
+		if (range == NAN)
+			range = 0.0;
+		[_rangeField setEnabled:YES];
+		[_rangeStepper setEnabled:YES];
+		[_rangeField setFloatValue:range];
+	}
+	else {
+		[_rangeField setFloatValue:0.0];
+		[_rangeStepper setEnabled:NO];
+		[_rangeField setEnabled:NO];
+	}
+	
+	[_graphView setRange:mode withRange:range];
 }
 
 - (void)animationNotify:(id)sender

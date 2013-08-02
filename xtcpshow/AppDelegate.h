@@ -19,6 +19,9 @@
 /* Configuration TAB */
 @property (weak) IBOutlet NSPopUpButton *deviceSelector;
 @property (weak) IBOutlet NSTextField *filterField;
+@property (weak) IBOutlet NSTextField *rangeField;
+@property (weak) IBOutlet NSStepper *rangeStepper;
+@property (weak) IBOutlet NSPopUpButton *rangeSelector;
 
 /* Status TAB */
 @property (weak) IBOutlet NSTextField *snapshotField;
@@ -38,6 +41,9 @@
 - (IBAction)startCapture:(id)sender;
 - (IBAction)changeZoom:(id)sender;
 - (IBAction)changeSmooth:(id)sender;
+- (IBAction)changeRange:(id)sender;
+- (IBAction)enterRange:(id)sender;
+- (IBAction)setRangeType:(id)sender;
 
 /* the model */
 @property (strong) CaptureModel *model;
