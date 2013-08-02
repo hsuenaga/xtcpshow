@@ -184,9 +184,6 @@ static void setup_interface(NSPopUpButton *);
 	[sampler movingAverage:[view SMASize]];
 	[sampler linearScaleQueue:[view dataScale]];
 	[sampler movingAverage:[view SMASize]];
-	NSLog(@"scale:%f data:%lu",
-	      [view dataScale],
-	      [[sampler data] count]);
 	[sampler clipQueueTail:[view viewRange]];
 	[view setData:[sampler data]];
 	[view setResolution:[model target_resolution]];
