@@ -33,10 +33,7 @@
 			*stop = YES;
 			return;
 		}
-		[self plotBPS:value
-		       maxBPS:y_range
-			atPos:(int)idx
-		       maxPos:rect.size.width];
+		[self plotBar:value atPos:idx];
 	}];
 	
 	[NSGraphicsContext restoreGraphicsState];
@@ -116,35 +113,22 @@
 	[t drawAtPoint:p withAttributes:attr];
 }
 
-- (void)plotBPS:(float)mbps
-	 maxBPS:(float)max_mbps
-	  atPos:(unsigned int)n
-	 maxPos:(int)max_n
+- (void)plotBar:(float)value atPos:(NSUInteger)idx
 {
 	NSGradient *grad;
 	NSRect bar, rect;
-	float l, r, w, h;
+	float h;
 
-	
 	rect = [self bounds];
 	
 	/* width and height of bar */
-	h = floor(rect.size.height * (mbps / max_mbps));
+	h = floor(rect.size.height * (value / y_range));
 	if (h < 1.0)
 		return; // less than 1 pixel
-	w = floor(rect.size.width / (float)max_n);
-	if (w < 1.0)
-		w = 1.0;
 	
-	/* left and right of bar */
-	l = floor(w * (float)n);
-	r = floor(l + w);
-	if (r > rect.size.width)
-		return;
-	
-	bar.origin.x = l;
+	bar.origin.x = (float)idx;
 	bar.origin.y = 0;
-	bar.size.width = w;
+	bar.size.width = 1.0;
 	bar.size.height = h;
 	
 	grad = [[NSGradient alloc]

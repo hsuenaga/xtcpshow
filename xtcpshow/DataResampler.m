@@ -9,8 +9,6 @@
 
 #import "DataResampler.h"
 
-#undef AVERAGE_SCALING
-
 @implementation DataResampler
 - (void)importData:(DataQueue *)data
 {
