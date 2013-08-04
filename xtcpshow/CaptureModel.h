@@ -28,8 +28,7 @@
 @property (atomic, assign) float mbps;
 @property (atomic, assign) float max_mbps;
 @property (atomic, assign) float peek_hold_mbps;
-@property (atomic, assign) float resolution;
-@property (atomic, assign) float target_resolution;
+@property (atomic, assign) float snapSamplingInterval;
 
 // data processing (don't acccess from other thread)
 @property (strong) DataQueue *data;
@@ -41,6 +40,8 @@
 - (void)stopCapture;
 - (BOOL)captureEnabled;
 - (void)resetCounter;
+- (void)setSamplingInterval:(float)interval;
+- (float)getSamplingInterval;
 - (void)samplingNotify:(NSNumber *)number;
 - (void)samplingError;
 @end

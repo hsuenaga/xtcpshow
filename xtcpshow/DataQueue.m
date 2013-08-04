@@ -15,6 +15,8 @@
 	self = [super init];
 	
 	STAILQ_INIT(&head);
+    _interval = 0.0;
+
 	return self;
 }
 

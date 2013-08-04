@@ -78,8 +78,17 @@
 	self.mbps = 0.0;
 	self.max_mbps = 0.0;
 	self.peek_hold_mbps = 0.0;
-	self.resolution = 0.0;
-	self.target_resolution = 0.0;
+	self.snapSamplingInterval = 0.0;
+}
+
+- (void) setSamplingInterval:(float)interval
+{
+    [self.data setInterval:interval];
+}
+
+- (float) getSamplingInterval
+{
+    return [self.data interval];
 }
 
 - (void) samplingNotify:(NSNumber *)number

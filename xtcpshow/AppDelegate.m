@@ -186,7 +186,7 @@ static void setup_interface(NSPopUpButton *);
 	[sampler movingAverage:[view SMASize]];
 	[sampler clipQueueTail:[view viewRange]];
 	[view setData:[sampler data]];
-	[view setResolution:[model target_resolution]];
+	[view setResolution:[model getSamplingInterval]];
 
 	[self updateUserInterface];
 }
@@ -209,9 +209,9 @@ static void setup_interface(NSPopUpButton *);
 	[self.totalpktField
 	 setIntegerValue:[self.model total_pkts]];
 	[self.samplingTargetField
-	 setFloatValue:[self.model target_resolution]];
+	 setFloatValue:[self.model getSamplingInterval]];
 	[self.samplingField
-	 setFloatValue:[self.model resolution]];
+	 setFloatValue:[self.model snapSamplingInterval]];
 	[self.graphView setNeedsDisplay:YES];
 }
 @end
