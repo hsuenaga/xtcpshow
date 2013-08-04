@@ -49,7 +49,7 @@
 
 	/* auto ranging */
 	if (range_mode == RANGE_MANUAL) {
-		new_range = manual_range;
+		max = manual_range;
 	} else if (range_mode == RANGE_PEEKHOLD) {
 		if (peek_range < max)
 			peek_range = max;
@@ -57,40 +57,39 @@
 	}
 
 	/* scaling */
-	if (range_mode != RANGE_MANUAL) {
-		if (max < 1.0) {
-			unit = 1.0;
-		}
-		else if (max < 5.0) {
-			unit = 2.5;
-		}
-		else {
-			unit = 5.0;
-		}
-		new_range = (unit * (floor(max / unit) + 1.0));
-	}
+    if (max < 0.5) {
+        unit = 0.5;
+    }
+    else if (max < 1.0) {
+        unit = 1.0;
+    }
+    else if (max < 5.0) {
+        unit = 2.5;
+    }
+    else {
+        unit = 5.0;
+    }
+    new_range = (unit * (floor(max / unit) + 1.0));
 	
 	if (new_range != y_range)
 		needRedrawImage = TRUE;
 	
-	y_range = new_range; // [mBPS]
+	y_range = new_range; // [Mbps]
 	x_range = _samplingInterval * _TargetTimeLength * 1000.0f; // [ms]
-	sma_range = [_data interval] * _SMASize * 1000.0f; // [ms]
+	sma_range = _samplingInterval * _SMASize * 1000.0f; // [ms]
 }
 
-- (void)setRange:(NSString *)mode withRange:(float)range
+- (float)setRange:(NSString *)mode withRange:(float)range
 {
 	if ([mode isEqualToString:@"Auto"]) {
 		NSLog(@"Auto Range mode");
 		range_mode = RANGE_AUTO;
 		peek_range = 0.0;
-		manual_range = 0.0;
 	}
 	else if ([mode isEqualToString:@"PeakHold"]) {
 		NSLog(@"Peak Hold Range mode");
 		range_mode = RANGE_PEEKHOLD;
 		peek_range = 0.0;
-		manual_range = 0.0;
 	}
 	else if ([mode isEqualToString:@"Manual"]) {
 		NSLog(@"Manual Range mode");
@@ -98,7 +97,9 @@
 		peek_range = 0.0;
 		manual_range = range;
 	}
-	return;
+    [self updateRange];
+    
+	return y_range;
 }
 
 - (void)drawText: (NSString *)t atPoint:(NSPoint) p
@@ -235,21 +236,26 @@
 - (void)importData:(DataQueue *)data
 {
     DataResampler *sampler = [[DataResampler alloc] init];
+    NSUInteger viewSMA;
     float unit_conv;
 
+    // remember sampling interval of original data
     _samplingInterval = [data interval];
-    // convert [bytes] => [Mbps]
-    unit_conv = 8.0f / [data interval]; // [bps]
-    unit_conv = unit_conv / 1000.0f / 1000.0f; // [Mbps]
 
 	[sampler importData:data];
     [sampler clipQueueTail:[self dataRangeTail]];
 	[sampler discreteScaleQueue:[self dataScale]];
     
-	[sampler movingAverage:_SMASize];
-	[sampler movingAverage:_SMASize];
+    viewSMA = ceil((float)_SMASize * [self dataScale]);
+    if (viewSMA < 2)
+        viewSMA = 2;
+	[sampler movingAverage:viewSMA/2];
+	[sampler movingAverage:viewSMA/2];
 	[sampler clipQueueTail:[self viewRange]];
-    
+
+    // convert [bytes] => [Mbps]
+    unit_conv = 8.0f / [[sampler data] interval]; // [bps]
+    unit_conv = unit_conv / 1000.0f / 1000.0f; // [Mbps]
     [sampler scaleAllValue:unit_conv];
      
      _data = [sampler data];

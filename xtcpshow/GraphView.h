@@ -39,7 +39,7 @@
 - (void)redrawGraphImage;
 
 - (void)updateRange;
-- (void)setRange:(NSString *)mode withRange:(float)range;
+- (float)setRange:(NSString *)mode withRange:(float)range;
 
 - (void)drawText: (NSString *)t atPoint:(NSPoint)p;
 - (void)plotBar:(float)value atPos:(NSUInteger)idx;

@@ -58,7 +58,7 @@
     __block NSUInteger dst_idx;
     __block float newvalue;
 
-    [dst setInterval:([_data interval] * scale)];
+    [dst setInterval:([_data interval] / scale)];
     newvalue = 0.0;
     dst_idx = 0;
     [_data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
@@ -92,7 +92,7 @@
 	NSUInteger src0_idx;
 
 	[self makeMutable];
-    [dst setInterval:([_data interval] * scale)];
+    [dst setInterval:([_data interval] / scale)];
 
 	dst_samples = (float)[_data count];
 	dst_samples = (NSUInteger)(ceil((float)dst_samples * scale));
@@ -130,7 +130,7 @@
 
 	dst0_idx = 0;
 	dst0 = dst1 = 0.0;
-    [dst setInterval:([_data interval] * scale)];
+    [dst setInterval:([_data interval] / scale)];
 	[_data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
 		NSUInteger pivot_idx;
 		float pivot;

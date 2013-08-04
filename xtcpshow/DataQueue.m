@@ -137,14 +137,13 @@
 {
     struct DataQueueEntry *entry;
     NSUInteger idx = 0;
+    __block BOOL stop = FALSE;
+    _sum = 0;
     
     STAILQ_FOREACH(entry, &head, chain) {
-        BOOL stop = FALSE;
-
-        _sum -= entry->data;
-        block(&entry->data, idx, &stop);
         if (stop == TRUE)
-            break;
+            continue;
+        block(&entry->data, idx, &stop);
         _sum += entry->data;
         idx++;
     }
@@ -189,7 +188,6 @@
 {
 	struct DataQueueEntry *entry;
 	struct DataQueueHead temp;
-    int drop = 0;
 	
 	STAILQ_INIT(&temp);
 	_count = 0;
@@ -207,11 +205,7 @@
 		entry = STAILQ_FIRST(&head);
 		STAILQ_REMOVE_HEAD(&head, chain);
 		free(entry);
-        drop++;
 	}
-    if (drop)
-        NSLog(@"%d entries dropped", drop);
-	
     
 	if (_count == 0 || _sum < 0.0)
 		_sum = 0.0;
