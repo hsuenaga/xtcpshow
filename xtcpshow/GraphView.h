@@ -49,4 +49,6 @@
 - (NSRange)viewRange;
 - (void)drawAll;
 - (void)drawRect:(NSRect)rect;
+
+- (void)importData:(DataQueue *)data;
 @end

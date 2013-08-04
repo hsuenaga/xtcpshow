@@ -74,8 +74,8 @@
 		needRedrawImage = TRUE;
 	
 	y_range = new_range; // [mBPS]
-	x_range = _samplingInterval * self.TargetTimeLength * 1000.0f; // [ms]
-	sma_range = _samplingInterval * self.SMASize * 1000.0f; // [ms]
+	x_range = _samplingInterval * _TargetTimeLength * 1000.0f; // [ms]
+	sma_range = [_data interval] * _SMASize * 1000.0f; // [ms]
 }
 
 - (void)setRange:(NSString *)mode withRange:(float)range
@@ -230,6 +230,29 @@
 	[self plotTrend];
 	
 	[NSGraphicsContext restoreGraphicsState];
+}
+
+- (void)importData:(DataQueue *)data
+{
+    DataResampler *sampler = [[DataResampler alloc] init];
+    float unit_conv;
+
+    _samplingInterval = [data interval];
+    // convert [bytes] => [Mbps]
+    unit_conv = 8.0f / [data interval]; // [bps]
+    unit_conv = unit_conv / 1000.0f / 1000.0f; // [Mbps]
+
+	[sampler importData:data];
+    [sampler clipQueueTail:[self dataRangeTail]];
+	[sampler discreteScaleQueue:[self dataScale]];
+    
+	[sampler movingAverage:_SMASize];
+	[sampler movingAverage:_SMASize];
+	[sampler clipQueueTail:[self viewRange]];
+    
+    [sampler scaleAllValue:unit_conv];
+     
+     _data = [sampler data];
 }
 
 - (float)dataScale

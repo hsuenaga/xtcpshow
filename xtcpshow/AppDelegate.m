@@ -177,29 +177,8 @@ static void setup_interface(NSPopUpButton *);
 {
 	CaptureModel *model = [self model];
 	GraphView *view = [self graphView];
-	DataResampler *sampler = [[DataResampler alloc] init];
-    NSRange sma_range, view_range;
-    float unit_conv;
 	
-	// XXX: really contoller's task?
-    
-    // convert [bytes] => [Mbps]
-    unit_conv = 8.0f / [[model data] interval]; // [bps]
-    unit_conv = unit_conv / 1000.0f / 1000.0f; // [Mbps]
-    view_range = [view viewRange];
-    sma_range = [view dataRangeTail];
-    
-	[sampler importData:[model data]];
-    [sampler clipQueueTail:sma_range];
-	[sampler discreteScaleQueue:[view dataScale]];
-    
-	[sampler movingAverage:[view SMASize]];
-	[sampler movingAverage:[view SMASize]];
-	[sampler clipQueueTail:view_range];
-
-    [sampler scaleAllValue:unit_conv];
-	[view setData:[sampler data]];
-	[view setSamplingInterval:[model getSamplingInterval]];
+    [view importData:[model data]];
 
 	[self updateUserInterface];
 }
