@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 
 struct DataQueueEntry {
-	float data;
+	float data; // Sampling data
 	
 	STAILQ_ENTRY(DataQueueEntry) chain;
 };
@@ -19,9 +19,12 @@ struct DataQueueEntry {
 }
 @property (readonly) NSUInteger count;
 @property (readonly) float sum;
+@property (assign) float interval; // Average Sampling interval
 
 // add data
 - (BOOL)addFloatValue:(float)value;
+- (float)addFloatValue:(float)value withLimit:(size_t)limit;
+- (BOOL)prependFloatValue:(float)value;
 
 // get/delete/shift data
 - (float)dequeueFloatValue;
@@ -29,6 +32,7 @@ struct DataQueueEntry {
 
 // enumerate all data
 - (void)enumerateFloatUsingBlock:(void(^)(float value, NSUInteger idx,  BOOL *stop))block;
+- (void)replaceValueUsingBlock:(void(^)(float *value, NSUInteger idx, BOOL *stop))block;
 
 // clear queue
 - (void)zeroFill:(size_t)size;

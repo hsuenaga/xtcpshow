@@ -33,10 +33,7 @@
 			*stop = YES;
 			return;
 		}
-		[self plotBPS:value
-		       maxBPS:y_range
-			atPos:(int)idx
-		       maxPos:rect.size.width];
+		[self plotBar:value atPos:idx];
 	}];
 	
 	[NSGraphicsContext restoreGraphicsState];
@@ -52,7 +49,7 @@
 
 	/* auto ranging */
 	if (range_mode == RANGE_MANUAL) {
-		new_range = manual_range;
+		max = manual_range;
 	} else if (range_mode == RANGE_PEEKHOLD) {
 		if (peek_range < max)
 			peek_range = max;
@@ -60,40 +57,39 @@
 	}
 
 	/* scaling */
-	if (range_mode != RANGE_MANUAL) {
-		if (max < 1.0) {
-			unit = 1.0;
-		}
-		else if (max < 5.0) {
-			unit = 2.5;
-		}
-		else {
-			unit = 5.0;
-		}
-		new_range = (unit * (floor(max / unit) + 1.0));
-	}
+    if (max < 0.5) {
+        unit = 0.5;
+    }
+    else if (max < 1.0) {
+        unit = 1.0;
+    }
+    else if (max < 5.0) {
+        unit = 2.5;
+    }
+    else {
+        unit = 5.0;
+    }
+    new_range = (unit * (floor(max / unit) + 1.0));
 	
 	if (new_range != y_range)
 		needRedrawImage = TRUE;
 	
-	y_range = new_range; // [mBPS]
-	x_range = self.resolution * self.TargetTimeLength; // [ms]
-	sma_range = self.resolution * self.SMASize; // [ms]
+	y_range = new_range; // [Mbps]
+	x_range = _samplingInterval * _TargetTimeLength * 1000.0f; // [ms]
+	sma_range = _samplingInterval * _SMASize * 1000.0f; // [ms]
 }
 
-- (void)setRange:(NSString *)mode withRange:(float)range
+- (float)setRange:(NSString *)mode withRange:(float)range
 {
 	if ([mode isEqualToString:@"Auto"]) {
 		NSLog(@"Auto Range mode");
 		range_mode = RANGE_AUTO;
 		peek_range = 0.0;
-		manual_range = 0.0;
 	}
 	else if ([mode isEqualToString:@"PeakHold"]) {
 		NSLog(@"Peak Hold Range mode");
 		range_mode = RANGE_PEEKHOLD;
 		peek_range = 0.0;
-		manual_range = 0.0;
 	}
 	else if ([mode isEqualToString:@"Manual"]) {
 		NSLog(@"Manual Range mode");
@@ -101,7 +97,9 @@
 		peek_range = 0.0;
 		manual_range = range;
 	}
-	return;
+    [self updateRange];
+    
+	return y_range;
 }
 
 - (void)drawText: (NSString *)t atPoint:(NSPoint) p
@@ -116,35 +114,22 @@
 	[t drawAtPoint:p withAttributes:attr];
 }
 
-- (void)plotBPS:(float)mbps
-	 maxBPS:(float)max_mbps
-	  atPos:(unsigned int)n
-	 maxPos:(int)max_n
+- (void)plotBar:(float)value atPos:(NSUInteger)idx
 {
 	NSGradient *grad;
 	NSRect bar, rect;
-	float l, r, w, h;
+	float h;
 
-	
 	rect = [self bounds];
 	
 	/* width and height of bar */
-	h = floor(rect.size.height * (mbps / max_mbps));
+	h = floor(rect.size.height * (value / y_range));
 	if (h < 1.0)
 		return; // less than 1 pixel
-	w = floor(rect.size.width / (float)max_n);
-	if (w < 1.0)
-		w = 1.0;
 	
-	/* left and right of bar */
-	l = floor(w * (float)n);
-	r = floor(l + w);
-	if (r > rect.size.width)
-		return;
-	
-	bar.origin.x = l;
+	bar.origin.x = (float)idx;
 	bar.origin.y = 0;
-	bar.size.width = w;
+	bar.size.width = 1.0;
 	bar.size.height = h;
 	
 	grad = [[NSGradient alloc]
@@ -248,6 +233,34 @@
 	[NSGraphicsContext restoreGraphicsState];
 }
 
+- (void)importData:(DataQueue *)data
+{
+    DataResampler *sampler = [[DataResampler alloc] init];
+    NSUInteger viewSMA;
+    float unit_conv;
+
+    // remember sampling interval of original data
+    _samplingInterval = [data interval];
+
+	[sampler importData:data];
+    [sampler clipQueueTail:[self dataRangeTail]];
+	[sampler discreteScaleQueue:[self dataScale]];
+    
+    viewSMA = ceil((float)_SMASize * [self dataScale]);
+    if (viewSMA < 2)
+        viewSMA = 2;
+	[sampler movingAverage:viewSMA/2];
+	[sampler movingAverage:viewSMA/2];
+	[sampler clipQueueTail:[self viewRange]];
+
+    // convert [bytes] => [Mbps]
+    unit_conv = 8.0f / [[sampler data] interval]; // [bps]
+    unit_conv = unit_conv / 1000.0f / 1000.0f; // [Mbps]
+    [sampler scaleAllValue:unit_conv];
+     
+     _data = [sampler data];
+}
+
 - (float)dataScale
 {
 	float scale;
@@ -261,6 +274,16 @@
 	scale = scale / target_length;
 	
 	return scale;
+}
+
+- (NSRange)dataRangeTail
+{
+    NSRange range;
+
+    // range from 'tail'
+    range.location = _TargetTimeOffset;
+    range.length = _TargetTimeLength + _SMASize;
+    return range;
 }
 
 - (NSRange)viewRange

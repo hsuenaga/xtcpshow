@@ -69,7 +69,7 @@ static void setup_interface(NSPopUpButton *);
 		input_enabled = FALSE;
 		
 		_timer =
-		[NSTimer timerWithTimeInterval:(1.0f/24.0f)
+		[NSTimer timerWithTimeInterval:(1.0f/12.0f)
 					target:self
 				      selector:@selector(animationNotify:)
 				      userInfo:nil
@@ -116,11 +116,14 @@ static void setup_interface(NSPopUpButton *);
 	
 	step = [_rangeStepper intValue];
 	if (step == 0) {
-		range = 1.0;
+		range = 0.5;
 	}
 	else if (step == 1) {
-		range = 2.5;
+		range = 1.0;
 	}
+    else if (step == 2) {
+        range = 2.5;
+    }
 	else {
 		range = 5.0 * (float)(step - 1);
 	}
@@ -133,22 +136,14 @@ static void setup_interface(NSPopUpButton *);
 	float range = 0.0;
 	
 	mode = [_rangeSelector titleOfSelectedItem];
-	range = [_rangeField floatValue];
-	if (range == NAN)
-		range = 0.0;
 	if (![mode isEqualToString:@"Manual"])
 		return;
-	
-	if (range < 2.5)
-		range = 1.0;
-	else if (range < 5.0)
-		range = 2.5;
-	else {
-		range = (floor(range / 5.0) + 1.0) * 5.0;
-	}
-	
+    range = [_rangeField floatValue];
+	if (range == NAN)
+		range = 0.0;
+    
+	range = [_graphView setRange:mode withRange:range];
 	[_rangeField setFloatValue:range];
-	[_graphView setRange:mode withRange:range];
 }
 
 - (IBAction)setRangeType:(id)sender {
@@ -157,15 +152,11 @@ static void setup_interface(NSPopUpButton *);
 	
 	mode = [_rangeSelector titleOfSelectedItem];
 	if ([mode isEqualToString:@"Manual"]) {
-		range = [_rangeField floatValue];
-		if (range == NAN)
-			range = 0.0;
 		[_rangeField setEnabled:YES];
 		[_rangeStepper setEnabled:YES];
-		[_rangeField setFloatValue:range];
+		[self enterRange:self];
 	}
 	else {
-		[_rangeField setFloatValue:0.0];
 		[_rangeStepper setEnabled:NO];
 		[_rangeField setEnabled:NO];
 	}
@@ -177,16 +168,8 @@ static void setup_interface(NSPopUpButton *);
 {
 	CaptureModel *model = [self model];
 	GraphView *view = [self graphView];
-	DataResampler *sampler = [[DataResampler alloc] init];
 	
-	// XXX: really contoller's task?
-	[sampler importData:[model data]];
-	[sampler movingAverage:[view SMASize]];
-	[sampler linearScaleQueue:[view dataScale]];
-	[sampler movingAverage:[view SMASize]];
-	[sampler clipQueueTail:[view viewRange]];
-	[view setData:[sampler data]];
-	[view setResolution:[model target_resolution]];
+    [view importData:[model data]];
 
 	[self updateUserInterface];
 }
@@ -209,9 +192,9 @@ static void setup_interface(NSPopUpButton *);
 	[self.totalpktField
 	 setIntegerValue:[self.model total_pkts]];
 	[self.samplingTargetField
-	 setFloatValue:[self.model target_resolution]];
+	 setFloatValue:([self.model getSamplingInterval] * 1000.0f)];
 	[self.samplingField
-	 setFloatValue:[self.model resolution]];
+	 setFloatValue:([self.model snapSamplingInterval] * 1000.0f)];
 	[self.graphView setNeedsDisplay:YES];
 }
 @end

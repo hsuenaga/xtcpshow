@@ -43,7 +43,7 @@
 	int bytes, pkts;
 	
 	NSLog(@"caputer thread");
-	[[self model] setTarget_resolution:(TIMESLOT * 1000.0)];
+    [[self model] setSamplingInterval:TIMESLOT];
 
 	// initialize libpcap
 	if (![self allocPcap]) {
@@ -58,10 +58,8 @@
 	}
 
 	// reset timer
-	gettimeofday(&tv_last_tick, NULL);
-	tv_peek_hold = tv_last_tick;
-	last_tick = 0.0;
-	last_peek_hold = 0.0;
+	gettimeofday(&tv_next_tick, NULL);
+	tv_peek_hold = tv_next_tick;
 	
 	// reset counter
 	max_mbps = ph_max_mbps = 0.0;
@@ -102,9 +100,8 @@
 			continue;
 
 		// update and reset snapshot
-		mbps = (float)(bytes * 8) / last_tick; // [bps]
+		mbps = (float)(bytes * 8) / last_interval; // [bps]
 		mbps = mbps / (1000.0 * 1000.0); // [mbps]
-		bytes = 0;
 		
 		// update max
 		if (mbps > max_mbps)
@@ -121,14 +118,9 @@
 		[[self model] setMbps:mbps];
 		[[self model] setPeek_hold_mbps:ph_max_mbps];
 		[[self model] setMax_mbps:max_mbps];
-		[[self model] setResolution:(last_tick * 1000.0)];
-
-		// send notify
-		while (last_tick > TIMESLOT) {
-			[self sendNotify:mbps];
-			last_tick -= TIMESLOT;
-			mbps = 0.0;
-		}
+        [[self model] setSnapSamplingInterval:last_interval];
+		[self sendNotify:bytes];
+        bytes = 0;
 	}
 	// finalize
 	if (pcap_stats(pcap, &ps) == 0) {
@@ -174,16 +166,41 @@
 	return elapsed;
 }
 
+- (void)addSecond:(float)second toTimeval:(struct timeval *)tv
+{
+    struct timeval delta;
+    float usecond;
+    int add = TRUE;
+
+    if (isnan(second) || isinf(second))
+        return;
+
+    if (second < 0.0) {
+        add = FALSE;
+        second = fabsf(second);
+    }
+
+    usecond = second - (floor(second));
+    usecond = usecond * (1000.0 * 1000.0);
+    delta.tv_sec = floor(second);
+    delta.tv_usec = floor(usecond);
+
+    if (add)
+        timeradd(tv, &delta, tv);
+    else
+        timersub(tv, &delta, tv);
+}
+
 - (BOOL)tick_expired
 {
 	float elapsed;
 	
-	elapsed = [self elapsed:&tv_last_tick];
+	elapsed = [self elapsed:&tv_next_tick];
 	if (elapsed < TIMESLOT)
 		return FALSE;
-	
-	last_tick = elapsed;
-	gettimeofday(&tv_last_tick, NULL);
+    
+	last_interval = elapsed;
+    [self addSecond:TIMESLOT toTimeval:&tv_next_tick];
 	return TRUE;
 }
 
@@ -195,7 +212,6 @@
 	if (elapsed < HOLDSLOT)
 		return FALSE;
 	
-	last_peek_hold = elapsed;
 	gettimeofday(&tv_peek_hold, NULL);
 	return TRUE;
 }

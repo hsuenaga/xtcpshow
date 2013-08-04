@@ -20,11 +20,16 @@
 - (void)makeMutable;
 - (void)purgeData;
 
+- (void)scaleAllValue:(float)scale;
+
+- (void)discreteScaleQueue:(float)scale;
+
 - (void)linearScaleQueue:(float)scale;
-- (void)linearReduceQueue:(float)scale;
-- (void)linearExpandQueue:(float)scale;
+- (void)linearDownSamplingQueue:(float)scale;
+- (void)linearUpSamplingQueue:(float)scale;
 
 - (void)clipQueueHead:(NSRange)range;
 - (void)clipQueueTail:(NSRange)range;
+
 - (void)movingAverage:(NSUInteger)samples;
 @end

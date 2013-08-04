@@ -34,18 +34,21 @@
 @property (assign) int viewOffset;
 @property (assign) int TargetTimeOffset;
 @property (assign) int TargetTimeLength;
-@property (assign) float resolution;
+@property (assign) float samplingInterval;
 - (void)initData;
 - (void)redrawGraphImage;
 
 - (void)updateRange;
-- (void)setRange:(NSString *)mode withRange:(float)range;
+- (float)setRange:(NSString *)mode withRange:(float)range;
 
 - (void)drawText: (NSString *)t atPoint:(NSPoint)p;
-- (void)plotBPS: (float)mbps maxBPS:(float)max_mbps atPos:(unsigned int)n maxPos:(int)max_n;
+- (void)plotBar:(float)value atPos:(NSUInteger)idx;
 - (void)plotTrend;
 - (float)dataScale;
+- (NSRange)dataRangeTail;
 - (NSRange)viewRange;
 - (void)drawAll;
 - (void)drawRect:(NSRect)rect;
+
+- (void)importData:(DataQueue *)data;
 @end

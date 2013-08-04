@@ -30,7 +30,6 @@
 	// data size
 	self.history_size = DEF_HISTORY;
 	self.data = [[DataQueue alloc] init];
-	[self.data zeroFill:self.history_size];
 
 	// traffic data
 	self.total_pkts = 0;
@@ -78,13 +77,23 @@
 	self.mbps = 0.0;
 	self.max_mbps = 0.0;
 	self.peek_hold_mbps = 0.0;
-	self.resolution = 0.0;
-	self.target_resolution = 0.0;
+	self.snapSamplingInterval = 0.0;
+}
+
+- (void) setSamplingInterval:(float)interval
+{
+    [self.data setInterval:interval];
+}
+
+- (float) getSamplingInterval
+{
+    return [self.data interval];
 }
 
 - (void) samplingNotify:(NSNumber *)number
 {
-	[self.data shiftFloatValueWithNewValue:[number floatValue]];
+	[self.data addFloatValue:[number floatValue]
+                   withLimit:_history_size];
 }
 
 - (void) samplingError

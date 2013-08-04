@@ -15,6 +15,8 @@
 	self = [super init];
 	
 	STAILQ_INIT(&head);
+    _interval = 0.0;
+
 	return self;
 }
 
@@ -41,6 +43,33 @@
 	_count++;
 	
 	STAILQ_INSERT_TAIL(&head, entry, chain);
+	return TRUE;
+}
+
+- (float)addFloatValue:(float)value withLimit:(size_t)limit
+{
+    float oldvalue = NAN;
+    
+    if (_count < limit)
+        [self addFloatValue:value];
+    else
+        oldvalue = [self shiftFloatValueWithNewValue:value];
+    
+    return oldvalue;
+}
+
+- (BOOL)prependFloatValue:(float)value
+{
+	struct DataQueueEntry *entry;
+	
+	entry = (struct DataQueueEntry *)malloc(sizeof(*entry));
+	if (entry == NULL)
+		return FALSE;
+	entry->data = value;
+	_sum += value;
+	_count++;
+	
+	STAILQ_INSERT_HEAD(&head, entry, chain);
 	return TRUE;
 }
 
@@ -71,10 +100,13 @@
 	struct DataQueueEntry *entry;
 	float oldvalue;
 	
-	entry = STAILQ_FIRST(&head);
-	STAILQ_REMOVE_HEAD(&head, chain);
-	oldvalue = entry->data;
-	_sum -= oldvalue;
+    if (STAILQ_EMPTY(&head))
+        return newvalue;
+    
+    entry = STAILQ_FIRST(&head);
+    STAILQ_REMOVE_HEAD(&head, chain);
+    oldvalue = entry->data;
+    _sum -= oldvalue;
 	
 	entry->data = newvalue;
 	STAILQ_INSERT_TAIL(&head, entry, chain);
@@ -95,8 +127,26 @@
 		BOOL stop = FALSE;
 		
 		block(entry->data, idx, &stop);
+        if (stop == TRUE)
+            break;
 		idx++;
-	}
+    }
+}
+
+- (void)replaceValueUsingBlock:(void(^)(float *value, NSUInteger idx, BOOL *stop))block
+{
+    struct DataQueueEntry *entry;
+    NSUInteger idx = 0;
+    __block BOOL stop = FALSE;
+    _sum = 0;
+    
+    STAILQ_FOREACH(entry, &head, chain) {
+        if (stop == TRUE)
+            continue;
+        block(&entry->data, idx, &stop);
+        _sum += entry->data;
+        idx++;
+    }
 }
 
 - (void)zeroFill:(size_t)size
@@ -156,7 +206,7 @@
 		STAILQ_REMOVE_HEAD(&head, chain);
 		free(entry);
 	}
-	
+    
 	if (_count == 0 || _sum < 0.0)
 		_sum = 0.0;
 	

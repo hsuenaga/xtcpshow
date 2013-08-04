@@ -10,7 +10,7 @@
 #import <Foundation/Foundation.h>
 #import "AppDelegate.h"
 
-#define TIMESLOT (0.01) /* [sec] (= 10[ms])*/
+#define TIMESLOT (0.05) /* [sec] (= 100[ms])*/
 #define HOLDSLOT (1.0) /* [sec] */
 
 #define CAP_TICK 1
@@ -24,10 +24,9 @@
 	char *source_interface;
 	char *filter_program;
 	pcap_t *pcap;
-	struct timeval tv_last_tick;
+	struct timeval tv_next_tick;
 	struct timeval tv_peek_hold;
-	float last_tick;
-	float last_peek_hold;
+    float last_interval; // [ms]
 	BOOL terminate;
 }
 @property (weak) CaptureModel *model;
