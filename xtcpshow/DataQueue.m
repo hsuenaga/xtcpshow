@@ -46,6 +46,33 @@
 	return TRUE;
 }
 
+- (float)addFloatValue:(float)value withLimit:(size_t)limit
+{
+    float oldvalue = NAN;
+    
+    if (_count < limit)
+        [self addFloatValue:value];
+    else
+        oldvalue = [self shiftFloatValueWithNewValue:value];
+    
+    return oldvalue;
+}
+
+- (BOOL)prependFloatValue:(float)value
+{
+	struct DataQueueEntry *entry;
+	
+	entry = (struct DataQueueEntry *)malloc(sizeof(*entry));
+	if (entry == NULL)
+		return FALSE;
+	entry->data = value;
+	_sum += value;
+	_count++;
+	
+	STAILQ_INSERT_HEAD(&head, entry, chain);
+	return TRUE;
+}
+
 - (float)dequeueFloatValue
 {
 	struct DataQueueEntry *entry;
@@ -73,10 +100,13 @@
 	struct DataQueueEntry *entry;
 	float oldvalue;
 	
-	entry = STAILQ_FIRST(&head);
-	STAILQ_REMOVE_HEAD(&head, chain);
-	oldvalue = entry->data;
-	_sum -= oldvalue;
+    if (STAILQ_EMPTY(&head))
+        return newvalue;
+    
+    entry = STAILQ_FIRST(&head);
+    STAILQ_REMOVE_HEAD(&head, chain);
+    oldvalue = entry->data;
+    _sum -= oldvalue;
 	
 	entry->data = newvalue;
 	STAILQ_INSERT_TAIL(&head, entry, chain);
@@ -159,6 +189,7 @@
 {
 	struct DataQueueEntry *entry;
 	struct DataQueueHead temp;
+    int drop = 0;
 	
 	STAILQ_INIT(&temp);
 	_count = 0;
@@ -176,8 +207,12 @@
 		entry = STAILQ_FIRST(&head);
 		STAILQ_REMOVE_HEAD(&head, chain);
 		free(entry);
+        drop++;
 	}
+    if (drop)
+        NSLog(@"%d entries dropped", drop);
 	
+    
 	if (_count == 0 || _sum < 0.0)
 		_sum = 0.0;
 	

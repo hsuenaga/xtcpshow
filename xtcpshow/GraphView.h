@@ -45,6 +45,7 @@
 - (void)plotBPS: (float)mbps maxBPS:(float)max_mbps atPos:(unsigned int)n maxPos:(int)max_n;
 - (void)plotTrend;
 - (float)dataScale;
+- (NSRange)dataRangeTail;
 - (NSRange)viewRange;
 - (void)drawAll;
 - (void)drawRect:(NSRect)rect;

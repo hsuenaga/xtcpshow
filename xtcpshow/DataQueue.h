@@ -23,6 +23,8 @@ struct DataQueueEntry {
 
 // add data
 - (BOOL)addFloatValue:(float)value;
+- (float)addFloatValue:(float)value withLimit:(size_t)limit;
+- (BOOL)prependFloatValue:(float)value;
 
 // get/delete/shift data
 - (float)dequeueFloatValue;

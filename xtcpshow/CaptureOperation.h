@@ -10,7 +10,7 @@
 #import <Foundation/Foundation.h>
 #import "AppDelegate.h"
 
-#define TIMESLOT (0.1) /* [sec] (= 100[ms])*/
+#define TIMESLOT (0.05) /* [sec] (= 100[ms])*/
 #define HOLDSLOT (1.0) /* [sec] */
 
 #define CAP_TICK 1

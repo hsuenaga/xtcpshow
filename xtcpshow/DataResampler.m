@@ -26,7 +26,8 @@
 		return;
 	if (_data == nil)
 		return;
-	
+    
+    [dst setInterval:[_data interval]];
 	[_data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
 		[dst addFloatValue:value];
 	}];
@@ -53,6 +54,30 @@
     }];
 }
 
+- (void)discreteScaleQueue:(float)scale
+{
+    DataQueue *dst = [[DataQueue alloc] init];
+    __block NSUInteger dst_idx;
+    __block float newvalue;
+
+    [dst setInterval:([_data interval] * scale)];
+    newvalue = 0.0;
+    dst_idx = 0;
+    [_data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
+        float f_idx;
+        
+        newvalue += value;
+        
+        f_idx = (float)idx * scale;
+        while (dst_idx < (NSUInteger)floor(f_idx)) {
+            [dst addFloatValue:newvalue];
+            newvalue = 0.0;
+            dst_idx++;
+        }
+    }];
+    _data = dst;
+}
+
 - (void)linearScaleQueue:(float)scale
 {
 	if (scale < 1.0)
@@ -69,6 +94,8 @@
 	NSUInteger src0_idx;
 
 	[self makeMutable];
+    [dst setInterval:([_data interval] * scale)];
+
 	dst_samples = (float)[_data count];
 	dst_samples = (NSUInteger)(ceil((float)dst_samples * scale));
 	
@@ -105,6 +132,7 @@
 
 	dst0_idx = 0;
 	dst0 = dst1 = 0.0;
+    [dst setInterval:([_data interval] * scale)];
 	[_data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
 		NSUInteger pivot_idx;
 		float pivot;
@@ -160,14 +188,16 @@
 	NSRange reverse = range;
 	
 	[self makeMutable];
-	if ([self.data count] < (range.location + range.length)) {
-		if (range.location > [self.data count])
-			return;
-		range.length = [self.data count] - range.location;
+
+	if ([_data count] < (range.location + range.length)) {
+        NSUInteger under_flow;
+        under_flow = (range.location + range.length) - [_data count];
+
+        while (under_flow-- > 0)
+            [_data prependFloatValue:0.0];
 	}
-	reverse.location = [self.data count] - range.length;
-	reverse.location -= range.location;
-	
+	reverse.location = [_data count] - range.location;
+	reverse.location -= range.length;
 	[self clipQueueHead:reverse];
 }
 
@@ -178,7 +208,10 @@
 	dst = [[DataQueue alloc] init];
 	sma = [[DataQueue alloc] init];
 	[sma zeroFill:samples];
-	
+    
+    [dst setInterval:[_data interval]];
+    [sma setInterval:[_data interval]];
+
 	[_data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
 		[sma shiftFloatValueWithNewValue:value];
 		[dst addFloatValue:[sma averageFloatValue]];

@@ -263,6 +263,16 @@
 	return scale;
 }
 
+- (NSRange)dataRangeTail
+{
+    NSRange range;
+
+    // range from 'tail'
+    range.location = _TargetTimeOffset;
+    range.length = _TargetTimeLength + _SMASize;
+    return range;
+}
+
 - (NSRange)viewRange
 {
 	NSRange range;

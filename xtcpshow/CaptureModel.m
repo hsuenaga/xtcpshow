@@ -30,7 +30,6 @@
 	// data size
 	self.history_size = DEF_HISTORY;
 	self.data = [[DataQueue alloc] init];
-	[self.data zeroFill:self.history_size];
 
 	// traffic data
 	self.total_pkts = 0;
@@ -93,7 +92,8 @@
 
 - (void) samplingNotify:(NSNumber *)number
 {
-	[self.data shiftFloatValueWithNewValue:[number floatValue]];
+	[self.data addFloatValue:[number floatValue]
+                   withLimit:_history_size];
 }
 
 - (void) samplingError

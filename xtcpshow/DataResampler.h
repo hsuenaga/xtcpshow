@@ -22,6 +22,8 @@
 
 - (void)scaleAllValue:(float)scale;
 
+- (void)discreteScaleQueue:(float)scale;
+
 - (void)linearScaleQueue:(float)scale;
 - (void)linearDownSamplingQueue:(float)scale;
 - (void)linearUpSamplingQueue:(float)scale;
