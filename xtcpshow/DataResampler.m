@@ -39,15 +39,29 @@
 	write_protect = FALSE;
 	_data = nil;
 }
+
+- (void)scaleAllValue:(float)scale
+{
+    if (isnan(scale))
+        return;
+    if (isinf(scale))
+        return;
+    if ([_data isEmpty])
+        return;
+    [_data replaceValueUsingBlock:^(float *value, NSUInteger idx, BOOL *stop) {
+        (*value) = (*value) * scale;
+    }];
+}
+
 - (void)linearScaleQueue:(float)scale
 {
 	if (scale < 1.0)
-		[self linearReduceQueue:scale];
+		[self linearDownSamplingQueue:scale];
 	else
-		[self linearExpandQueue:scale];
+		[self linearUpSamplingQueue:scale];
 }
 
-- (void)linearExpandQueue:(float)scale
+- (void)linearUpSamplingQueue:(float)scale
 {
 	DataQueue *dst = [[DataQueue alloc] init];
 	NSUInteger dst_idx, dst_samples;
@@ -83,7 +97,7 @@
 	_data = dst;
 }
 
-- (void)linearReduceQueue:(float)scale
+- (void)linearDownSamplingQueue:(float)scale
 {
 	DataQueue *dst = [[DataQueue alloc] init];
 	__block NSUInteger dst0_idx;

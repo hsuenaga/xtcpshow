@@ -178,15 +178,22 @@ static void setup_interface(NSPopUpButton *);
 	CaptureModel *model = [self model];
 	GraphView *view = [self graphView];
 	DataResampler *sampler = [[DataResampler alloc] init];
+    float unit_conv;
 	
 	// XXX: really contoller's task?
+    
+    // convert [bytes] => [Mbps]
+    unit_conv = 8.0f / [[model data] interval]; // [bps]
+    unit_conv = unit_conv / 1000.0f / 1000.0f; // [Mbps]
+    
 	[sampler importData:[model data]];
 	[sampler movingAverage:[view SMASize]];
 	[sampler linearScaleQueue:[view dataScale]];
 	[sampler movingAverage:[view SMASize]];
 	[sampler clipQueueTail:[view viewRange]];
+    [sampler scaleAllValue:unit_conv];
 	[view setData:[sampler data]];
-	[view setResolution:[model getSamplingInterval]];
+	[view setSamplingInterval:[model getSamplingInterval]];
 
 	[self updateUserInterface];
 }
@@ -209,9 +216,9 @@ static void setup_interface(NSPopUpButton *);
 	[self.totalpktField
 	 setIntegerValue:[self.model total_pkts]];
 	[self.samplingTargetField
-	 setFloatValue:[self.model getSamplingInterval]];
+	 setFloatValue:([self.model getSamplingInterval] * 1000.0f)];
 	[self.samplingField
-	 setFloatValue:[self.model snapSamplingInterval]];
+	 setFloatValue:([self.model snapSamplingInterval] * 1000.0f)];
 	[self.graphView setNeedsDisplay:YES];
 }
 @end

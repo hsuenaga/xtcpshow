@@ -34,7 +34,7 @@
 @property (assign) int viewOffset;
 @property (assign) int TargetTimeOffset;
 @property (assign) int TargetTimeLength;
-@property (assign) float resolution;
+@property (assign) float samplingInterval;
 - (void)initData;
 - (void)redrawGraphImage;
 

@@ -77,8 +77,8 @@
 		needRedrawImage = TRUE;
 	
 	y_range = new_range; // [mBPS]
-	x_range = self.resolution * self.TargetTimeLength; // [ms]
-	sma_range = self.resolution * self.SMASize; // [ms]
+	x_range = _samplingInterval * self.TargetTimeLength * 1000.0f; // [ms]
+	sma_range = _samplingInterval * self.SMASize * 1000.0f; // [ms]
 }
 
 - (void)setRange:(NSString *)mode withRange:(float)range

@@ -30,6 +30,7 @@ struct DataQueueEntry {
 
 // enumerate all data
 - (void)enumerateFloatUsingBlock:(void(^)(float value, NSUInteger idx,  BOOL *stop))block;
+- (void)replaceValueUsingBlock:(void(^)(float *value, NSUInteger idx, BOOL *stop))block;
 
 // clear queue
 - (void)zeroFill:(size_t)size;

@@ -97,8 +97,27 @@
 		BOOL stop = FALSE;
 		
 		block(entry->data, idx, &stop);
+        if (stop == TRUE)
+            break;
 		idx++;
-	}
+    }
+}
+
+- (void)replaceValueUsingBlock:(void(^)(float *value, NSUInteger idx, BOOL *stop))block
+{
+    struct DataQueueEntry *entry;
+    NSUInteger idx = 0;
+    
+    STAILQ_FOREACH(entry, &head, chain) {
+        BOOL stop = FALSE;
+
+        _sum -= entry->data;
+        block(&entry->data, idx, &stop);
+        if (stop == TRUE)
+            break;
+        _sum += entry->data;
+        idx++;
+    }
 }
 
 - (void)zeroFill:(size_t)size

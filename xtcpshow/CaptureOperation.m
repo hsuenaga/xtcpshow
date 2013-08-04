@@ -102,7 +102,6 @@
 		// update and reset snapshot
 		mbps = (float)(bytes * 8) / last_interval; // [bps]
 		mbps = mbps / (1000.0 * 1000.0); // [mbps]
-		bytes = 0;
 		
 		// update max
 		if (mbps > max_mbps)
@@ -120,7 +119,8 @@
 		[[self model] setPeek_hold_mbps:ph_max_mbps];
 		[[self model] setMax_mbps:max_mbps];
         [[self model] setSnapSamplingInterval:last_interval];
-		[self sendNotify:mbps];
+		[self sendNotify:bytes];
+        bytes = 0;
 	}
 	// finalize
 	if (pcap_stats(pcap, &ps) == 0) {
