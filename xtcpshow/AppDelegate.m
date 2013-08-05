@@ -171,6 +171,7 @@ static void setup_interface(NSPopUpButton *);
 
 	[view importData:[model data]];
 
+	[self.graphView setNeedsDisplay:YES];
 	[self updateUserInterface];
 }
 
@@ -195,7 +196,6 @@ static void setup_interface(NSPopUpButton *);
 	 setFloatValue:([self.model getSamplingInterval] * 1000.0f)];
 	[self.samplingField
 	 setFloatValue:([self.model snapSamplingInterval] * 1000.0f)];
-	[self.graphView setNeedsDisplay:YES];
 }
 @end
 
