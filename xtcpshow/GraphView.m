@@ -244,13 +244,19 @@
 
 	[sampler importData:data];
 	[sampler clipQueueTail:[self dataRangeTail]];
+#if 0
 	[sampler discreteScaleQueue:[self dataScale]];
+#else
+	[sampler linearScaleQueue:[self dataScale]];
+#endif
 
+#if 0
 	viewSMA = ceil((float)_SMASize * [self dataScale]);
 	if (viewSMA < 2)
 		viewSMA = 2;
 	[sampler movingAverage:viewSMA/2];
 	[sampler movingAverage:viewSMA/2];
+#endif
 	[sampler clipQueueTail:[self viewRange]];
 
 	// convert [bytes] => [Mbps]

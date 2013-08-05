@@ -115,8 +115,8 @@
 		if (isnan(src0) || isnan(src1))
 			break;
 
-		value = src0 * (pivot - floor(pivot));
-		value += src1 * (ceil(pivot) - pivot);
+		value = src0 * (ceil(pivot) - pivot);
+		value += src1 * (pivot - floor(pivot));
 		[dst addFloatValue:value];
 	}
 	_data = dst;
