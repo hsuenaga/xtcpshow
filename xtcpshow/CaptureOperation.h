@@ -26,7 +26,7 @@
 	pcap_t *pcap;
 	struct timeval tv_next_tick;
 	struct timeval tv_peek_hold;
-    float last_interval; // [ms]
+	float last_interval; // [ms]
 	BOOL terminate;
 }
 @property (weak) CaptureModel *model;

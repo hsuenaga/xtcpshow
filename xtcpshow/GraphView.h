@@ -18,7 +18,7 @@
 @interface GraphView : NSView {
 	BOOL needRedrawImage;
 	BOOL needRedrawAll;
-	
+
 	float snap_mbps;
 	float trend_mbps;
 	float y_range;

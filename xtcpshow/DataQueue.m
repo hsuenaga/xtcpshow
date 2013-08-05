@@ -13,9 +13,9 @@
 - (DataQueue *)init
 {
 	self = [super init];
-	
+
 	STAILQ_INIT(&head);
-    _interval = 0.0;
+	_interval = 0.0;
 
 	return self;
 }
@@ -34,41 +34,41 @@
 - (BOOL)addFloatValue:(float)value
 {
 	struct DataQueueEntry *entry;
-	
+
 	entry = (struct DataQueueEntry *)malloc(sizeof(*entry));
 	if (entry == NULL)
 		return FALSE;
 	entry->data = value;
 	_sum += value;
 	_count++;
-	
+
 	STAILQ_INSERT_TAIL(&head, entry, chain);
 	return TRUE;
 }
 
 - (float)addFloatValue:(float)value withLimit:(size_t)limit
 {
-    float oldvalue = NAN;
-    
-    if (_count < limit)
-        [self addFloatValue:value];
-    else
-        oldvalue = [self shiftFloatValueWithNewValue:value];
-    
-    return oldvalue;
+	float oldvalue = NAN;
+
+	if (_count < limit)
+		[self addFloatValue:value];
+	else
+		oldvalue = [self shiftFloatValueWithNewValue:value];
+
+	return oldvalue;
 }
 
 - (BOOL)prependFloatValue:(float)value
 {
 	struct DataQueueEntry *entry;
-	
+
 	entry = (struct DataQueueEntry *)malloc(sizeof(*entry));
 	if (entry == NULL)
 		return FALSE;
 	entry->data = value;
 	_sum += value;
 	_count++;
-	
+
 	STAILQ_INSERT_HEAD(&head, entry, chain);
 	return TRUE;
 }
@@ -77,7 +77,7 @@
 {
 	struct DataQueueEntry *entry;
 	float oldvalue;
-	
+
 	if (STAILQ_EMPTY(&head)) {
 		return NAN;
 	}
@@ -86,12 +86,12 @@
 	STAILQ_REMOVE_HEAD(&head, chain);
 	oldvalue = entry->data;
 	free(entry);
-	
+
 	_sum -= oldvalue;
 	_count--;
 	if (_count == 0 || _sum < 0.0)
 		_sum = 0.0;
-	
+
 	return oldvalue;
 }
 
@@ -99,22 +99,22 @@
 {
 	struct DataQueueEntry *entry;
 	float oldvalue;
-	
-    if (STAILQ_EMPTY(&head))
-        return newvalue;
-    
-    entry = STAILQ_FIRST(&head);
-    STAILQ_REMOVE_HEAD(&head, chain);
-    oldvalue = entry->data;
-    _sum -= oldvalue;
-	
+
+	if (STAILQ_EMPTY(&head))
+		return newvalue;
+
+	entry = STAILQ_FIRST(&head);
+	STAILQ_REMOVE_HEAD(&head, chain);
+	oldvalue = entry->data;
+	_sum -= oldvalue;
+
 	entry->data = newvalue;
 	STAILQ_INSERT_TAIL(&head, entry, chain);
 	_sum += newvalue;
 
 	if (_sum < 0.0)
 		_sum = 0;
-	
+
 	return oldvalue;
 }
 
@@ -122,31 +122,31 @@
 {
 	struct DataQueueEntry *entry;
 	NSUInteger idx = 0;
-	
+
 	STAILQ_FOREACH(entry, &head, chain) {
 		BOOL stop = FALSE;
-		
+
 		block(entry->data, idx, &stop);
-        if (stop == TRUE)
-            break;
+		if (stop == TRUE)
+			break;
 		idx++;
-    }
+	}
 }
 
 - (void)replaceValueUsingBlock:(void(^)(float *value, NSUInteger idx, BOOL *stop))block
 {
-    struct DataQueueEntry *entry;
-    NSUInteger idx = 0;
-    __block BOOL stop = FALSE;
-    _sum = 0;
-    
-    STAILQ_FOREACH(entry, &head, chain) {
-        if (stop == TRUE)
-            continue;
-        block(&entry->data, idx, &stop);
-        _sum += entry->data;
-        idx++;
-    }
+	struct DataQueueEntry *entry;
+	NSUInteger idx = 0;
+	__block BOOL stop = FALSE;
+	_sum = 0;
+
+	STAILQ_FOREACH(entry, &head, chain) {
+		if (stop == TRUE)
+			continue;
+		block(&entry->data, idx, &stop);
+		_sum += entry->data;
+		idx++;
+	}
 }
 
 - (void)zeroFill:(size_t)size
@@ -159,7 +159,7 @@
 - (void)deleteAll
 {
 	struct DataQueueEntry *entry;
-	
+
 	while (!STAILQ_EMPTY(&head)) {
 		entry = STAILQ_FIRST(&head);
 		STAILQ_REMOVE_HEAD(&head, chain);
@@ -172,7 +172,7 @@
 - (void)removeFromHead:(size_t)size
 {
 	struct DataQueueEntry *entry;
-	
+
 	while (size-- && !STAILQ_EMPTY(&head)) {
 		entry = STAILQ_FIRST(&head);
 		STAILQ_REMOVE_HEAD(&head, chain);
@@ -188,11 +188,11 @@
 {
 	struct DataQueueEntry *entry;
 	struct DataQueueHead temp;
-	
+
 	STAILQ_INIT(&temp);
 	_count = 0;
 	_sum = 0.0;
-	
+
 	while(size-- && !STAILQ_EMPTY(&head)) {
 		entry = STAILQ_FIRST(&head);
 		STAILQ_REMOVE_HEAD(&head, chain);
@@ -200,16 +200,16 @@
 		_sum += entry->data;
 		_count++;
 	}
-	
+
 	while(!STAILQ_EMPTY(&head)) {
 		entry = STAILQ_FIRST(&head);
 		STAILQ_REMOVE_HEAD(&head, chain);
 		free(entry);
 	}
-    
+
 	if (_count == 0 || _sum < 0.0)
 		_sum = 0.0;
-	
+
 	memcpy(&head, &temp, sizeof(head));
 }
 
@@ -224,7 +224,7 @@
 {
 	struct DataQueueEntry *entry;
 	float max = 0.0;
-	
+
 	STAILQ_FOREACH(entry, &head, chain) {
 		if (entry->data == NAN)
 			continue;

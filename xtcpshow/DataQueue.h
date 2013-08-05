@@ -10,7 +10,7 @@
 
 struct DataQueueEntry {
 	float data; // Sampling data
-	
+
 	STAILQ_ENTRY(DataQueueEntry) chain;
 };
 

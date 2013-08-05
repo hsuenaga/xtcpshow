@@ -29,10 +29,10 @@ static void setup_interface(NSPopUpButton *);
 	[[self graphView] initData];
 	[[self graphView] setRange:@"Auto" withRange:0.0];
 	[[self startButton] setEnabled:TRUE];
-	
+
 	// setup intrface labels
 	setup_interface([self deviceSelector]);
-	
+
 	// setup range labels
 	[_rangeSelector removeAllItems];
 	[_rangeSelector addItemWithTitle:@"Auto"];
@@ -45,7 +45,7 @@ static void setup_interface(NSPopUpButton *);
 
 - (IBAction)startCapture:(id)sender {
 	BOOL input_enabled;
-	
+
 	if ([self.model captureEnabled]) {
 		/* stop capture */
 		[self.model stopCapture];
@@ -57,17 +57,17 @@ static void setup_interface(NSPopUpButton *);
 	else {
 		/* start capture */
 		[self.model resetCounter];
-		
+
 		self.model.device =
 		[[self.deviceSelector titleOfSelectedItem] cStringUsingEncoding:NSASCIIStringEncoding];
 		self.model.filter =
 		[[[self filterField] stringValue] cStringUsingEncoding:NSASCIIStringEncoding];
 		[[self graphView] setTargetTimeLength:[[self zoomBar] intValue]];
 		[[self graphView] setSMASize:[[self smoothBar] intValue]];
-				
+
 		[[self startButton] setTitle:@"STOP"];
 		input_enabled = FALSE;
-		
+
 		_timer =
 		[NSTimer timerWithTimeInterval:(1.0f/12.0f)
 					target:self
@@ -106,14 +106,14 @@ static void setup_interface(NSPopUpButton *);
 	NSString *mode;
 	float range = 0.0;
 	int step;
-	
+
 	mode = [_rangeSelector titleOfSelectedItem];
 	range = [_rangeField floatValue];
 	if (range == NAN)
 		range = 0.0;
 	if (![mode isEqualToString:@"Manual"])
 		return;
-	
+
 	step = [_rangeStepper intValue];
 	if (step == 0) {
 		range = 0.5;
@@ -121,9 +121,9 @@ static void setup_interface(NSPopUpButton *);
 	else if (step == 1) {
 		range = 1.0;
 	}
-    else if (step == 2) {
-        range = 2.5;
-    }
+	else if (step == 2) {
+		range = 2.5;
+	}
 	else {
 		range = 5.0 * (float)(step - 1);
 	}
@@ -134,14 +134,14 @@ static void setup_interface(NSPopUpButton *);
 - (IBAction)enterRange:(id)sender {
 	NSString *mode;
 	float range = 0.0;
-	
+
 	mode = [_rangeSelector titleOfSelectedItem];
 	if (![mode isEqualToString:@"Manual"])
 		return;
-    range = [_rangeField floatValue];
+	range = [_rangeField floatValue];
 	if (range == NAN)
 		range = 0.0;
-    
+
 	range = [_graphView setRange:mode withRange:range];
 	[_rangeField setFloatValue:range];
 }
@@ -149,7 +149,7 @@ static void setup_interface(NSPopUpButton *);
 - (IBAction)setRangeType:(id)sender {
 	NSString *mode;
 	float range = 0.0;
-	
+
 	mode = [_rangeSelector titleOfSelectedItem];
 	if ([mode isEqualToString:@"Manual"]) {
 		[_rangeField setEnabled:YES];
@@ -160,7 +160,7 @@ static void setup_interface(NSPopUpButton *);
 		[_rangeStepper setEnabled:NO];
 		[_rangeField setEnabled:NO];
 	}
-	
+
 	[_graphView setRange:mode withRange:range];
 }
 
@@ -168,8 +168,8 @@ static void setup_interface(NSPopUpButton *);
 {
 	CaptureModel *model = [self model];
 	GraphView *view = [self graphView];
-	
-    [view importData:[model data]];
+
+	[view importData:[model data]];
 
 	[self updateUserInterface];
 }
@@ -205,24 +205,24 @@ static void setup_interface(NSPopUpButton *);
 static void setup_interface(NSPopUpButton *btn)
 {
 	struct ifaddrs *ifap0, *ifap;
-	
+
 	if (getifaddrs(&ifap0) < 0)
 		return;
-	
+
 	[btn removeAllItems];
-	
+
 	for (ifap = ifap0; ifap; ifap = ifap->ifa_next) {
 		NSString *if_name, *exist_name;
 		NSArray *name_array;
 		NSEnumerator *enumerator;
-		
+
 		if (ifap->ifa_flags & IFF_LOOPBACK)
 			continue;
 		if (!(ifap->ifa_flags & IFF_UP))
 			continue;
 		if (!(ifap->ifa_flags & IFF_RUNNING))
 			continue;
-		
+
 		if_name = [NSString
 			   stringWithCString:ifap->ifa_name
 			   encoding:NSASCIIStringEncoding];
@@ -236,7 +236,7 @@ static void setup_interface(NSPopUpButton *btn)
 		}
 		if (if_name == nil)
 			continue;
-		
+
 		[btn addItemWithTitle:if_name];
 		if ([if_name isEqualToString:@"en0"])
 			[btn selectItemWithTitle:if_name];
@@ -247,6 +247,6 @@ static void setup_interface(NSPopUpButton *btn)
 				[btn selectItemWithTitle:if_name];
 		}
 	}
-	
+
 	freeifaddrs(ifap0);
 }

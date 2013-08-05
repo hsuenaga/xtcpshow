@@ -26,7 +26,7 @@
 	// pcap
 	self.device = NULL;
 	self.filter = "tcp";
-	
+
 	// data size
 	self.history_size = DEF_HISTORY;
 	self.data = [[DataQueue alloc] init];
@@ -36,17 +36,17 @@
 	self.mbps = 0.0;
 	self.max_mbps = 0.0;
 	self.peek_hold_mbps = 0.0;
-	
+
 	// outlets
 	self.controller = nil;
-	
+
 	return self;
 }
 
 - (int) startCapture
 {
 	CaptureOperation *op = [[CaptureOperation alloc] init];
-	
+
 	NSLog(@"Start capture thread");
 	[self resetCounter];
 	[op setModel:self];
@@ -55,7 +55,7 @@
 	[op setQueuePriority:NSOperationQueuePriorityHigh];
 	[capture_cue addOperation:op];
 	running = TRUE;
-	
+
 	return 0;
 }
 
@@ -82,18 +82,18 @@
 
 - (void) setSamplingInterval:(float)interval
 {
-    [self.data setInterval:interval];
+	[self.data setInterval:interval];
 }
 
 - (float) getSamplingInterval
 {
-    return [self.data interval];
+	return [self.data interval];
 }
 
 - (void) samplingNotify:(NSNumber *)number
 {
 	[self.data addFloatValue:[number floatValue]
-                   withLimit:_history_size];
+		       withLimit:_history_size];
 }
 
 - (void) samplingError

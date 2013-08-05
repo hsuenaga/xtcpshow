@@ -19,13 +19,13 @@
 - (void)makeMutable
 {
 	DataQueue *dst = [[DataQueue alloc] init];
-	
+
 	if (!write_protect)
 		return;
 	if (_data == nil)
 		return;
-    
-    [dst setInterval:[_data interval]];
+
+	[dst setInterval:[_data interval]];
 	[_data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
 		[dst addFloatValue:value];
 	}];
@@ -41,39 +41,39 @@
 
 - (void)scaleAllValue:(float)scale
 {
-    if (isnan(scale))
-        return;
-    if (isinf(scale))
-        return;
-    if ([_data isEmpty])
-        return;
-    [_data replaceValueUsingBlock:^(float *value, NSUInteger idx, BOOL *stop) {
-        (*value) = (*value) * scale;
-    }];
+	if (isnan(scale))
+		return;
+	if (isinf(scale))
+		return;
+	if ([_data isEmpty])
+		return;
+	[_data replaceValueUsingBlock:^(float *value, NSUInteger idx, BOOL *stop) {
+		(*value) = (*value) * scale;
+	}];
 }
 
 - (void)discreteScaleQueue:(float)scale
 {
-    DataQueue *dst = [[DataQueue alloc] init];
-    __block NSUInteger dst_idx;
-    __block float newvalue;
+	DataQueue *dst = [[DataQueue alloc] init];
+	__block NSUInteger dst_idx;
+	__block float newvalue;
 
-    [dst setInterval:([_data interval] / scale)];
-    newvalue = 0.0;
-    dst_idx = 0;
-    [_data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
-        float f_idx;
-        
-        newvalue += value;
-        
-        f_idx = (float)idx * scale;
-        while (dst_idx < (NSUInteger)floor(f_idx)) {
-            [dst addFloatValue:newvalue];
-            newvalue = 0.0;
-            dst_idx++;
-        }
-    }];
-    _data = dst;
+	[dst setInterval:([_data interval] / scale)];
+	newvalue = 0.0;
+	dst_idx = 0;
+	[_data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
+		float f_idx;
+
+		newvalue += value;
+
+		f_idx = (float)idx * scale;
+		while (dst_idx < (NSUInteger)floor(f_idx)) {
+			[dst addFloatValue:newvalue];
+			newvalue = 0.0;
+			dst_idx++;
+		}
+	}];
+	_data = dst;
 }
 
 - (void)linearScaleQueue:(float)scale
@@ -96,7 +96,7 @@
 
 	dst_samples = (float)[_data count];
 	dst_samples = (NSUInteger)(ceil((float)dst_samples * scale));
-	
+
 	src0 = [_data dequeueFloatValue];
 	src1 = [_data dequeueFloatValue];
 	src0_idx = 0;
@@ -104,7 +104,7 @@
 		NSUInteger pivot_idx;
 		float pivot = (float)dst_idx / scale;
 		float value;
-		
+
 		pivot_idx = (NSUInteger)(floor(pivot));
 		while (pivot_idx > src0_idx) {
 			/* get left side and right side value */
@@ -114,7 +114,7 @@
 		}
 		if (isnan(src0) || isnan(src1))
 			break;
-		
+
 		value = src0 * (pivot - floor(pivot));
 		value += src1 * (ceil(pivot) - pivot);
 		[dst addFloatValue:value];
@@ -134,7 +134,7 @@
 	[_data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
 		NSUInteger pivot_idx;
 		float pivot;
-		
+
 		pivot = (float)idx * scale;
 		pivot_idx = (NSUInteger)(floor(pivot));
 		while (dst0_idx < pivot_idx) {
@@ -147,7 +147,7 @@
 		dst1 += value * (pivot - floor(pivot));
 	}];
 	[dst addFloatValue:dst0];
-	
+
 	_data = dst;
 }
 
@@ -184,15 +184,15 @@
 - (void)clipQueueTail:(NSRange)range
 {
 	NSRange reverse = range;
-	
+
 	[self makeMutable];
 
 	if ([_data count] < (range.location + range.length)) {
-        NSUInteger under_flow;
-        under_flow = (range.location + range.length) - [_data count];
+		NSUInteger under_flow;
+		under_flow = (range.location + range.length) - [_data count];
 
-        while (under_flow-- > 0)
-            [_data prependFloatValue:0.0];
+		while (under_flow-- > 0)
+			[_data prependFloatValue:0.0];
 	}
 	reverse.location = [_data count] - range.location;
 	reverse.location -= range.length;
@@ -206,15 +206,15 @@
 	dst = [[DataQueue alloc] init];
 	sma = [[DataQueue alloc] init];
 	[sma zeroFill:samples];
-    
-    [dst setInterval:[_data interval]];
-    [sma setInterval:[_data interval]];
+
+	[dst setInterval:[_data interval]];
+	[sma setInterval:[_data interval]];
 
 	[_data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
 		[sma shiftFloatValueWithNewValue:value];
 		[dst addFloatValue:[sma averageFloatValue]];
 	}];
-	
+
 	write_protect = FALSE;
 	_data = dst;
 }

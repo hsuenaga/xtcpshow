@@ -41,9 +41,9 @@
 	struct pcap_stat ps;
 	float max_mbps, ph_max_mbps;
 	int bytes, pkts;
-	
+
 	NSLog(@"caputer thread");
-    [[self model] setSamplingInterval:TIMESLOT];
+	[[self model] setSamplingInterval:TIMESLOT];
 
 	// initialize libpcap
 	if (![self allocPcap]) {
@@ -60,11 +60,11 @@
 	// reset timer
 	gettimeofday(&tv_next_tick, NULL);
 	tv_peek_hold = tv_next_tick;
-	
+
 	// reset counter
 	max_mbps = ph_max_mbps = 0.0;
 	bytes = pkts = 0;
-	
+
 	terminate = FALSE;
 	while (!terminate) {
 		struct pcap_pkthdr *hdr;
@@ -94,7 +94,7 @@
 				terminate = TRUE;
 				break;
 		}
-		
+
 		// timer update
 		if ([self tick_expired] == FALSE)
 			continue;
@@ -102,25 +102,25 @@
 		// update and reset snapshot
 		mbps = (float)(bytes * 8) / last_interval; // [bps]
 		mbps = mbps / (1000.0 * 1000.0); // [mbps]
-		
+
 		// update max
 		if (mbps > max_mbps)
 			max_mbps = mbps;
 		if (mbps > ph_max_mbps)
 			ph_max_mbps = mbps;
-		
+
 		// reset peek_hold data
 		if ([self peek_hold_expired])
 			ph_max_mbps = 0.0;
-		
+
 		// update model
 		[[self model] setTotal_pkts:pkts];
 		[[self model] setMbps:mbps];
 		[[self model] setPeek_hold_mbps:ph_max_mbps];
 		[[self model] setMax_mbps:max_mbps];
-        [[self model] setSnapSamplingInterval:last_interval];
+		[[self model] setSnapSamplingInterval:last_interval];
 		[self sendNotify:bytes];
-        bytes = 0;
+		bytes = 0;
 	}
 	// finalize
 	if (pcap_stats(pcap, &ps) == 0) {
@@ -157,61 +157,61 @@
 {
 	struct timeval now, delta;
 	float elapsed;
-	
+
 	gettimeofday(&now, NULL);
 	timersub(&now, last, &delta);
 	elapsed = (float)delta.tv_sec;
 	elapsed += (float)delta.tv_usec / (1000.0 * 1000.0);
-	
+
 	return elapsed;
 }
 
 - (void)addSecond:(float)second toTimeval:(struct timeval *)tv
 {
-    struct timeval delta;
-    float usecond;
-    int add = TRUE;
+	struct timeval delta;
+	float usecond;
+	int add = TRUE;
 
-    if (isnan(second) || isinf(second))
-        return;
+	if (isnan(second) || isinf(second))
+		return;
 
-    if (second < 0.0) {
-        add = FALSE;
-        second = fabsf(second);
-    }
+	if (second < 0.0) {
+		add = FALSE;
+		second = fabsf(second);
+	}
 
-    usecond = second - (floor(second));
-    usecond = usecond * (1000.0 * 1000.0);
-    delta.tv_sec = floor(second);
-    delta.tv_usec = floor(usecond);
+	usecond = second - (floor(second));
+	usecond = usecond * (1000.0 * 1000.0);
+	delta.tv_sec = floor(second);
+	delta.tv_usec = floor(usecond);
 
-    if (add)
-        timeradd(tv, &delta, tv);
-    else
-        timersub(tv, &delta, tv);
+	if (add)
+		timeradd(tv, &delta, tv);
+	else
+		timersub(tv, &delta, tv);
 }
 
 - (BOOL)tick_expired
 {
 	float elapsed;
-	
+
 	elapsed = [self elapsed:&tv_next_tick];
 	if (elapsed < TIMESLOT)
 		return FALSE;
-    
+
 	last_interval = elapsed;
-    [self addSecond:TIMESLOT toTimeval:&tv_next_tick];
+	[self addSecond:TIMESLOT toTimeval:&tv_next_tick];
 	return TRUE;
 }
 
 - (BOOL)peek_hold_expired
 {
 	float elapsed;
-	
+
 	elapsed = [self elapsed:&tv_peek_hold];
 	if (elapsed < HOLDSLOT)
 		return FALSE;
-	
+
 	gettimeofday(&tv_peek_hold, NULL);
 	return TRUE;
 }
@@ -227,9 +227,9 @@
 - (void)sendError
 {
 	NSObject *model;
-	
+
 	model = (NSObject *)[self model];
-	
+
 	[model
 	 performSelectorOnMainThread:@selector(samplingError)
 	 withObject:self
@@ -239,19 +239,19 @@
 - (BOOL) allocPcap
 {
 	int r;
-	
+
 	if (source_interface == NULL) {
 		NSLog(@"No source interface");
 		return FALSE;
 	}
-	
+
 	NSLog(@"initializing libpcap...");
 	pcap = pcap_create(source_interface, errbuf);
 	if (pcap == NULL) {
 		NSLog(@"pcap_create() failed.");
 		goto error;
 	}
-	
+
 	if (pcap_set_snaplen(pcap, CAP_SNAPLEN) != 0) {
 		NSLog(@"pcap_set_snaplen() failed.");
 		goto error;
@@ -260,12 +260,12 @@
 		NSLog(@"pcap_set_timeout() failed.");
 		goto error;
 	}
-	
+
 	if (pcap_set_buffer_size(pcap, CAP_BUFSIZ) != 0) {
 		NSLog(@"pcap_set_buffer_size() failed.");
 		goto error;
 	}
-	
+
 	r = pcap_activate(pcap);
 	if (r == PCAP_WARNING) {
 		NSLog(@"pcap_activate() has warning.");
@@ -276,9 +276,9 @@
 		goto error;
 	}
 	NSLog(@"libpcap initialized.");
-	
+
 	return TRUE;
-	
+
 error:
 	if (pcap) {
 		NSLog(@"ERROR: %s", pcap_geterr(pcap));
@@ -302,18 +302,18 @@ error:
 		NSLog(@"program: %s", filter_program);
 		return FALSE;
 	}
-	
+
 	if (pcap_setfilter(pcap, &filter) < 0) {
 		NSLog(@"pcap_setfilter() failed: %s",
 		      pcap_geterr(pcap));
 		pcap_freecode(&filter);
 		return FALSE;
 	}
-	
+
 	if (pcap_setdirection(pcap, PCAP_D_IN) != 0) {
 		NSLog(@"pcap_setdirection() is not supported.");
 	}
-	
+
 	pcap_freecode(&filter);
 	return TRUE;
 }
