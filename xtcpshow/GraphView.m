@@ -19,25 +19,9 @@
 	self.TargetTimeLength = 0;
 	self.viewOffset = 0;
 	self.scalingMode = DISCRETE_SCALING;
-}
-
-- (void)redrawGraphImage
-{
-	DataQueue *data;
-	NSRect rect;
-
-	[NSGraphicsContext saveGraphicsState];
-	rect = [self bounds];
-	data = [self data];
-	[data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
-		if (idx > rect.size.width) {
-			*stop = YES;
-			return;
-		}
-		[self plotBar:value atPos:idx];
-	}];
-
-	[NSGraphicsContext restoreGraphicsState];
+	graph_gradient = [[NSGradient alloc]
+			  initWithStartingColor:[NSColor clearColor]
+			  endingColor:[NSColor greenColor]];
 }
 
 - (void)updateRange
@@ -103,6 +87,32 @@
 	return y_range;
 }
 
+- (void)drawGraph
+{
+	DataQueue *data;
+	NSRect rect;
+
+	[NSGraphicsContext saveGraphicsState];
+	rect = [self bounds];
+	data = [self data];
+	[data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
+		NSRect bar;
+
+		if (idx > rect.size.width) {
+			*stop = YES;
+			return;
+		}
+		bar.origin.x = (float)idx;
+		bar.origin.y = 0;
+		bar.size.width = 1.0;
+		bar.size.height = value * _bounds.size.height / y_range;
+		if (bar.size.height < 1.0)
+			return;
+		[graph_gradient drawInRect:bar angle:90.0];
+	}];
+	[NSGraphicsContext restoreGraphicsState];
+}
+
 - (void)drawText: (NSString *)t atPoint:(NSPoint) p
 {
 	NSMutableDictionary *attr;
@@ -115,31 +125,7 @@
 	[t drawAtPoint:p withAttributes:attr];
 }
 
-- (void)plotBar:(float)value atPos:(NSUInteger)idx
-{
-	NSGradient *grad;
-	NSRect bar, rect;
-	float h;
-
-	rect = [self bounds];
-
-	/* width and height of bar */
-	h = floor(rect.size.height * (value / y_range));
-	if (h < 1.0)
-		return; // less than 1 pixel
-
-	bar.origin.x = (float)idx;
-	bar.origin.y = 0;
-	bar.size.width = 1.0;
-	bar.size.height = h;
-
-	grad = [[NSGradient alloc]
-		initWithStartingColor:[NSColor clearColor]
-		endingColor:[NSColor greenColor]];
-	[grad drawInRect:bar angle:90.0];
-}
-
-- (void)plotTrend
+- (void)drawGuide
 {
 	NSRect rect;
 	NSBezierPath *path;
@@ -179,21 +165,10 @@
 	[NSGraphicsContext restoreGraphicsState];
 }
 
-- (void)drawAll
+- (void)drawGrid
 {
 	NSRect rect = [self bounds];
-	NSString *title;
 
-	[NSGraphicsContext saveGraphicsState];
-
-	/* clear screen */
-	[[NSColor clearColor] set];
-	NSRectFill(rect);
-
-	/* caclulate size */
-	[self updateRange];
-
-	/* show matrix */
 	[[NSColor whiteColor] set];
 	for (int i = 1; i < 5; i++) {
 		CGFloat pattern[2] = {5.0, 5.0};
@@ -217,19 +192,37 @@
 		[path lineToPoint:NSMakePoint(x, rect.size.height)];
 		[path stroke];
 	}
+}
+
+- (void)drawAll
+{
+	NSRect rect = [self bounds];
+	NSString *title;
+
+	[NSGraphicsContext saveGraphicsState];
+
+	/* clear screen */
+	[[NSColor clearColor] set];
+	NSRectFill(rect);
+
+	/* caclulate size */
+	[self updateRange];
+
+	/* show matrix */
+	[self drawGrid];
 
 	/* plot bar graph */
-	[self redrawGraphImage];
+	[self drawGraph];
 
 	/* bar graph params */
 	title =
-	[NSString stringWithFormat:@" Y-Range %6.3f [Mbps] / X-Range %6.1f [ms] / SMA %6.1f [ms] / Avg %6.3f [Mbps] ",
+	[NSString stringWithFormat:@" Y-Range %6.3f [Mbps] / X-Range %6.1f [ms] / MA %6.1f [ms] / Avg %6.3f [Mbps] ",
 	 y_range, x_range, sma_range,
 	 [[self data] averageFloatValue]];
 	[self drawText:title atPoint:NSMakePoint(0.0, 0.0)];
 
 	/* plot trend line */
-	[self plotTrend];
+	[self drawGuide];
 
 	[NSGraphicsContext restoreGraphicsState];
 }
@@ -260,6 +253,7 @@
 	// convert [bytes] => [Mbps]
 	unit_conv = 8.0f / [[sampler data] interval]; // [bps]
 	unit_conv = unit_conv / 1000.0f / 1000.0f; // [Mbps]
+
 	[sampler scaleAllValue:unit_conv];
 
 	_data = [sampler data];

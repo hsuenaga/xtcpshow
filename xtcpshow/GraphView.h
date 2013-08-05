@@ -31,6 +31,8 @@
 	int range_mode;
 	float manual_range;
 	float peek_range;
+	
+	NSGradient *graph_gradient;
 }
 @property (strong) DataQueue *data;
 @property (assign) int SMASize;
@@ -41,19 +43,21 @@
 @property (assign) int scalingMode;
 
 - (void)initData;
-- (void)redrawGraphImage;
 
 - (void)updateRange;
 - (float)setRange:(NSString *)mode withRange:(float)range;
 
+- (void)drawGraph;
 - (void)drawText: (NSString *)t atPoint:(NSPoint)p;
-- (void)plotBar:(float)value atPos:(NSUInteger)idx;
-- (void)plotTrend;
+- (void)drawGuide;
+- (void)drawGrid;
+- (void)drawAll;
+
+- (void)importData:(DataQueue *)data;
+
 - (float)dataScale;
 - (NSRange)dataRangeTail;
 - (NSRange)viewRange;
-- (void)drawAll;
 - (void)drawRect:(NSRect)rect;
 
-- (void)importData:(DataQueue *)data;
 @end
