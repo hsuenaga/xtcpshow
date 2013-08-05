@@ -32,4 +32,5 @@
 - (void)clipQueueTail:(NSRange)range;
 
 - (void)movingAverage:(NSUInteger)samples;
+- (void)triangleMovingAverage:(NSUInteger)samples;
 @end

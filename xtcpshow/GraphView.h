@@ -11,9 +11,12 @@
 @class DataQueue;
 @class DataResampler;
 
-#define RANGE_AUTO 0
-#define RANGE_PEEKHOLD 1
-#define RANGE_MANUAL 2
+#define RANGE_AUTO		0
+#define RANGE_PEEKHOLD		1
+#define RANGE_MANUAL		2
+
+#define LINEAR_SCALING		0
+#define DISCRETE_SCALING	1
 
 @interface GraphView : NSView {
 	BOOL needRedrawImage;
@@ -35,6 +38,8 @@
 @property (assign) int TargetTimeOffset;
 @property (assign) int TargetTimeLength;
 @property (assign) float samplingInterval;
+@property (assign) int scalingMode;
+
 - (void)initData;
 - (void)redrawGraphImage;
 

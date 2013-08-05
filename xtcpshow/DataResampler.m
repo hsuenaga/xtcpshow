@@ -204,11 +204,11 @@
 	DataQueue *dst, *sma;
 
 	dst = [[DataQueue alloc] init];
-	sma = [[DataQueue alloc] init];
-	[sma zeroFill:samples];
-
 	[dst setInterval:[_data interval]];
+
+	sma = [[DataQueue alloc] init];
 	[sma setInterval:[_data interval]];
+	[sma zeroFill:samples];
 
 	[_data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
 		[sma shiftFloatValueWithNewValue:value];
@@ -219,4 +219,31 @@
 	_data = dst;
 }
 
+- (void)triangleMovingAverage:(NSUInteger)samples
+{
+	DataQueue *dst, *sma1, *sma2;
+	NSUInteger half_samples;
+
+	half_samples = samples / 2 + 1;
+
+	dst = [[DataQueue alloc] init];
+	[dst setInterval:[_data interval]];
+	
+	sma1 = [[DataQueue alloc] init];
+	[sma1 setInterval:[_data interval]];
+	[sma1 zeroFill:half_samples];
+
+	sma2 = [[DataQueue alloc] init];
+	[sma2 setInterval:[_data interval]];
+	[sma2 zeroFill:half_samples];
+
+	[_data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
+		[sma1 shiftFloatValueWithNewValue:value];
+		[sma2 shiftFloatValueWithNewValue:[sma1 averageFloatValue]];
+		[dst addFloatValue:[sma2 averageFloatValue]];
+	}];
+
+	write_protect = FALSE;
+	_data = dst;
+}
 @end

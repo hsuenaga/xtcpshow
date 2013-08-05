@@ -18,6 +18,7 @@
 	self.TargetTimeOffset = 0;
 	self.TargetTimeLength = 0;
 	self.viewOffset = 0;
+	self.scalingMode = DISCRETE_SCALING;
 }
 
 - (void)redrawGraphImage
@@ -244,19 +245,16 @@
 
 	[sampler importData:data];
 	[sampler clipQueueTail:[self dataRangeTail]];
-#if 0
-	[sampler discreteScaleQueue:[self dataScale]];
-#else
-	[sampler linearScaleQueue:[self dataScale]];
-#endif
+	if (_scalingMode == DISCRETE_SCALING)
+		[sampler discreteScaleQueue:[self dataScale]];
+	else
+		[sampler linearScaleQueue:[self dataScale]];
 
-#if 0
-	viewSMA = ceil((float)_SMASize * [self dataScale]);
-	if (viewSMA < 2)
-		viewSMA = 2;
-	[sampler movingAverage:viewSMA/2];
-	[sampler movingAverage:viewSMA/2];
-#endif
+	if (_SMASize > 1) {
+		viewSMA = ceil((float)_SMASize * [self dataScale]);
+		if (viewSMA > 1)
+			[sampler triangleMovingAverage:viewSMA];
+	}
 	[sampler clipQueueTail:[self viewRange]];
 
 	// convert [bytes] => [Mbps]
