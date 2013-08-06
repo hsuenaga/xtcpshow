@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		461422B217B08334000BB91D /* xtcpshow.iconset in Resources */ = {isa = PBXBuildFile; fileRef = 461422B117B08334000BB91D /* xtcpshow.iconset */; };
 		4639F8251798BA9700E59491 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4639F8241798BA9700E59491 /* Cocoa.framework */; };
 		4639F82F1798BA9700E59491 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 4639F82D1798BA9700E59491 /* InfoPlist.strings */; };
 		4639F8311798BA9700E59491 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 4639F8301798BA9700E59491 /* main.m */; };
@@ -22,6 +23,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		461422B117B08334000BB91D /* xtcpshow.iconset */ = {isa = PBXFileReference; lastKnownFileType = folder.iconset; path = xtcpshow.iconset; sourceTree = "<group>"; };
 		4639F8211798BA9700E59491 /* xtcpshow.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = xtcpshow.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4639F8241798BA9700E59491 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		4639F8271798BA9700E59491 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
@@ -64,6 +66,7 @@
 		4639F8181798BA9600E59491 = {
 			isa = PBXGroup;
 			children = (
+				461422B117B08334000BB91D /* xtcpshow.iconset */,
 				4639F846179D0D0900E59491 /* libpcap.dylib */,
 				4639F82A1798BA9700E59491 /* xtcpshow */,
 				4639F8231798BA9700E59491 /* Frameworks */,
@@ -185,6 +188,7 @@
 				4639F82F1798BA9700E59491 /* InfoPlist.strings in Resources */,
 				4639F8351798BA9700E59491 /* Credits.rtf in Resources */,
 				4639F83B1798BA9700E59491 /* MainMenu.xib in Resources */,
+				461422B217B08334000BB91D /* xtcpshow.iconset in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

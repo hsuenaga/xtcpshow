@@ -9,13 +9,16 @@
 
 #import "DataQueue.h"
 
+#define ERR_FILTER 0.00001f
+
 @implementation DataQueue
 - (DataQueue *)init
 {
 	self = [super init];
 
 	STAILQ_INIT(&head);
-	_interval = 0.0;
+	_interval = 0.0f;
+	sum_remain = 0.0f;
 
 	return self;
 }
@@ -34,12 +37,15 @@
 - (BOOL)addFloatValue:(float)value
 {
 	struct DataQueueEntry *entry;
+	float new_sum;
 
 	entry = (struct DataQueueEntry *)malloc(sizeof(*entry));
 	if (entry == NULL)
 		return FALSE;
 	entry->data = value;
-	_sum += value;
+	new_sum = _sum + (value + sum_remain);
+	sum_remain = (value + sum_remain) - (new_sum - _sum);
+	_sum = new_sum;
 	_count++;
 
 	STAILQ_INSERT_TAIL(&head, entry, chain);
@@ -61,12 +67,15 @@
 - (BOOL)prependFloatValue:(float)value
 {
 	struct DataQueueEntry *entry;
+	float new_sum;
 
 	entry = (struct DataQueueEntry *)malloc(sizeof(*entry));
 	if (entry == NULL)
 		return FALSE;
 	entry->data = value;
-	_sum += value;
+	new_sum = _sum + (value + sum_remain);
+	sum_remain = (value + sum_remain) - (new_sum - _sum);
+	_sum = new_sum;
 	_count++;
 
 	STAILQ_INSERT_HEAD(&head, entry, chain);
@@ -76,7 +85,7 @@
 - (float)dequeueFloatValue
 {
 	struct DataQueueEntry *entry;
-	float oldvalue;
+	float oldvalue, new_sum;
 
 	if (STAILQ_EMPTY(&head)) {
 		return NAN;
@@ -86,34 +95,40 @@
 	STAILQ_REMOVE_HEAD(&head, chain);
 	oldvalue = entry->data;
 	free(entry);
-
-	_sum -= oldvalue;
 	_count--;
-	if (_count == 0 || _sum < 0.0)
+	if (_count == 0) {
 		_sum = 0.0;
+		return oldvalue;
+	}
+	if (oldvalue == 0.0f || isnan(oldvalue))
+		return oldvalue;
+
+	new_sum = (_sum + sum_remain) - oldvalue;
+	if (isnan(oldvalue) || isinf(oldvalue) || (new_sum / oldvalue) < ERR_FILTER) {
+		float tmp_sum;
+
+		new_sum = 0.0f;
+		sum_remain = 0.0f;
+		STAILQ_FOREACH(entry, &head, chain) {
+			tmp_sum = new_sum + entry->data + sum_remain;
+			sum_remain = (entry->data + sum_remain) - (tmp_sum - new_sum);
+			new_sum = tmp_sum;
+		}
+	}
+	_sum  = new_sum;
 
 	return oldvalue;
 }
 
 - (float)shiftFloatValueWithNewValue:(float)newvalue
 {
-	struct DataQueueEntry *entry;
 	float oldvalue;
 
 	if (STAILQ_EMPTY(&head))
 		return newvalue;
 
-	entry = STAILQ_FIRST(&head);
-	STAILQ_REMOVE_HEAD(&head, chain);
-	oldvalue = entry->data;
-	_sum -= oldvalue;
-
-	entry->data = newvalue;
-	STAILQ_INSERT_TAIL(&head, entry, chain);
-	_sum += newvalue;
-
-	if (_sum < 0.0)
-		_sum = 0;
+	oldvalue = [self dequeueFloatValue];
+	[self addFloatValue:newvalue];
 
 	return oldvalue;
 }
@@ -138,13 +153,18 @@
 	struct DataQueueEntry *entry;
 	NSUInteger idx = 0;
 	__block BOOL stop = FALSE;
-	_sum = 0;
 
+	_sum = 0.0;
+	sum_remain = 0.0;
 	STAILQ_FOREACH(entry, &head, chain) {
+		float new_sum;
+
 		if (stop == TRUE)
 			continue;
 		block(&entry->data, idx, &stop);
-		_sum += entry->data;
+		new_sum = _sum + entry->data + sum_remain;
+		sum_remain = (entry->data + sum_remain) - (new_sum - _sum);
+		_sum = new_sum;
 		idx++;
 	}
 }
@@ -171,17 +191,8 @@
 
 - (void)removeFromHead:(size_t)size
 {
-	struct DataQueueEntry *entry;
-
-	while (size-- && !STAILQ_EMPTY(&head)) {
-		entry = STAILQ_FIRST(&head);
-		STAILQ_REMOVE_HEAD(&head, chain);
-		_sum -= entry->data;
-		_count--;
-		free(entry);
-	}
-	if (_count == 0 || _sum < 0.0)
-		_sum = 0.0;
+	while (size-- && !STAILQ_EMPTY(&head))
+		[self dequeueFloatValue];
 }
 
 - (void)clipFromHead:(size_t)size
@@ -192,12 +203,17 @@
 	STAILQ_INIT(&temp);
 	_count = 0;
 	_sum = 0.0;
+	sum_remain = 0.0;
 
 	while(size-- && !STAILQ_EMPTY(&head)) {
+		float new_sum;
+
 		entry = STAILQ_FIRST(&head);
 		STAILQ_REMOVE_HEAD(&head, chain);
 		STAILQ_INSERT_TAIL(&temp, entry, chain);
-		_sum += entry->data;
+		new_sum = _sum + (entry->data + sum_remain);
+		sum_remain = (entry->data + sum_remain) - (new_sum - _sum);
+		_sum = new_sum;
 		_count++;
 	}
 
@@ -207,7 +223,7 @@
 		free(entry);
 	}
 
-	if (_count == 0 || _sum < 0.0)
+	if (_count == 0)
 		_sum = 0.0;
 
 	memcpy(&head, &temp, sizeof(head));

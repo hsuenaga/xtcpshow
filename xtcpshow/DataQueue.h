@@ -16,6 +16,7 @@ struct DataQueueEntry {
 
 @interface DataQueue : NSObject {
 	STAILQ_HEAD(DataQueueHead, DataQueueEntry) head;
+	float sum_remain;
 }
 @property (readonly) NSUInteger count;
 @property (readonly) float sum;
