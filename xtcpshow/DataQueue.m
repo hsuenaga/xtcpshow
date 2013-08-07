@@ -9,6 +9,8 @@
 
 #import "DataQueue.h"
 
+#define REFRESH_THR 0.5f
+
 @implementation DataQueue
 - (DataQueue *)init
 {
@@ -36,26 +38,44 @@
 - (void)addSumState:(float)value
 {
 	float new_value;
-
+	float delta;
+	
 	if (isnan(value) || isinf(value))
 		return; // XXX: exception
+	if (value == 0.0f)
+		return;
 
-	new_value = add + (value + add_remain);
-
-	add_remain = (value + add_remain) - (new_value - add);
+	value = value + add_remain;
+	new_value = add + value;
+	delta = new_value - add;
+	if ((delta / value) < REFRESH_THR) {
+		NSLog(@"refresh DataQueue SumState(add): %f", add);
+		[self refreshSumState];
+		return;
+	}
+	add_remain = value - delta;
 	add = new_value;
 }
 
 - (void)subSumState:(float)value
 {
 	float new_value;
+	float delta;
 
 	if (isnan(value) || isinf(value))
 		return; // XXX: exception
+	if (value == 0.0f)
+		return;
 
-	new_value = sub + (value + sub_remain);
-
-	sub_remain = (value + sub_remain) - (new_value - sub);
+	value = value + sub_remain;
+	new_value = sub + value;
+	delta = new_value - sub;
+	if ((delta / value) < REFRESH_THR) {
+		NSLog(@"refresh DataQueue SumState(sub): %f", sub);
+		[self refreshSumState];
+		return;
+	}
+	sub_remain = value - delta;
 	sub = new_value;
 }
 
@@ -65,6 +85,26 @@
 	sub = 0.0f;
 	add_remain = 0.0f;
 	sub_remain = 0.0f;
+}
+
+- (void)refreshSumState
+{
+	struct DataQueueEntry *entry;
+
+	[self clearSumState];
+	STAILQ_FOREACH(entry, &head, chain) {
+		float value, new_value;
+
+		if (isnan(entry->data))
+			continue;
+
+		value = entry->data + add_remain;
+		new_value = add + value;
+		add_remain = new_value - value;
+		add = new_value;
+	}
+	NSLog(@"SumState refreshed: add->%f", add);
+
 }
 
 - (float)sum
@@ -121,7 +161,7 @@
 	float oldvalue;
 
 	if (STAILQ_EMPTY(&head)) {
-		return NAN;
+		return nanf(__func__);
 	}
 
 	entry = STAILQ_FIRST(&head);
@@ -245,7 +285,7 @@
 	float max = 0.0;
 
 	STAILQ_FOREACH(entry, &head, chain) {
-		if (entry->data == NAN)
+		if (isnan(entry->data))
 			continue;
 		if (max < entry->data)
 			max = entry->data;

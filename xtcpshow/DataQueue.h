@@ -28,6 +28,7 @@ struct DataQueueEntry {
 - (void)addSumState:(float)value;
 - (void)subSumState:(float)sub;
 - (void)clearSumState;
+- (void)refreshSumState;
 - (float)sum;
 
 // add data
