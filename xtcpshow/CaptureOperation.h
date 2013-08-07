@@ -43,7 +43,7 @@
 
 - (float)elapsed:(struct timeval *)last;
 - (BOOL)tick_expired;
-- (void)sendNotify:(float)mbps;
+- (void)sendNotify:(float)bytes;
 - (void)sendError:(NSString *)message;
 
 - (BOOL)allocPcap;

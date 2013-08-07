@@ -16,6 +16,7 @@ struct DataQueueEntry {
 
 @interface DataQueue : NSObject {
 	STAILQ_HEAD(DataQueueHead, DataQueueEntry) head;
+	NSUInteger refresh_count;
 	float add;
 	float add_remain;
 	float sub;

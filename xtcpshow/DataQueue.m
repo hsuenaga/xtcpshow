@@ -9,7 +9,7 @@
 
 #import "DataQueue.h"
 
-#define REFRESH_THR 0.5f
+#define REFRESH_THR 1000 // [samples]
 
 @implementation DataQueue
 - (DataQueue *)init
@@ -19,6 +19,7 @@
 	STAILQ_INIT(&head);
 	_interval = 0.0f;
 	_count = 0;
+	refresh_count = REFRESH_THR;
 	[self clearSumState];
 
 	return self;
@@ -44,15 +45,18 @@
 		return; // XXX: exception
 	if (value == 0.0f)
 		return;
-
-	value = value + add_remain;
-	new_value = add + value;
-	delta = new_value - add;
-	if ((delta / value) < REFRESH_THR) {
-		NSLog(@"refresh DataQueue SumState(add): %f", add);
+	if (refresh_count-- == 0) {
 		[self refreshSumState];
 		return;
 	}
+
+	value = value + add_remain;
+	new_value = add + value;
+	if (isinf(new_value) || isnan(new_value)) {
+		[self refreshSumState];
+		return;
+	}
+	delta = new_value - add;
 	add_remain = value - delta;
 	add = new_value;
 }
@@ -66,15 +70,19 @@
 		return; // XXX: exception
 	if (value == 0.0f)
 		return;
-
-	value = value + sub_remain;
-	new_value = sub + value;
-	delta = new_value - sub;
-	if ((delta / value) < REFRESH_THR) {
-		NSLog(@"refresh DataQueue SumState(sub): %f", sub);
+	if (refresh_count-- == 0) {
 		[self refreshSumState];
 		return;
 	}
+	
+	value = value + sub_remain;
+	new_value = sub + value;
+	if (isinf(new_value) || isnan(new_value)) {
+		[self refreshSumState];
+		return;
+	}
+	
+	delta = new_value - sub;
 	sub_remain = value - delta;
 	sub = new_value;
 }
@@ -95,22 +103,25 @@
 	STAILQ_FOREACH(entry, &head, chain) {
 		float value, new_value;
 
-		if (isnan(entry->data))
+		if (isnan(entry->data) || isinf(entry->data))
 			continue;
 
 		value = entry->data + add_remain;
 		new_value = add + value;
-		add_remain = new_value - value;
+		add_remain = (new_value - add) - value;
 		add = new_value;
 	}
-	NSLog(@"SumState refreshed: add->%f", add);
-
+	refresh_count = REFRESH_THR;
 }
 
 - (float)sum
 {
+	float sum;
 	// XXX: cancellation of significant digits
-	return (add + add_remain) - (sub + sub_remain);
+
+	sum = add_remain - sub_remain;
+	sum += add - sub;
+	return sum;
 }
 
 - (BOOL)addFloatValue:(float)value
@@ -122,10 +133,10 @@
 		return FALSE;
 	entry->data = value;
 
+	STAILQ_INSERT_TAIL(&head, entry, chain);
 	[self addSumState:value];
 	_count++;
 
-	STAILQ_INSERT_TAIL(&head, entry, chain);
 	return TRUE;
 }
 
@@ -148,10 +159,10 @@
 		return FALSE;
 	entry->data = value;
 
+	STAILQ_INSERT_HEAD(&head, entry, chain);
 	[self addSumState:value];
 	_count++;
 
-	STAILQ_INSERT_HEAD(&head, entry, chain);
 	return TRUE;
 }
 
@@ -204,7 +215,6 @@
 	struct DataQueueEntry *entry;
 	NSUInteger idx = 0;
 
-	[self clearSumState];
 	_count = 0;
 	STAILQ_FOREACH(entry, &head, chain) {
 		BOOL stop = FALSE;
@@ -212,11 +222,10 @@
 		block(&entry->data, idx, &stop);
 		if (stop == TRUE)
 			break;
-		
-		[self addSumState:entry->data];
 		_count++;
 		idx++;
 	}
+	[self refreshSumState];
 }
 
 - (void)zeroFill:(size_t)size

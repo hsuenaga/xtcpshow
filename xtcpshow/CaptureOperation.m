@@ -107,11 +107,9 @@
 		if ([self tick_expired] == FALSE)
 			continue;
 
-		// update and reset snapshot
+		// update max
 		mbps = (float)(bytes * 8) / last_interval; // [bps]
 		mbps = mbps / (1000.0 * 1000.0); // [mbps]
-
-		// update max
 		if (max_mbps < mbps)
 			max_mbps = mbps;
 		[max_buffer shiftFloatValueWithNewValue:mbps];
@@ -126,6 +124,7 @@
 		[self sendNotify:bytes];
 		bytes = 0;
 	}
+
 	// finalize
 	if (pcap_stats(pcap, &ps) == 0) {
 		NSLog(@"%d packets recieved by pcap", ps.ps_recv);
@@ -208,12 +207,12 @@
 	return TRUE;
 }
 
-- (void)sendNotify:(float)mbps
+- (void)sendNotify:(float)bytes
 {
 	[[self model]
 	 performSelectorOnMainThread:@selector(samplingNotify:)
-	 withObject:[NSNumber numberWithFloat:mbps]
-	 waitUntilDone:NO];
+	 withObject:[NSNumber numberWithFloat:bytes]
+	 waitUntilDone:YES];
 }
 
 - (void)sendError:(NSString *)message
