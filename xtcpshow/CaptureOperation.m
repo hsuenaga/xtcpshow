@@ -47,13 +47,17 @@
 
 	// initialize libpcap
 	if (![self allocPcap]) {
+		NSString *message;
 		NSLog(@"cannot initialize libpcap");
-		[self sendError];
+
+		message =
+		[NSString stringWithFormat:@"Caputer Error:%@", last_error];
+		[self sendError:@"Cannot Initialize libpcap"];
 		return;
 	}
 	if (![self attachFilter]) {
 		NSLog(@"libpcap filter error");
-		[self sendError];
+		[self sendError:@"Syntax erorr in filter statement"];
 		return;
 	}
 
@@ -224,15 +228,15 @@
 	 waitUntilDone:NO];
 }
 
-- (void)sendError
+- (void)sendError:(NSString *)message
 {
 	NSObject *model;
 
 	model = (NSObject *)[self model];
 
 	[model
-	 performSelectorOnMainThread:@selector(samplingError)
-	 withObject:self
+	 performSelectorOnMainThread:@selector(samplingError:)
+	 withObject:last_error
 	 waitUntilDone:NO];
 }
 
@@ -248,31 +252,30 @@
 	NSLog(@"initializing libpcap...");
 	pcap = pcap_create(source_interface, errbuf);
 	if (pcap == NULL) {
-		NSLog(@"pcap_create() failed.");
+		last_error = @"pcap_create() failed";
 		goto error;
 	}
 
 	if (pcap_set_snaplen(pcap, CAP_SNAPLEN) != 0) {
-		NSLog(@"pcap_set_snaplen() failed.");
+		last_error = @"pcap_set_snaplen() failed";
 		goto error;
 	}
 	if (pcap_set_timeout(pcap, CAP_TICK) != 0) {
-		NSLog(@"pcap_set_timeout() failed.");
+		last_error = @"pcap_set_timeout() failed";
 		goto error;
 	}
 
 	if (pcap_set_buffer_size(pcap, CAP_BUFSIZ) != 0) {
-		NSLog(@"pcap_set_buffer_size() failed.");
+		last_error = @"pcap_set_buffer_size() failed";
 		goto error;
 	}
 
 	r = pcap_activate(pcap);
 	if (r == PCAP_WARNING) {
-		NSLog(@"pcap_activate() has warning.");
 		NSLog(@"WARNING: %s", pcap_geterr(pcap));
 	}
 	else if (r != 0) {
-		NSLog(@"pcap_activate() failed.");
+		last_error = @"pcap_activate() failed";
 		goto error;
 	}
 	NSLog(@"libpcap initialized.");
@@ -281,7 +284,9 @@
 
 error:
 	if (pcap) {
-		NSLog(@"ERROR: %s", pcap_geterr(pcap));
+		NSLog(@"%@: %s", last_error, pcap_geterr(pcap));
+		last_error =
+		[NSString stringWithFormat:@"Device error: %s", pcap_geterr(pcap)];
 		pcap_close(pcap);
 	}
 	return FALSE;
@@ -297,15 +302,17 @@ error:
 	}
 	if (pcap_compile(pcap, &filter, filter_program,
 			 0, PCAP_NETMASK_UNKNOWN) != 0) {
-		NSLog(@"pcap_compile() failed: %s",
-		      pcap_geterr(pcap));
+		last_error = [NSString  stringWithFormat:@"Filter error: %s",
+		      pcap_geterr(pcap)];
+		NSLog(@"pcap_compile() failed");
 		NSLog(@"program: %s", filter_program);
 		return FALSE;
 	}
 
 	if (pcap_setfilter(pcap, &filter) < 0) {
-		NSLog(@"pcap_setfilter() failed: %s",
-		      pcap_geterr(pcap));
+		last_error = [NSString stringWithFormat:@"Filter error: %s",
+		      pcap_geterr(pcap)];
+		NSLog(@"pcap_setfilter() failed");
 		pcap_freecode(&filter);
 		return FALSE;
 	}

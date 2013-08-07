@@ -78,7 +78,6 @@ static void setup_interface(NSPopUpButton *);
 					     forMode:NSRunLoopCommonModes];
 
 		if ([self.model startCapture] < 0) {
-			/* XXX: report error */
 			[[self startButton] setTitle:@"START"];
 			input_enabled = TRUE;
 			[_timer invalidate];
@@ -175,11 +174,21 @@ static void setup_interface(NSPopUpButton *);
 	[self updateUserInterface];
 }
 
-- (void)samplingError
+- (void)samplingError:(NSString *)message
 {
+	NSAlert *alert;
+
 	[[self startButton] setTitle:@"START"];
 	[[self deviceSelector] setEnabled:YES];
 	[[self filterField] setEnabled:YES];
+
+	alert = [NSAlert alertWithMessageText:@"Capture ERROR"
+				defaultButton:@"OK"
+			      alternateButton:nil
+				  otherButton:nil
+		    informativeTextWithFormat:@"%@", message];
+	[alert runModal];
+
 	[self updateUserInterface];
 }
 

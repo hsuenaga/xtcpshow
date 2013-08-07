@@ -51,6 +51,6 @@
 
 /* notify from model, controller(myself), ... */
 - (void) animationNotify:(NSTimer *)sender;
-- (void) samplingError;
+- (void) samplingError:(NSString *)message;
 - (void) updateUserInterface;
 @end

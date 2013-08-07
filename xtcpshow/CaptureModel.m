@@ -96,8 +96,8 @@
 		       withLimit:_history_size];
 }
 
-- (void) samplingError
+- (void) samplingError:(NSString *)message
 {
-	[self.controller samplingError];
+	[self.controller samplingError:message];
 }
 @end

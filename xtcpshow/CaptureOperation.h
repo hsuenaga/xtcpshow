@@ -20,6 +20,7 @@
 @class CaptureModel;
 
 @interface CaptureOperation : NSOperation {
+	NSString *last_error;
 	char errbuf[PCAP_ERRBUF_SIZE];
 	char *source_interface;
 	char *filter_program;
@@ -41,7 +42,7 @@
 - (BOOL)tick_expired;
 - (BOOL)peek_hold_expired;
 - (void)sendNotify:(float)mbps;
-- (void)sendError;
+- (void)sendError:(NSString *)message;
 
 - (BOOL)allocPcap;
 - (BOOL)attachFilter;

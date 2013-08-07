@@ -16,11 +16,19 @@ struct DataQueueEntry {
 
 @interface DataQueue : NSObject {
 	STAILQ_HEAD(DataQueueHead, DataQueueEntry) head;
-	float sum_remain;
+	float add;
+	float add_remain;
+	float sub;
+	float sub_remain;
 }
 @property (readonly) NSUInteger count;
-@property (readonly) float sum;
 @property (assign) float interval; // Average Sampling interval
+
+// differential sum update.
+- (void)addSumState:(float)value;
+- (void)subSumState:(float)sub;
+- (void)clearSumState;
+- (float)sum;
 
 // add data
 - (BOOL)addFloatValue:(float)value;

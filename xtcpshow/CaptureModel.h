@@ -43,5 +43,5 @@
 - (void)setSamplingInterval:(float)interval;
 - (float)getSamplingInterval;
 - (void)samplingNotify:(NSNumber *)number;
-- (void)samplingError;
+- (void)samplingError:(NSString *)message;
 @end
