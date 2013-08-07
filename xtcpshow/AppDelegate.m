@@ -108,7 +108,7 @@ static void setup_interface(NSPopUpButton *);
 
 	mode = [_rangeSelector titleOfSelectedItem];
 	range = [_rangeField floatValue];
-	if (range == NAN)
+	if (isnan(range))
 		range = 0.0;
 	if (![mode isEqualToString:@"Manual"])
 		return;
@@ -138,7 +138,7 @@ static void setup_interface(NSPopUpButton *);
 	if (![mode isEqualToString:@"Manual"])
 		return;
 	range = [_rangeField floatValue];
-	if (range == NAN)
+	if (isnan(range))
 		range = 0.0;
 
 	range = [_graphView setRange:mode withRange:range];
