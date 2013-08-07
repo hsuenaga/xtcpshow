@@ -12,6 +12,7 @@
 
 #import "CaptureOperation.h"
 #import "CaptureModel.h"
+#import "DataQueue.h"
 
 /*
  * Capture thread
@@ -63,7 +64,10 @@
 
 	// reset timer
 	gettimeofday(&tv_next_tick, NULL);
-	tv_peek_hold = tv_next_tick;
+
+	// init peak hold buffer for 1[sec]
+	max_buffer = [[DataQueue alloc] init];
+	[max_buffer zeroFill:(int)(ceil(1.0f/TIMESLOT))];
 
 	// reset counter
 	max_mbps = ph_max_mbps = 0.0;
@@ -108,14 +112,10 @@
 		mbps = mbps / (1000.0 * 1000.0); // [mbps]
 
 		// update max
-		if (mbps > max_mbps)
+		if (max_mbps < mbps)
 			max_mbps = mbps;
-		if (mbps > ph_max_mbps)
-			ph_max_mbps = mbps;
-
-		// reset peek_hold data
-		if ([self peek_hold_expired])
-			ph_max_mbps = 0.0;
+		[max_buffer shiftFloatValueWithNewValue:mbps];
+		ph_max_mbps = [max_buffer maxFloatValue];
 
 		// update model
 		[[self model] setTotal_pkts:pkts];
@@ -205,18 +205,6 @@
 
 	last_interval = elapsed;
 	[self addSecond:TIMESLOT toTimeval:&tv_next_tick];
-	return TRUE;
-}
-
-- (BOOL)peek_hold_expired
-{
-	float elapsed;
-
-	elapsed = [self elapsed:&tv_peek_hold];
-	if (elapsed < HOLDSLOT)
-		return FALSE;
-
-	gettimeofday(&tv_peek_hold, NULL);
 	return TRUE;
 }
 

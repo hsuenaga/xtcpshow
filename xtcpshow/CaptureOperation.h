@@ -8,25 +8,28 @@
 #include <pcap/pcap.h>
 
 #import <Foundation/Foundation.h>
+
 #import "AppDelegate.h"
 
-#define TIMESLOT (0.05) /* [sec] (= 100[ms])*/
-#define HOLDSLOT (1.0) /* [sec] */
+#define TIMESLOT (0.05f) /* [sec] (= 100[ms])*/
+#define HOLDSLOT (1.0f) /* [sec] */
 
 #define CAP_TICK 1
 #define CAP_SNAPLEN 64
 #define CAP_BUFSIZ (CAP_SNAPLEN * 128)
 
 @class CaptureModel;
+@class DataQueue;
 
 @interface CaptureOperation : NSOperation {
 	NSString *last_error;
+	DataQueue *max_buffer;
+
 	char errbuf[PCAP_ERRBUF_SIZE];
 	char *source_interface;
 	char *filter_program;
 	pcap_t *pcap;
 	struct timeval tv_next_tick;
-	struct timeval tv_peek_hold;
 	float last_interval; // [ms]
 	BOOL terminate;
 }
@@ -40,7 +43,6 @@
 
 - (float)elapsed:(struct timeval *)last;
 - (BOOL)tick_expired;
-- (BOOL)peek_hold_expired;
 - (void)sendNotify:(float)mbps;
 - (void)sendError:(NSString *)message;
 
