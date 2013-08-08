@@ -11,6 +11,10 @@
 #import "DataQueue.h"
 #import "DataResampler.h"
 
+NSString *const RANGE_AUTO = @"Auto";
+NSString *const RANGE_PEEKHOLD = @"PeekHold";
+NSString *const RANGE_MANUAL = @"Manual";
+
 @implementation GraphView
 - (void)initData
 {
@@ -36,9 +40,9 @@
 	if (range_mode == RANGE_MANUAL) {
 		max = manual_range;
 	} else if (range_mode == RANGE_PEEKHOLD) {
-		if (peek_range < max)
-			peek_range = max;
-		max = peek_range;
+		if (peak_range < max)
+			peak_range = max;
+		max = peak_range;
 	}
 
 	/* scaling */
@@ -66,25 +70,39 @@
 
 - (float)setRange:(NSString *)mode withRange:(float)range
 {
-	if ([mode isEqualToString:@"Auto"]) {
-		NSLog(@"Auto Range mode");
-		range_mode = RANGE_AUTO;
-		peek_range = 0.0;
-	}
-	else if ([mode isEqualToString:@"PeakHold"]) {
-		NSLog(@"Peak Hold Range mode");
-		range_mode = RANGE_PEEKHOLD;
-		peek_range = 0.0;
-	}
-	else if ([mode isEqualToString:@"Manual"]) {
-		NSLog(@"Manual Range mode");
-		range_mode = RANGE_MANUAL;
-		peek_range = 0.0;
+
+	range_mode = mode;
+	peak_range = 0.0f;
+	if (mode == RANGE_MANUAL)
 		manual_range = range;
-	}
+
 	[self updateRange];
 
 	return y_range;
+}
+
+- (float)setRange:(NSString *)mode withStep:(int)step
+{
+	float range;
+
+	if (step < 0) {
+		step = 0;
+		range = 0.0; // suprress compiler
+	}
+
+	else if (step == 0) {
+		range = 0.5;
+	}
+	else if (step == 1) {
+		range = 1.0;
+	}
+	else if (step == 2) {
+		range = 2.5;
+	}
+	else {
+		range = 5.0f * (float)(step - 1);
+	}
+	return [self setRange:mode withRange:range];
 }
 
 - (void)drawGraph

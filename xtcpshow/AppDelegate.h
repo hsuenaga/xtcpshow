@@ -5,8 +5,10 @@
 //  Created by SUENAGA Hiroki on 2013/07/19.
 //  Copyright (c) 2013年 SUENAGA Hiroki. All rights reserved.
 //
-
 #import <Cocoa/Cocoa.h>
+
+#define UPDATE_FPS (12.0f)
+#define UPDATE_INT (1.0f/UPDATE_FPS)
 
 @class CaptureModel;
 @class GraphView;
@@ -53,4 +55,7 @@
 - (void) animationNotify:(NSTimer *)sender;
 - (void) samplingError:(NSString *)message;
 - (void) updateUserInterface;
+
+/* initialize environment */
+- (void) setupInterfaceButton:(NSPopUpButton *)btn;
 @end

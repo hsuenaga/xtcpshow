@@ -11,9 +11,9 @@
 @class DataQueue;
 @class DataResampler;
 
-#define RANGE_AUTO		0
-#define RANGE_PEEKHOLD		1
-#define RANGE_MANUAL		2
+extern NSString *const RANGE_AUTO;
+extern NSString *const RANGE_PEEKHOLD;
+extern NSString *const RANGE_MANUAL;
 
 #define LINEAR_SCALING		0
 #define DISCRETE_SCALING	1
@@ -28,9 +28,9 @@
 	float x_range;
 	float sma_range;
 
-	int range_mode;
+	NSString *range_mode;
 	float manual_range;
-	float peek_range;
+	float peak_range;
 	
 	NSGradient *graph_gradient;
 }
@@ -46,6 +46,7 @@
 
 - (void)updateRange;
 - (float)setRange:(NSString *)mode withRange:(float)range;
+- (float)setRange:(NSString *)mode withStep:(int)step;
 
 - (void)drawGraph;
 - (void)drawText: (NSString *)t atPoint:(NSPoint)p;

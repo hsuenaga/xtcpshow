@@ -15,6 +15,14 @@
 #import "GraphView.h"
 #import "DataResampler.h"
 
+static NSString *const LBL_START=@"START";
+static NSString *const LBL_STOP=@"STOP";
+static NSString *const LBL_OK=@"OK";
+static NSString *const LBL_CAP_ERROR=@"Capture ERROR";
+
+static NSString *const DEF_DEVICE=@"en0";
+static NSString *const PREFER_DEVICE=@"en";
+
 static void setup_interface(NSPopUpButton *);
 
 @implementation AppDelegate
@@ -27,18 +35,18 @@ static void setup_interface(NSPopUpButton *);
 
 	// widget initialization
 	[[self graphView] initData];
-	[[self graphView] setRange:@"Auto" withRange:0.0];
+	[[self graphView] setRange:RANGE_AUTO withRange:0.0];
 	[[self startButton] setEnabled:TRUE];
 
 	// setup intrface labels
-	setup_interface([self deviceSelector]);
+	[self setupInterfaceButton:_deviceSelector];
 
 	// setup range labels
 	[_rangeSelector removeAllItems];
-	[_rangeSelector addItemWithTitle:@"Auto"];
-	[_rangeSelector addItemWithTitle:@"PeakHold"];
-	[_rangeSelector addItemWithTitle:@"Manual"];
-	[_rangeSelector selectItemWithTitle:@"Auto"];
+	[_rangeSelector addItemWithTitle:RANGE_AUTO];
+	[_rangeSelector addItemWithTitle:RANGE_PEEKHOLD];
+	[_rangeSelector addItemWithTitle:RANGE_MANUAL];
+	[_rangeSelector selectItemWithTitle:RANGE_AUTO];
 
 	[self updateUserInterface];
 }
@@ -49,7 +57,7 @@ static void setup_interface(NSPopUpButton *);
 	if ([self.model captureEnabled]) {
 		/* stop capture */
 		[self.model stopCapture];
-		[[self startButton] setTitle:@"START"];
+		[[self startButton] setTitle:LBL_START];
 		input_enabled = TRUE;
 		if (_timer)
 			[_timer invalidate];
@@ -65,11 +73,11 @@ static void setup_interface(NSPopUpButton *);
 		[[self graphView] setTargetTimeLength:[[self zoomBar] intValue]];
 		[[self graphView] setSMASize:[[self smoothBar] intValue]];
 
-		[[self startButton] setTitle:@"STOP"];
+		[[self startButton] setTitle:LBL_STOP];
 		input_enabled = FALSE;
 
 		_timer =
-		[NSTimer timerWithTimeInterval:(1.0f/12.0f)
+		[NSTimer timerWithTimeInterval:UPDATE_INT
 					target:self
 				      selector:@selector(animationNotify:)
 				      userInfo:nil
@@ -78,7 +86,7 @@ static void setup_interface(NSPopUpButton *);
 					     forMode:NSRunLoopCommonModes];
 
 		if ([self.model startCapture] < 0) {
-			[[self startButton] setTitle:@"START"];
+			[[self startButton] setTitle:LBL_START];
 			input_enabled = TRUE;
 			[_timer invalidate];
 		}
@@ -108,26 +116,14 @@ static void setup_interface(NSPopUpButton *);
 
 	mode = [_rangeSelector titleOfSelectedItem];
 	range = [_rangeField floatValue];
-	if (isnan(range))
+	if (isnan(range) || isinf(range))
 		range = 0.0;
-	if (![mode isEqualToString:@"Manual"])
+	if (mode != RANGE_MANUAL)
 		return;
 
 	step = [_rangeStepper intValue];
-	if (step == 0) {
-		range = 0.5;
-	}
-	else if (step == 1) {
-		range = 1.0;
-	}
-	else if (step == 2) {
-		range = 2.5;
-	}
-	else {
-		range = 5.0 * (float)(step - 1);
-	}
+	range = [_graphView setRange:mode withStep:step];
 	[_rangeField setFloatValue:range];
-	[_graphView setRange:mode withRange:range];
 }
 
 - (IBAction)enterRange:(id)sender {
@@ -135,10 +131,11 @@ static void setup_interface(NSPopUpButton *);
 	float range = 0.0;
 
 	mode = [_rangeSelector titleOfSelectedItem];
-	if (![mode isEqualToString:@"Manual"])
+	if (mode != RANGE_MANUAL)
 		return;
+
 	range = [_rangeField floatValue];
-	if (isnan(range))
+	if (isnan(range) || isinf(range))
 		range = 0.0;
 
 	range = [_graphView setRange:mode withRange:range];
@@ -150,7 +147,7 @@ static void setup_interface(NSPopUpButton *);
 	float range = 0.0;
 
 	mode = [_rangeSelector titleOfSelectedItem];
-	if ([mode isEqualToString:@"Manual"]) {
+	if (mode == RANGE_MANUAL) {
 		[_rangeField setEnabled:YES];
 		[_rangeStepper setEnabled:YES];
 		[self enterRange:self];
@@ -178,12 +175,12 @@ static void setup_interface(NSPopUpButton *);
 {
 	NSAlert *alert;
 
-	[[self startButton] setTitle:@"START"];
+	[[self startButton] setTitle:LBL_START];
 	[[self deviceSelector] setEnabled:YES];
 	[[self filterField] setEnabled:YES];
 
-	alert = [NSAlert alertWithMessageText:@"Capture ERROR"
-				defaultButton:@"OK"
+	alert = [NSAlert alertWithMessageText:LBL_CAP_ERROR
+				defaultButton:LBL_OK
 			      alternateButton:nil
 				  otherButton:nil
 		    informativeTextWithFormat:@"%@", message];
@@ -206,12 +203,8 @@ static void setup_interface(NSPopUpButton *);
 	[self.samplingField
 	 setFloatValue:([self.model snapSamplingInterval] * 1000.0f)];
 }
-@end
 
-/*
- * C API bridge
- */
-static void setup_interface(NSPopUpButton *btn)
+- (void)setupInterfaceButton:(NSPopUpButton *)btn
 {
 	struct ifaddrs *ifap0, *ifap;
 
@@ -247,11 +240,11 @@ static void setup_interface(NSPopUpButton *btn)
 			continue;
 
 		[btn addItemWithTitle:if_name];
-		if ([if_name isEqualToString:@"en0"])
+		if ([if_name isEqualToString:DEF_DEVICE])
 			[btn selectItemWithTitle:if_name];
 		else {
 			NSRange range;
-			range = [if_name rangeOfString:@"en"];
+			range = [if_name rangeOfString:PREFER_DEVICE];
 			if (range.location != NSNotFound)
 				[btn selectItemWithTitle:if_name];
 		}
@@ -259,3 +252,4 @@ static void setup_interface(NSPopUpButton *btn)
 
 	freeifaddrs(ifap0);
 }
+@end
