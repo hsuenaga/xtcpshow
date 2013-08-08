@@ -24,46 +24,40 @@
 	running = FALSE;
 
 	// pcap
-	self.device = NULL;
-	self.filter = "tcp";
+	_device = NULL;
+	_filter = "tcp";
 
 	// data size
-	self.history_size = DEF_HISTORY;
-	self.data = [[DataQueue alloc] init];
+	_history_size = DEF_HISTORY;
+	_data = [[DataQueue alloc] init];
 
 	// traffic data
-	self.total_pkts = 0;
-	self.mbps = 0.0;
-	self.max_mbps = 0.0;
-	self.peek_hold_mbps = 0.0;
+	[self resetCounter];
 
 	// outlets
-	self.controller = nil;
+	_controller = nil;
 
 	return self;
 }
 
-- (int) startCapture
+- (void) startCapture
 {
 	CaptureOperation *op = [[CaptureOperation alloc] init];
 
 	NSLog(@"Start capture thread");
 	[self resetCounter];
 	[op setModel:self];
-	[op setSource:self.device];
-	[op setFilter:self.filter];
+	[op setSource:_device];
+	[op setFilter:_filter];
 	[op setQueuePriority:NSOperationQueuePriorityHigh];
 	[capture_cue addOperation:op];
 	running = TRUE;
-
-	return 0;
 }
 
 - (void) stopCapture
 {
 	NSLog(@"Stop capture thread");
 	[capture_cue cancelAllOperations];
-	running = FALSE;
 }
 
 - (BOOL) captureEnabled
@@ -73,31 +67,49 @@
 
 - (void) resetCounter
 {
-	self.total_pkts = 0;
-	self.mbps = 0.0;
-	self.max_mbps = 0.0;
-	self.peek_hold_mbps = 0.0;
-	self.snapSamplingInterval = 0.0;
+	_total_pkts = 0;
+	_mbps = 0.0f;
+	_max_mbps = 0.0f;
+	_peek_hold_mbps = 0.0f;
+	_samplingIntervalLast = 0.0f;
 }
 
 - (void) setSamplingInterval:(float)interval
 {
-	[self.data setInterval:interval];
+	[_data setInterval:interval];
 }
 
-- (float) getSamplingInterval
+- (float) samplingInterval
 {
-	return [self.data interval];
+	return [_data interval];
 }
 
+- (float) samplingIntervalMS
+{
+	return ([self samplingInterval] * 1000.0f);
+}
+
+- (float) samplingIntervalLastMS
+{
+	return (_samplingIntervalLast * 1000.0f);
+}
+
+//
+// notify from Capture operation thread
+//
 - (void) samplingNotify:(NSNumber *)number
 {
-	[self.data addFloatValue:[number floatValue]
-		       withLimit:_history_size];
+	[_data addFloatValue:[number floatValue]
+		   withLimit:_history_size];
 }
 
 - (void) samplingError:(NSString *)message
 {
-	[self.controller samplingError:message];
+	[_controller samplingError:message];
+}
+
+- (void) samplingFinish:(id)sender
+{
+	running = FALSE;
 }
 @end

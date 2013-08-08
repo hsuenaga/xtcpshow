@@ -29,9 +29,17 @@
 	char *source_interface;
 	char *filter_program;
 	pcap_t *pcap;
+
 	struct timeval tv_next_tick;
+	struct timeval tv_last_tick;
 	float last_interval; // [ms]
 	BOOL terminate;
+
+	// counter
+	float max_mbps;
+	float peak_mbps;
+	int bytes;
+	int pkts;
 }
 @property (weak) CaptureModel *model;
 
@@ -43,8 +51,9 @@
 
 - (float)elapsed:(struct timeval *)last;
 - (BOOL)tick_expired;
-- (void)sendNotify:(float)bytes;
+- (void)sendNotify;
 - (void)sendError:(NSString *)message;
+- (void)sendFinish;
 
 - (BOOL)allocPcap;
 - (BOOL)attachFilter;

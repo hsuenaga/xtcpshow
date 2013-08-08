@@ -40,11 +40,9 @@
 - (void) main
 {
 	struct pcap_stat ps;
-	float max_mbps, ph_max_mbps;
-	int bytes, pkts;
 
-	NSLog(@"caputer thread");
-	[[self model] setSamplingInterval:TIMESLOT];
+	NSLog(@"caputer thread: interval %f [sec]", TIMESLOT);
+	[_model setSamplingInterval:TIMESLOT];
 
 	// initialize libpcap
 	if (![self allocPcap]) {
@@ -56,6 +54,8 @@
 		[self sendError:@"Cannot Initialize libpcap"];
 		return;
 	}
+
+	// set filter
 	if (![self attachFilter]) {
 		NSLog(@"libpcap filter error");
 		[self sendError:@"Syntax erorr in filter statement"];
@@ -64,13 +64,14 @@
 
 	// reset timer
 	gettimeofday(&tv_next_tick, NULL);
+	gettimeofday(&tv_last_tick, NULL);
 
 	// init peak hold buffer for 1[sec]
 	max_buffer = [[DataQueue alloc] init];
 	[max_buffer zeroFill:(int)(ceil(1.0f/TIMESLOT))];
 
 	// reset counter
-	max_mbps = ph_max_mbps = 0.0;
+	max_mbps = peak_mbps = 0.0;
 	bytes = pkts = 0;
 
 	terminate = FALSE;
@@ -83,7 +84,7 @@
 		if ([self isCancelled] == YES)
 			break;
 
-		if ([self model] == nil)
+		if (_model == nil)
 			break;
 
 		code = pcap_next_ex(pcap, &hdr, &data);
@@ -109,19 +110,19 @@
 
 		// update max
 		mbps = (float)(bytes * 8) / last_interval; // [bps]
-		mbps = mbps / (1000.0 * 1000.0); // [mbps]
+		mbps = mbps / (1000.0f * 1000.0f); // [mbps]
 		if (max_mbps < mbps)
 			max_mbps = mbps;
 		[max_buffer shiftFloatValueWithNewValue:mbps];
-		ph_max_mbps = [max_buffer maxFloatValue];
+		peak_mbps = [max_buffer maxFloatValue];
 
 		// update model
-		[[self model] setTotal_pkts:pkts];
-		[[self model] setMbps:mbps];
-		[[self model] setPeek_hold_mbps:ph_max_mbps];
-		[[self model] setMax_mbps:max_mbps];
-		[[self model] setSnapSamplingInterval:last_interval];
-		[self sendNotify:bytes];
+		[_model setTotal_pkts:pkts];
+		[_model setMbps:mbps];
+		[_model setPeek_hold_mbps:peak_mbps];
+		[_model setMax_mbps:max_mbps];
+		[_model setSamplingIntervalLast:last_interval];
+		[self sendNotify];
 		bytes = 0;
 	}
 
@@ -134,6 +135,7 @@
 	pcap_close(pcap);
 	NSLog(@"%d packets proccessed.", pkts);
 	NSLog(@"done thread");
+	[self sendFinish];
 }
 
 - (void)setSource:(const char *)source
@@ -164,7 +166,7 @@
 	gettimeofday(&now, NULL);
 	timersub(&now, last, &delta);
 	elapsed = (float)delta.tv_sec;
-	elapsed += (float)delta.tv_usec / (1000.0 * 1000.0);
+	elapsed += (float)delta.tv_usec / (1000.0f * 1000.0f);
 
 	return elapsed;
 }
@@ -183,9 +185,9 @@
 		second = fabsf(second);
 	}
 
-	usecond = second - (floor(second));
-	usecond = usecond * (1000.0 * 1000.0);
 	delta.tv_sec = floor(second);
+	usecond = second - (float)delta.tv_sec;
+	usecond = usecond * (1000.0f * 1000.0f);
 	delta.tv_usec = floor(usecond);
 
 	if (add)
@@ -196,35 +198,42 @@
 
 - (BOOL)tick_expired
 {
-	float elapsed;
+	float expired, elapsed;
 
-	elapsed = [self elapsed:&tv_next_tick];
-	if (elapsed < TIMESLOT)
+	expired = [self elapsed:&tv_next_tick];
+	if (expired < TIMESLOT)
 		return FALSE;
-
+	
+	elapsed = [self elapsed:&tv_last_tick];
 	last_interval = elapsed;
+
 	[self addSecond:TIMESLOT toTimeval:&tv_next_tick];
+	gettimeofday(&tv_last_tick, NULL);
 	return TRUE;
 }
 
-- (void)sendNotify:(float)bytes
+- (void)sendNotify
 {
-	[[self model]
+	[_model
 	 performSelectorOnMainThread:@selector(samplingNotify:)
-	 withObject:[NSNumber numberWithFloat:bytes]
+	 withObject:[NSNumber numberWithInt:bytes]
 	 waitUntilDone:YES];
 }
 
 - (void)sendError:(NSString *)message
 {
-	NSObject *model;
-
-	model = (NSObject *)[self model];
-
-	[model
+	[_model
 	 performSelectorOnMainThread:@selector(samplingError:)
 	 withObject:last_error
 	 waitUntilDone:NO];
+}
+
+- (void)sendFinish
+{
+	[_model
+	 performSelectorOnMainThread:@selector(samplingFinish:)
+	 withObject:self
+	 waitUntilDone:YES];
 }
 
 - (BOOL) allocPcap

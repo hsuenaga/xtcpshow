@@ -31,12 +31,12 @@ static void setup_interface(NSPopUpButton *);
 {
 	// Setup Model object
 	[self setModel:[[CaptureModel alloc] init]];
-	[[self model] setController:self]; // weak
+	[_model setController:self]; // weak
 
 	// widget initialization
-	[[self graphView] initData];
-	[[self graphView] setRange:RANGE_AUTO withRange:0.0];
-	[[self startButton] setEnabled:TRUE];
+	[_graphView initData];
+	[_graphView setRange:RANGE_AUTO withRange:0.0];
+	[_startButton setEnabled:TRUE];
 
 	// setup intrface labels
 	[self setupInterfaceButton:_deviceSelector];
@@ -56,24 +56,23 @@ static void setup_interface(NSPopUpButton *);
 
 	if ([self.model captureEnabled]) {
 		/* stop capture */
-		[self.model stopCapture];
-		[[self startButton] setTitle:LBL_START];
+		[_model stopCapture];
+		[_startButton setTitle:LBL_START];
 		input_enabled = TRUE;
 		if (_timer)
 			[_timer invalidate];
 	}
 	else {
 		/* start capture */
-		[self.model resetCounter];
+		[_model resetCounter];
 
-		self.model.device =
-		[[self.deviceSelector titleOfSelectedItem] cStringUsingEncoding:NSASCIIStringEncoding];
-		self.model.filter =
-		[[[self filterField] stringValue] cStringUsingEncoding:NSASCIIStringEncoding];
-		[[self graphView] setTargetTimeLength:[[self zoomBar] intValue]];
-		[[self graphView] setSMASize:[[self smoothBar] intValue]];
+		_model.device =	[[_deviceSelector titleOfSelectedItem] cStringUsingEncoding:NSASCIIStringEncoding];
+		_model.filter =
+		[[_filterField stringValue] cStringUsingEncoding:NSASCIIStringEncoding];
+		[_graphView setTargetTimeLength:[_zoomBar intValue]];
+		[_graphView setSMASize:[_smoothBar intValue]];
 
-		[[self startButton] setTitle:LBL_STOP];
+		[_startButton setTitle:LBL_STOP];
 		input_enabled = FALSE;
 
 		_timer =
@@ -85,33 +84,29 @@ static void setup_interface(NSPopUpButton *);
 		[[NSRunLoop currentRunLoop] addTimer:_timer
 					     forMode:NSRunLoopCommonModes];
 
-		if ([self.model startCapture] < 0) {
-			[[self startButton] setTitle:LBL_START];
-			input_enabled = TRUE;
-			[_timer invalidate];
-		}
+		[_model startCapture];
 	}
 
-	[[self deviceSelector] setEnabled:input_enabled];
-	[[self filterField] setEnabled:input_enabled];
+	[_deviceSelector setEnabled:input_enabled];
+	[_filterField setEnabled:input_enabled];
 	[self updateUserInterface];
 }
 
 - (IBAction)changeZoom:(id)sender {
-	[[self graphView] setTargetTimeLength:[sender intValue]];
+	[_graphView setTargetTimeLength:[sender intValue]];
 	[self animationNotify:nil];
 	[self updateUserInterface];
 }
 
 - (IBAction)changeSmooth:(id)sender {
-	[[self graphView] setSMASize:[sender intValue]];
+	[_graphView setSMASize:[sender intValue]];
 	[self animationNotify:nil];
 	[self updateUserInterface];
 }
 
 - (IBAction)changeRange:(id)sender {
 	NSString *mode;
-	float range = 0.0;
+	float range;
 	int step;
 
 	mode = [_rangeSelector titleOfSelectedItem];
@@ -124,11 +119,12 @@ static void setup_interface(NSPopUpButton *);
 	step = [_rangeStepper intValue];
 	range = [_graphView setRange:mode withStep:step];
 	[_rangeField setFloatValue:range];
+	[self updateUserInterface];
 }
 
 - (IBAction)enterRange:(id)sender {
 	NSString *mode;
-	float range = 0.0;
+	float range;
 
 	mode = [_rangeSelector titleOfSelectedItem];
 	if (mode != RANGE_MANUAL)
@@ -136,38 +132,39 @@ static void setup_interface(NSPopUpButton *);
 
 	range = [_rangeField floatValue];
 	if (isnan(range) || isinf(range))
-		range = 0.0;
+		range = 0.0f;
 
 	range = [_graphView setRange:mode withRange:range];
 	[_rangeField setFloatValue:range];
+	[self updateUserInterface];
 }
 
 - (IBAction)setRangeType:(id)sender {
 	NSString *mode;
-	float range = 0.0;
 
 	mode = [_rangeSelector titleOfSelectedItem];
 	if (mode == RANGE_MANUAL) {
+		float range;
+
 		[_rangeField setEnabled:YES];
 		[_rangeStepper setEnabled:YES];
-		[self enterRange:self];
-	}
-	else {
-		[_rangeStepper setEnabled:NO];
-		[_rangeField setEnabled:NO];
+		range = [_rangeField floatValue];
+		range = [_graphView setRange:mode withRange:range];
+		[_rangeField setFloatValue:range];
+		return;
 	}
 
-	[_graphView setRange:mode withRange:range];
+	[_rangeStepper setEnabled:NO];
+	[_rangeField setEnabled:NO];
+	[_graphView setRange:mode withRange:0.0f];
+	[self updateUserInterface];
 }
 
 - (void)animationNotify:(id)sender
 {
-	CaptureModel *model = [self model];
-	GraphView *view = [self graphView];
+	[_graphView importData:[_model data]];
+	[_graphView setNeedsDisplay:YES];
 
-	[view importData:[model data]];
-
-	[self.graphView setNeedsDisplay:YES];
 	[self updateUserInterface];
 }
 
@@ -175,9 +172,9 @@ static void setup_interface(NSPopUpButton *);
 {
 	NSAlert *alert;
 
-	[[self startButton] setTitle:LBL_START];
-	[[self deviceSelector] setEnabled:YES];
-	[[self filterField] setEnabled:YES];
+	[_startButton setTitle:LBL_START];
+	[_deviceSelector setEnabled:YES];
+	[_filterField setEnabled:YES];
 
 	alert = [NSAlert alertWithMessageText:LBL_CAP_ERROR
 				defaultButton:LBL_OK
@@ -190,18 +187,15 @@ static void setup_interface(NSPopUpButton *);
 }
 
 - (void)updateUserInterface {
-	[self.snapshotField
-	 setFloatValue:[self.model mbps]];
-	[self.maxField
-	 setFloatValue:[self.model max_mbps]];
-	[self.trendField
-	 setFloatValue:[self.model peek_hold_mbps]];
-	[self.totalpktField
-	 setIntegerValue:[self.model total_pkts]];
-	[self.samplingTargetField
-	 setFloatValue:([self.model getSamplingInterval] * 1000.0f)];
-	[self.samplingField
-	 setFloatValue:([self.model snapSamplingInterval] * 1000.0f)];
+	[_snapshotField	 setFloatValue:_model.mbps];
+	[_maxField setFloatValue:_model.max_mbps];
+	[_trendField setFloatValue:_model.peek_hold_mbps];
+	[_totalpktField setIntegerValue:_model.total_pkts];
+
+	[_samplingTargetField
+	 setFloatValue:_model.samplingIntervalMS];
+	[_samplingField
+	 setFloatValue:_model.samplingIntervalLastMS];
 }
 
 - (void)setupInterfaceButton:(NSPopUpButton *)btn
