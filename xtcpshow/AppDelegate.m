@@ -36,6 +36,7 @@ static void setup_interface(NSPopUpButton *);
 	// widget initialization
 	[_graphView initData];
 	[_graphView setRange:RANGE_AUTO withRange:0.0];
+	[_graphView setShowPacketMarker:NO];
 	[_startButton setEnabled:TRUE];
 
 	// setup intrface labels
@@ -158,6 +159,13 @@ static void setup_interface(NSPopUpButton *);
 	[_rangeField setEnabled:NO];
 	[_graphView setRange:mode withRange:0.0f];
 	[self updateUserInterface];
+}
+
+- (IBAction)togglePacketMarker:(id)sender {
+	if ([sender state] == NSOnState)
+		[_graphView setShowPacketMarker:YES];
+	else
+		[_graphView setShowPacketMarker:NO];
 }
 
 - (void)animationNotify:(id)sender

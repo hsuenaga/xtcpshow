@@ -49,9 +49,11 @@ struct DataQueueEntry {
 - (void)zeroFill:(size_t)size;
 - (void)deleteAll;
 
-// clipping queue
+// copy/clipping queue
+- (DataQueue *)duplicate;
 - (void)removeFromHead:(size_t)size;
 - (void)clipFromHead:(size_t)size;
+
 
 // queue status
 - (BOOL)isEmpty;

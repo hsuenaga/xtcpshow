@@ -35,12 +35,14 @@ extern NSString *const RANGE_MANUAL;
 	NSGradient *graph_gradient;
 }
 @property (strong) DataQueue *data;
+@property (strong) DataQueue *marker;
 @property (assign) int SMASize;
 @property (assign) int viewOffset;
 @property (assign) int TargetTimeOffset;
 @property (assign) int TargetTimeLength;
 @property (assign) float samplingInterval;
 @property (assign) int scalingMode;
+@property (assign) BOOL showPacketMarker;
 
 - (void)initData;
 
@@ -49,6 +51,7 @@ extern NSString *const RANGE_MANUAL;
 - (float)setRange:(NSString *)mode withStep:(int)step;
 
 - (void)drawGraph;
+- (void)drawXMark:(float)height;
 - (void)drawText: (NSString *)t atPoint:(NSPoint)p;
 - (void)drawGuide;
 - (void)drawGrid;
@@ -59,6 +62,7 @@ extern NSString *const RANGE_MANUAL;
 - (float)dataScale;
 - (NSRange)dataRangeTail;
 - (NSRange)viewRange;
+- (NSRange)markerRange;
 - (void)drawRect:(NSRect)rect;
 
 @end

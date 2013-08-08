@@ -46,6 +46,7 @@
 - (IBAction)changeRange:(id)sender;
 - (IBAction)enterRange:(id)sender;
 - (IBAction)setRangeType:(id)sender;
+- (IBAction)togglePacketMarker:(id)sender;
 
 /* the model */
 @property (strong) CaptureModel *model;

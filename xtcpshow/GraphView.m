@@ -18,11 +18,13 @@ NSString *const RANGE_MANUAL = @"Manual";
 @implementation GraphView
 - (void)initData
 {
-	self.data = nil;
-	self.TargetTimeOffset = 0;
-	self.TargetTimeLength = 0;
-	self.viewOffset = 0;
-	self.scalingMode = DISCRETE_SCALING;
+	_data = nil;
+	_TargetTimeOffset = 0;
+	_TargetTimeLength = 0;
+	_viewOffset = 0;
+	_scalingMode = DISCRETE_SCALING;
+	_showPacketMarker = TRUE;
+
 	graph_gradient = [[NSGradient alloc]
 			  initWithStartingColor:[NSColor clearColor]
 			  endingColor:[NSColor greenColor]];
@@ -107,16 +109,11 @@ NSString *const RANGE_MANUAL = @"Manual";
 
 - (void)drawGraph
 {
-	DataQueue *data;
-	NSRect rect;
-
 	[NSGraphicsContext saveGraphicsState];
-	rect = [self bounds];
-	data = [self data];
-	[data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
+	[_data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
 		NSRect bar;
 
-		if (idx > rect.size.width) {
+		if (idx > _bounds.size.width) {
 			*stop = YES;
 			return;
 		}
@@ -128,6 +125,28 @@ NSString *const RANGE_MANUAL = @"Manual";
 			return;
 		[graph_gradient drawInRect:bar angle:90.0];
 	}];
+	[NSGraphicsContext restoreGraphicsState];
+}
+
+- (void)drawXMark:(float)height;
+{
+	height = _bounds.size.height * height;
+
+	[NSGraphicsContext saveGraphicsState];
+	[[NSColor cyanColor] set];
+	[_marker enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
+		NSBezierPath *path;
+
+		if (value < 1.0f)
+			return;
+
+		path = [NSBezierPath bezierPath];
+		[path moveToPoint:NSMakePoint((float)idx, 0.0f)];
+		[path lineToPoint:NSMakePoint((float)idx, height)];
+		[path setLineCapStyle:NSRoundLineCapStyle];
+		[path stroke];
+	}];
+
 	[NSGraphicsContext restoreGraphicsState];
 }
 
@@ -229,6 +248,10 @@ NSString *const RANGE_MANUAL = @"Manual";
 	/* show matrix */
 	[self drawGrid];
 
+	/* plot x mark */
+	if (_showPacketMarker == TRUE)
+		[self drawXMark:0.2f];
+
 	/* plot bar graph */
 	[self drawGraph];
 
@@ -254,12 +277,14 @@ NSString *const RANGE_MANUAL = @"Manual";
 	// remember sampling interval of original data
 	_samplingInterval = [data interval];
 
+	// make bar graph
 	[sampler importData:data];
 	[sampler clipQueueTail:[self dataRangeTail]];
 	if (_scalingMode == DISCRETE_SCALING)
 		[sampler discreteScaleQueue:[self dataScale]];
 	else
 		[sampler linearScaleQueue:[self dataScale]];
+	_marker = [[sampler data] duplicate]; // before SMA
 
 	if (_SMASize > 1) {
 		viewSMA = ceil((float)_SMASize * [self dataScale]);
@@ -273,8 +298,11 @@ NSString *const RANGE_MANUAL = @"Manual";
 	unit_conv = unit_conv / 1000.0f / 1000.0f; // [Mbps]
 
 	[sampler scaleAllValue:unit_conv];
-
 	_data = [sampler data];
+
+	[sampler importData:_marker];
+	[sampler clipQueueTail:[self markerRange]];
+	_marker = [sampler data];
 }
 
 - (float)dataScale
@@ -306,8 +334,18 @@ NSString *const RANGE_MANUAL = @"Manual";
 {
 	NSRange range;
 
-	range.location = [self viewOffset];
-	range.length = (int)[self bounds].size.width;
+	range.location = _viewOffset;
+	range.length = (int)_bounds.size.width;
+	return range;
+}
+
+- (NSRange)markerRange
+{
+	NSRange range;
+
+	range.location = _viewOffset + (_SMASize/2) * [self dataScale];
+	range.length = (int)_bounds.size.width;
+
 	return range;
 }
 

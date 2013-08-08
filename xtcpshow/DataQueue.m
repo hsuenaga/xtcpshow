@@ -249,6 +249,19 @@
 	_count = 0;
 }
 
+- (DataQueue *)duplicate
+{
+	struct DataQueueEntry *entry;
+	DataQueue *new = [[DataQueue alloc] init];
+
+	new.interval = _interval;
+	STAILQ_FOREACH(entry, &head, chain) {
+		[new addFloatValue:entry->data];
+	}
+	
+	return new;
+}
+
 - (void)removeFromHead:(size_t)size
 {
 	while (size-- && !STAILQ_EMPTY(&head))
