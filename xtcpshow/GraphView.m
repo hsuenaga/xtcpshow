@@ -34,34 +34,37 @@ NSString *const RANGE_MANUAL = @"Manual";
 {
 	float max;
 	float new_range;
-	float unit;
 
 	max = [[self data] maxFloatValue];
 
 	/* auto ranging */
 	if (range_mode == RANGE_MANUAL) {
-		max = manual_range;
-	} else if (range_mode == RANGE_PEEKHOLD) {
-		if (peak_range < max)
-			peak_range = max;
-		max = peak_range;
-	}
+		if (manual_range <= 0.5f)
+			new_range = 0.5f;
+		else if (manual_range <= 1.0f)
+			new_range = 1.0f;
+		else if (manual_range <= 2.5f)
+			new_range = 2.5f;
+		else
+			new_range =
+			5.0f * (ceil(manual_range/5.0f));
+	} else {
+		if (range_mode == RANGE_PEEKHOLD) {
+			if (peak_range < max)
+				peak_range = max;
+			max = peak_range;
+		}
 
-	/* scaling */
-	if (max < 0.5) {
-		unit = 0.5;
+		/* automatic scaling */
+		if (max < 0.5f)
+			new_range = 0.5f;
+		else if (max < 1.0f)
+			new_range = 1.0f;
+		else if (max < 2.5f)
+			new_range = 2.5f;
+		else
+			new_range = 5.0f * (ceil(max / 5.0f));
 	}
-	else if (max < 1.0) {
-		unit = 1.0;
-	}
-	else if (max < 5.0) {
-		unit = 2.5;
-	}
-	else {
-		unit = 5.0;
-	}
-	new_range = (unit * (floor(max / unit) + 1.0));
-
 	if (new_range != y_range)
 		needRedrawImage = TRUE;
 
@@ -72,7 +75,6 @@ NSString *const RANGE_MANUAL = @"Manual";
 
 - (float)setRange:(NSString *)mode withRange:(float)range
 {
-
 	range_mode = mode;
 	peak_range = 0.0f;
 	if (mode == RANGE_MANUAL)
@@ -87,24 +89,34 @@ NSString *const RANGE_MANUAL = @"Manual";
 {
 	float range;
 
-	if (step < 0) {
-		step = 0;
-		range = 0.0; // suprress compiler
-	}
-
-	else if (step == 0) {
+	if (step < 1)
 		range = 0.5;
-	}
-	else if (step == 1) {
+	else if (step == 1)
 		range = 1.0;
-	}
-	else if (step == 2) {
+	else if (step == 2)
 		range = 2.5;
-	}
-	else {
-		range = 5.0f * (float)(step - 1);
-	}
+	else
+		range = (float)(5 * (step - 2));
+	NSLog(@"step:%d range:%f", step, range);
+
 	return [self setRange:mode withRange:range];
+}
+
+- (int)stepValueWithRange:(float)range
+{
+	int step;
+
+	if (range < 1.0f)
+		step = 0;
+	else if (range < 2.5f)
+		step = 1;
+	else if (range < 5.0f)
+		step = 2;
+	else
+		step = ((int)floor(range / 5.0f)) + 2;
+	NSLog(@"range:%f step:%d", range, step);
+
+	return step;
 }
 
 - (void)drawGraph

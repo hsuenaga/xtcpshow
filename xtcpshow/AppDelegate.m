@@ -111,14 +111,12 @@ static void setup_interface(NSPopUpButton *);
 	int step;
 
 	mode = [_rangeSelector titleOfSelectedItem];
-	range = [_rangeField floatValue];
-	if (isnan(range) || isinf(range))
-		range = 0.0;
 	if (mode != RANGE_MANUAL)
 		return;
 
 	step = [_rangeStepper intValue];
 	range = [_graphView setRange:mode withStep:step];
+	NSLog(@"new range:%f", range);
 	[_rangeField setFloatValue:range];
 	[self updateUserInterface];
 }
@@ -137,6 +135,8 @@ static void setup_interface(NSPopUpButton *);
 
 	range = [_graphView setRange:mode withRange:range];
 	[_rangeField setFloatValue:range];
+	[_rangeStepper
+	 setIntValue:[_graphView stepValueWithRange:range]];
 	[self updateUserInterface];
 }
 

@@ -49,6 +49,7 @@ extern NSString *const RANGE_MANUAL;
 - (void)updateRange;
 - (float)setRange:(NSString *)mode withRange:(float)range;
 - (float)setRange:(NSString *)mode withStep:(int)step;
+- (int)stepValueWithRange:(float)range;
 
 - (void)drawGraph;
 - (void)drawXMark:(float)height;
