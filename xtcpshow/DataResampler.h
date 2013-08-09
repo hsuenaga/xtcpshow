@@ -32,4 +32,6 @@
 
 - (void)movingAverage:(NSUInteger)samples;
 - (void)triangleMovingAverage:(NSUInteger)samples;
+
+- (void)invalidValueException;
 @end

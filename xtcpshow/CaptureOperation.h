@@ -36,6 +36,7 @@
 	BOOL terminate;
 
 	// counter
+	struct timeval tv_stamp;
 	float max_mbps;
 	float peak_mbps;
 	int bytes;

@@ -307,7 +307,6 @@ NSString *const RANGE_MANUAL = @"Manual";
 	// convert [bytes] => [Mbps]
 	unit_conv = 8.0f / [[sampler data] interval]; // [bps]
 	unit_conv = unit_conv / 1000.0f / 1000.0f; // [Mbps]
-
 	[sampler scaleAllValue:unit_conv];
 	_data = [sampler data];
 

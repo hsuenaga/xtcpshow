@@ -217,7 +217,7 @@
 	[_model
 	 performSelectorOnMainThread:@selector(samplingNotify:)
 	 withObject:[NSNumber numberWithInt:bytes]
-	 waitUntilDone:YES];
+	 waitUntilDone:NO];
 }
 
 - (void)sendError:(NSString *)message

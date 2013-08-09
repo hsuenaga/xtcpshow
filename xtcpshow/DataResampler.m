@@ -42,11 +42,14 @@
 - (void)scaleAllValue:(float)scale
 {
 	if (isnan(scale))
-		return;
+		[self invalidValueException];
 	if (isinf(scale))
+		[self invalidValueException];
+
+	if ([_data isEmpty]) {
+		NSLog(@"data is empty");
 		return;
-	if ([_data isEmpty])
-		return;
+	}
 	[_data replaceValueUsingBlock:^(float *value, NSUInteger idx, BOOL *stop) {
 		(*value) = (*value) * scale;
 	}];
@@ -245,5 +248,14 @@
 
 	write_protect = FALSE;
 	_data = dst;
+}
+
+- (void)invalidValueException
+{
+	NSException *ex;
+
+	ex = [NSException exceptionWithName:@"Invalid value" reason:@"Invalid value in DataResampler" userInfo:nil];
+
+	@throw ex;
 }
 @end

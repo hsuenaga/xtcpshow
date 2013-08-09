@@ -234,7 +234,6 @@
 		block(&value, idx, &stop);
 		if (stop == TRUE)
 			break;
-
 		[entry setFloatValue:value];
 		_count++;
 		idx++;
@@ -299,7 +298,7 @@
 
 - (BOOL)isEmpty
 {
-	if (_head && _tail)
+	if (!_head)
 		return TRUE;
 
 	return FALSE;
