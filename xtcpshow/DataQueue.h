@@ -33,16 +33,25 @@
 - (float)sum;
 
 // add data
+- (void)addDataEntry:(DataEntry *)entry;
+- (DataEntry *)addDataEntry:(DataEntry *)entry withLimit:(size_t)limit;
 - (void)addFloatValue:(float)value;
 - (float)addFloatValue:(float)value withLimit:(size_t)limit;
 - (BOOL)prependFloatValue:(float)value;
 
 // get/delete/shift data
+- (DataEntry *)dequeueDataEntry;
 - (float)dequeueFloatValue;
+- (DataEntry *)shiftDataWithNewData:(DataEntry *)entry;
 - (float)shiftFloatValueWithNewValue:(float)newvalue;
+
+// time
+- (float)lastSeconds;
+- (float)firstSeconds;
 
 // enumerate all data
 - (void)enumerateFloatUsingBlock:(void(^)(float value, NSUInteger idx,  BOOL *stop))block;
+- (void)enumerateFloatWithTimeUsingBlock:(void(^)(float value, float seconds, NSUInteger idx, BOOL *stop))block;
 - (void)replaceValueUsingBlock:(void(^)(float *value, NSUInteger idx, BOOL *stop))block;
 
 // clear queue

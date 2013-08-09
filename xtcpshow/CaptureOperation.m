@@ -13,6 +13,7 @@
 #import "CaptureOperation.h"
 #import "CaptureModel.h"
 #import "DataQueue.h"
+#import "DataEntry.h"
 
 /*
  * Capture thread
@@ -91,8 +92,10 @@
 		switch (code) {
 			case 1:
 				// got packet
+				pkts++;
 				bytes += hdr->len;
-				pkts += 1;
+				[self sendNotify:hdr->len
+					withTime:&hdr->ts];
 				break;
 			case 0:
 				// timeout
@@ -122,7 +125,6 @@
 		[_model setPeek_hold_mbps:peak_mbps];
 		[_model setMax_mbps:max_mbps];
 		[_model setSamplingIntervalLast:last_interval];
-		[self sendNotify];
 		bytes = 0;
 	}
 
@@ -212,11 +214,11 @@
 	return TRUE;
 }
 
-- (void)sendNotify
+- (void)sendNotify:(int)size withTime:(struct timeval *)tv
 {
 	[_model
 	 performSelectorOnMainThread:@selector(samplingNotify:)
-	 withObject:[NSNumber numberWithInt:bytes]
+	 withObject:[DataEntry dataWithInt:size atTime:tv]
 	 waitUntilDone:NO];
 }
 

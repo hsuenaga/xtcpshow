@@ -126,11 +126,11 @@
 	return sum;
 }
 
-- (void)addFloatValue:(float)value
+- (void)addDataEntry:(DataEntry *)entry
 {
-	DataEntry *entry;
+	if (!entry)
+		return;
 
-	entry = [DataEntry dataWithFloat:value atTime:NULL];
 	if (_tail) {
 		_tail.next = entry;
 		_tail = entry;
@@ -138,20 +138,35 @@
 	else {
 		_head = _tail = entry;
 	}
-	[self addSumState:value];
+	[self addSumState:[entry floatValue]];
 	_count++;
-
 	CHECK_COUNTER(self);
+}
+
+-(DataEntry *)addDataEntry:(DataEntry *)entry withLimit:(size_t)limit
+{
+	if (_count < limit) {
+		[self addDataEntry:entry];
+		return nil;
+	}
+
+	return [self shiftDataWithNewData:entry];
+}
+
+- (void)addFloatValue:(float)value
+{
+	[self addDataEntry:[DataEntry dataWithFloat:value atTime:NULL]];
 }
 
 - (float)addFloatValue:(float)value withLimit:(size_t)limit
 {
-	if (_count < limit) {
-		[self addFloatValue:value];
-		return 0.0f;
-	}
+	DataEntry *old;
 
-	return [self shiftFloatValueWithNewValue:value];
+	old = [self addDataEntry:[DataEntry dataWithFloat:value atTime:NULL] withLimit:limit];
+	if (old)
+		return [old floatValue];
+
+	return 0.0f;
 }
 
 - (BOOL)prependFloatValue:(float)value
@@ -173,33 +188,53 @@
 	return TRUE;
 }
 
-- (float)dequeueFloatValue
+- (DataEntry *)dequeueDataEntry
 {
 	DataEntry *entry;
-	float oldvalue;
+
+	if (!_head)
+		return nil;
 
 	entry = _head;
 	_head = entry.next;
 	entry.next = nil;
-	if (_head == nil)
+	if (!_head)
 		_tail = nil;
-
-	oldvalue = [entry floatValue];
+	[self subSumState:[entry floatValue]];
 	_count--;
 
-	if (_count == 0)
-		[self clearSumState];
-	else
-		[self subSumState:oldvalue];
-	
 	CHECK_COUNTER(self);
-	return oldvalue;
+	return entry;
+}
+
+- (float)dequeueFloatValue
+{
+	return [[self dequeueDataEntry] floatValue];
+}
+
+- (DataEntry *)shiftDataWithNewData:(DataEntry *)entry
+{
+	[self addDataEntry:entry];
+	return [self dequeueDataEntry];
 }
 
 - (float)shiftFloatValueWithNewValue:(float)newvalue
 {
-	[self addFloatValue:newvalue];
-	return [self dequeueFloatValue];
+	return [[self shiftDataWithNewData:[DataEntry dataWithFloat:newvalue atTime:NULL]] floatValue];
+}
+
+- (float)lastSeconds
+{
+	if (!_tail)
+		return 0.0f;
+	return [_tail floatTime];
+}
+
+- (float)firstSeconds
+{
+	if (!_head)
+		return 0.0f;
+	return [_head floatTime];
 }
 
 - (void)enumerateFloatUsingBlock:(void(^)(float value, NSUInteger idx,  BOOL *stop))block
@@ -213,6 +248,25 @@
 
 		value = [entry floatValue];
 		block(value, idx, &stop);
+		if (stop == TRUE)
+			break;
+		idx++;
+	}
+	CHECK_COUNTER(self);
+}
+
+- (void)enumerateFloatWithTimeUsingBlock:(void(^)(float value, float seconds, NSUInteger idx,  BOOL *stop))block
+{
+	DataEntry *entry;
+	NSUInteger idx = 0;
+
+	for (entry = _head; entry; entry = entry.next) {
+		BOOL stop = FALSE;
+		float value, seconds;
+
+		value = [entry floatValue];
+		seconds = [entry floatTime];
+		block(value, seconds, idx, &stop);
 		if (stop == TRUE)
 			break;
 		idx++;

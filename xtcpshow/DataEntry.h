@@ -15,6 +15,7 @@
 @property (strong) DataEntry *next;
 
 + (DataEntry *)dataWithFloat:(float)data atTime:(struct timeval *)time;
++ (DataEntry *)dataWithFloat:(float)data atSeconds:(float)seconds;
 + (DataEntry *)dataWithInt:(int)data atTime:(struct timeval *)time;
 
 - (void)setFloatValue:(float)value;

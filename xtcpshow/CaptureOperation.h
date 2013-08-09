@@ -36,11 +36,10 @@
 	BOOL terminate;
 
 	// counter
-	struct timeval tv_stamp;
 	float max_mbps;
 	float peak_mbps;
-	int bytes;
 	int pkts;
+	int bytes;
 }
 @property (weak) CaptureModel *model;
 
@@ -52,7 +51,7 @@
 
 - (float)elapsed:(struct timeval *)last;
 - (BOOL)tick_expired;
-- (void)sendNotify;
+- (void)sendNotify:(int)size withTime:(struct timeval *)tv;
 - (void)sendError:(NSString *)message;
 - (void)sendFinish;
 

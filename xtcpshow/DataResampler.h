@@ -29,6 +29,7 @@
 
 - (void)clipQueueHead:(NSRange)range;
 - (void)clipQueueTail:(NSRange)range;
+- (void)clipQueueBySeconds:(float)length;
 
 - (void)movingAverage:(NSUInteger)samples;
 - (void)triangleMovingAverage:(NSUInteger)samples;

@@ -8,6 +8,7 @@
 #include "math.h"
 
 #import "DataResampler.h"
+#import "DataEntry.h"
 
 @implementation DataResampler
 - (void)importData:(DataQueue *)data
@@ -54,6 +55,7 @@
 		(*value) = (*value) * scale;
 	}];
 }
+
 
 - (void)discreteScaleQueue:(float)scale
 {
@@ -200,6 +202,27 @@
 	reverse.location = [_data count] - range.location;
 	reverse.location -= range.length;
 	[self clipQueueHead:reverse];
+}
+
+- (void)clipQueueBySeconds:(float)length
+{
+	DataQueue *dst = [[DataQueue alloc] init];
+	float last_time = [_data lastSeconds];
+	float start;
+
+	if (last_time < length)
+		start = 0;
+	else
+		start = last_time - length;
+
+	[_data enumerateFloatWithTimeUsingBlock:^(float value, float seconds, NSUInteger idx, BOOL *stop) {
+		if (seconds < start)
+			return;
+		[dst addDataEntry:[DataEntry dataWithFloat:value atSeconds:seconds]];
+	}];
+
+	write_protect = FALSE;
+	_data = dst;
 }
 
 - (void)movingAverage:(NSUInteger)samples

@@ -30,6 +30,15 @@
 	return new;
 }
 
++ (DataEntry *)dataWithFloat:(float)data atSeconds:(float)seconds
+{
+	DataEntry *new = [[DataEntry alloc] init];
+
+	[new setFloatValue:data];
+	[new setFloatTime:seconds];
+	return new;
+}
+
 + (DataEntry *)dataWithInt:(int)data atTime:(struct timeval *)time
 {
 	DataEntry *new = [[DataEntry alloc] init];

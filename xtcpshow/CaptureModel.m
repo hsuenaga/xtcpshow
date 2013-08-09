@@ -10,6 +10,7 @@
 #import "CaptureModel.h"
 #import "CaptureOperation.h"
 #import "DataQueue.h"
+#import "DataEntry.h"
 
 /*
  * Model object: almost values are updated by operation thread.
@@ -97,10 +98,10 @@
 //
 // notify from Capture operation thread
 //
-- (void) samplingNotify:(NSNumber *)number
+- (void) samplingNotify:(DataEntry *)entry
 {
-	[_data addFloatValue:[number floatValue]
-		   withLimit:_history_size];
+	[_data addDataEntry:entry withLimit:_history_size];
+
 }
 
 - (void) samplingError:(NSString *)message
