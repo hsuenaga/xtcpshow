@@ -18,7 +18,7 @@
 static NSString *const LBL_START=@"START";
 static NSString *const LBL_STOP=@"STOP";
 static NSString *const LBL_OK=@"OK";
-static NSString *const LBL_CAP_ERROR=@"Capture ERROR";
+static NSString *const LBL_CAP_ERROR=@"CAPTURE ERROR";
 
 static NSString *const DEF_DEVICE=@"en0";
 static NSString *const PREFER_DEVICE=@"en";

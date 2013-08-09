@@ -8,22 +8,22 @@
 #include <sys/queue.h>
 #import <Foundation/Foundation.h>
 
-struct DataQueueEntry {
-	float data; // Sampling data
-
-	STAILQ_ENTRY(DataQueueEntry) chain;
-};
+@class DataEntry;
 
 @interface DataQueue : NSObject {
-	STAILQ_HEAD(DataQueueHead, DataQueueEntry) head;
 	NSUInteger refresh_count;
 	float add;
 	float add_remain;
 	float sub;
 	float sub_remain;
 }
+@property (readonly, strong) DataEntry *head;
+@property (readonly, strong) DataEntry *tail;
 @property (readonly) NSUInteger count;
 @property (assign) float interval; // Average Sampling interval
+
+// protected
+- (DataQueue *)init;
 
 // differential sum update.
 - (void)addSumState:(float)value;
@@ -33,7 +33,7 @@ struct DataQueueEntry {
 - (float)sum;
 
 // add data
-- (BOOL)addFloatValue:(float)value;
+- (void)addFloatValue:(float)value;
 - (float)addFloatValue:(float)value withLimit:(size_t)limit;
 - (BOOL)prependFloatValue:(float)value;
 
@@ -54,9 +54,13 @@ struct DataQueueEntry {
 - (void)removeFromHead:(size_t)size;
 - (void)clipFromHead:(size_t)size;
 
-
 // queue status
 - (BOOL)isEmpty;
 - (float)maxFloatValue;
 - (float)averageFloatValue;
+
+// debug & exception
+- (void)assertCounting;
+- (void)invalidValueException;
+- (void)invalidChainException:(NSUInteger)count;
 @end

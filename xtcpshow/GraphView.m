@@ -124,7 +124,6 @@ NSString *const RANGE_MANUAL = @"Manual";
 	[NSGraphicsContext saveGraphicsState];
 	[_data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
 		NSRect bar;
-
 		if (idx > _bounds.size.width) {
 			*stop = YES;
 			return;

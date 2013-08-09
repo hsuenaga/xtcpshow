@@ -7,7 +7,6 @@
 //
 
 #import <Foundation/Foundation.h>
-
 #import "DataQueue.h"
 
 @interface DataResampler : NSObject {

@@ -8,15 +8,25 @@
 #include <sys/queue.h>
 
 #import "DataQueue.h"
+#import "DataEntry.h"
+
+#undef DEBUG_COUNTER
 
 #define REFRESH_THR 1000 // [samples]
+
+#ifdef DEBUG_COUNTER
+#define CHECK_COUNTER(x) [(x) assertCounting]
+#else
+#define CHECK_COUNTER(x) // nothing
+#endif
 
 @implementation DataQueue
 - (DataQueue *)init
 {
 	self = [super init];
 
-	STAILQ_INIT(&head);
+	_head = nil;
+	_tail = nil;
 	_interval = 0.0f;
 	_count = 0;
 	refresh_count = REFRESH_THR;
@@ -25,24 +35,14 @@
 	return self;
 }
 
-- (void)dealloc
-{
-	struct DataQueueEntry *entry;
-
-	while (!STAILQ_EMPTY(&head)) {
-		entry = STAILQ_FIRST(&head);
-		STAILQ_REMOVE_HEAD(&head, chain);
-		free(entry);
-	}
-}
-
 - (void)addSumState:(float)value
 {
 	float new_value;
 	float delta;
 	
 	if (isnan(value) || isinf(value))
-		return; // XXX: exception
+		[self invalidValueException];
+	
 	if (value == 0.0f)
 		return;
 	if (refresh_count-- == 0) {
@@ -67,7 +67,8 @@
 	float delta;
 
 	if (isnan(value) || isinf(value))
-		return; // XXX: exception
+		[self invalidValueException];
+	
 	if (value == 0.0f)
 		return;
 	if (refresh_count-- == 0) {
@@ -97,16 +98,17 @@
 
 - (void)refreshSumState
 {
-	struct DataQueueEntry *entry;
+	DataEntry *entry;
 
 	[self clearSumState];
-	STAILQ_FOREACH(entry, &head, chain) {
+	for (entry = _head; entry; entry = entry.next) {
 		float value, new_value;
 
-		if (isnan(entry->data) || isinf(entry->data))
-			continue;
+		value = [entry floatValue];
+		if (isnan(value) || isinf(value))
+			[self invalidValueException];
 
-		value = entry->data + add_remain;
+		value = value + add_remain;
 		new_value = add + value;
 		add_remain = (new_value - add) - value;
 		add = new_value;
@@ -124,20 +126,22 @@
 	return sum;
 }
 
-- (BOOL)addFloatValue:(float)value
+- (void)addFloatValue:(float)value
 {
-	struct DataQueueEntry *entry;
+	DataEntry *entry;
 
-	entry = (struct DataQueueEntry *)malloc(sizeof(*entry));
-	if (entry == NULL)
-		return FALSE;
-	entry->data = value;
-
-	STAILQ_INSERT_TAIL(&head, entry, chain);
+	entry = [DataEntry dataWithFloat:value atTime:NULL];
+	if (_tail) {
+		_tail.next = entry;
+		_tail = entry;
+	}
+	else {
+		_head = _tail = entry;
+	}
 	[self addSumState:value];
 	_count++;
 
-	return TRUE;
+	CHECK_COUNTER(self);
 }
 
 - (float)addFloatValue:(float)value withLimit:(size_t)limit
@@ -152,40 +156,43 @@
 
 - (BOOL)prependFloatValue:(float)value
 {
-	struct DataQueueEntry *entry;
+	DataEntry *entry;
 
-	entry = (struct DataQueueEntry *)malloc(sizeof(*entry));
-	if (entry == NULL)
-		return FALSE;
-	entry->data = value;
-
-	STAILQ_INSERT_HEAD(&head, entry, chain);
+	entry = [DataEntry dataWithFloat:value atTime:NULL];
+	if (_head) {
+		entry.next = _head;
+		_head = entry;
+	}
+	else {
+		_head = _tail = entry;
+	}
 	[self addSumState:value];
 	_count++;
-
+	
+	CHECK_COUNTER(self);
 	return TRUE;
 }
 
 - (float)dequeueFloatValue
 {
-	struct DataQueueEntry *entry;
+	DataEntry *entry;
 	float oldvalue;
 
-	if (STAILQ_EMPTY(&head)) {
-		return nanf(__func__);
-	}
+	entry = _head;
+	_head = entry.next;
+	entry.next = nil;
+	if (_head == nil)
+		_tail = nil;
 
-	entry = STAILQ_FIRST(&head);
-	STAILQ_REMOVE_HEAD(&head, chain);
-	oldvalue = entry->data;
-	free(entry);
+	oldvalue = [entry floatValue];
 	_count--;
 
 	if (_count == 0)
 		[self clearSumState];
 	else
 		[self subSumState:oldvalue];
-
+	
+	CHECK_COUNTER(self);
 	return oldvalue;
 }
 
@@ -197,35 +204,44 @@
 
 - (void)enumerateFloatUsingBlock:(void(^)(float value, NSUInteger idx,  BOOL *stop))block
 {
-	struct DataQueueEntry *entry;
+	DataEntry *entry;
 	NSUInteger idx = 0;
 
-	STAILQ_FOREACH(entry, &head, chain) {
+	for (entry = _head; entry; entry = entry.next) {
 		BOOL stop = FALSE;
+		float value;
 
-		block(entry->data, idx, &stop);
+		value = [entry floatValue];
+		block(value, idx, &stop);
 		if (stop == TRUE)
 			break;
 		idx++;
 	}
+	CHECK_COUNTER(self);
 }
 
 - (void)replaceValueUsingBlock:(void(^)(float *value, NSUInteger idx, BOOL *stop))block
 {
-	struct DataQueueEntry *entry;
+	DataEntry *entry;
 	NSUInteger idx = 0;
 
 	_count = 0;
-	STAILQ_FOREACH(entry, &head, chain) {
+	for (entry = _head; entry; entry = entry.next) {
 		BOOL stop = FALSE;
+		float value;
 
-		block(&entry->data, idx, &stop);
+		value = [entry floatValue];
+		block(&value, idx, &stop);
 		if (stop == TRUE)
 			break;
+
+		[entry setFloatValue:value];
 		_count++;
 		idx++;
 	}
+	entry.next = nil;
 	[self refreshSumState];
+	CHECK_COUNTER(self);
 }
 
 - (void)zeroFill:(size_t)size
@@ -233,84 +249,75 @@
 	[self deleteAll];
 	for (int i = 0; i < size; i++)
 		[self addFloatValue:0.0];
+	CHECK_COUNTER(self);
 }
 
 - (void)deleteAll
 {
-	struct DataQueueEntry *entry;
-
-	while (!STAILQ_EMPTY(&head)) {
-		entry = STAILQ_FIRST(&head);
-		STAILQ_REMOVE_HEAD(&head, chain);
-		free(entry);
-	}
-	
+	_head = _tail = nil;
 	[self clearSumState];
 	_count = 0;
 }
 
 - (DataQueue *)duplicate
 {
-	struct DataQueueEntry *entry;
+	DataEntry *entry;
 	DataQueue *new = [[DataQueue alloc] init];
 
 	new.interval = _interval;
-	STAILQ_FOREACH(entry, &head, chain) {
-		[new addFloatValue:entry->data];
-	}
-	
+
+	for (entry = _head; entry; entry = entry.next)
+		[new addFloatValue:[entry floatValue]];
+	CHECK_COUNTER(self);
 	return new;
 }
 
 - (void)removeFromHead:(size_t)size
 {
-	while (size-- && !STAILQ_EMPTY(&head))
+	while (size-- && _head)
 		[self dequeueFloatValue];
+	CHECK_COUNTER(self);
 }
 
 - (void)clipFromHead:(size_t)size
 {
-	struct DataQueueEntry *entry;
-	struct DataQueueHead temp;
+	DataEntry *entry;
 
-	STAILQ_INIT(&temp);
 	[self clearSumState];
 	_count = 0;
 
-	while(size-- && !STAILQ_EMPTY(&head)) {
-		entry = STAILQ_FIRST(&head);
-		STAILQ_REMOVE_HEAD(&head, chain);
-		STAILQ_INSERT_TAIL(&temp, entry, chain);
-		[self addSumState:entry->data];
+	for (entry = _head; entry; entry = entry.next) {
 		_count++;
+		if (size-- == 0) {
+			entry.next = nil;
+			_tail = entry;
+			break;
+		}
 	}
-
-	while(!STAILQ_EMPTY(&head)) {
-		entry = STAILQ_FIRST(&head);
-		STAILQ_REMOVE_HEAD(&head, chain);
-		free(entry);
-	}
-
-	head = temp;
+	CHECK_COUNTER(self);
 }
 
 - (BOOL)isEmpty
 {
-	if (STAILQ_EMPTY(&head))
+	if (_head && _tail)
 		return TRUE;
+
 	return FALSE;
 }
 
 - (float)maxFloatValue
 {
-	struct DataQueueEntry *entry;
+	DataEntry *entry;
 	float max = 0.0;
 
-	STAILQ_FOREACH(entry, &head, chain) {
-		if (isnan(entry->data))
-			continue;
-		if (max < entry->data)
-			max = entry->data;
+	for (entry = _head; entry; entry = entry.next) {
+		float value = [entry floatValue];
+
+		if (isnan(value))
+			[self invalidValueException];
+
+		if (max < value)
+			max = value;
 	}
 	return max;
 }
@@ -321,5 +328,33 @@
 		return 0.0;
 
 	return ([self sum] / (float)_count);
+}
+
+- (void)assertCounting
+{
+	DataEntry *entry;
+	NSUInteger idx = 0;
+
+	for (entry = _head; entry; entry = entry.next)
+		idx++;
+
+	NSAssert(idx == _count, @"counter(%lu) and entries(%lu) are mismatched", _count, idx);
+}
+
+- (void)invalidValueException
+{
+	NSException *ex = [NSException exceptionWithName:@"Invalid Value" reason:@"Value in DataQueue is not a number." userInfo:nil];
+
+	@throw ex;
+}
+
+- (void)invalidChainException:(NSUInteger)idx
+{
+	NSString *message;
+
+	message = [NSString stringWithFormat:@"counter(%lu) and entry(%lu) are mismatched", _count, idx];
+	NSException *ex = [NSException exceptionWithName:@"Invalid Chain" reason:message userInfo:nil];
+
+	@throw ex;
 }
 @end
