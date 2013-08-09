@@ -90,7 +90,9 @@
 //
 - (void) samplingNotify:(DataEntry *)entry
 {
-	[_data addDataEntry:entry withLimit:_history_size];
+	if (entry.timestamp)
+		[_data addDataEntry:entry withLimit:_history_size];
+	_data.last_update = [NSDate date];
 }
 
 - (void) samplingError:(NSString *)message

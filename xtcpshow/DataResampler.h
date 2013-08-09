@@ -23,7 +23,7 @@
 
 - (void)discreteScaleQueue:(float)scale;
 
-- (void)alignWithTick:(NSTimeInterval)tick fromDate:(NSDate *)date;
+- (void)alignWithTick:(NSTimeInterval)tick fromDate:(NSDate *)start toDate:(NSDate *)end;
 
 - (void)linearScaleQueue:(float)scale;
 - (void)linearDownSamplingQueue:(float)scale;

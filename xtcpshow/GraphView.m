@@ -69,7 +69,7 @@ NSString *const RANGE_MANUAL = @"Manual";
 
 	y_range = new_range; // [Mbps]
 	x_range = time_length * 1000.0f; // [ms]
-	sma_range = _SMASize * 1000.0f; // [ms]
+	sma_range = sma_length * 1000.0f; // [ms]
 }
 
 - (float)setRange:(NSString *)mode withRange:(float)range
@@ -121,7 +121,12 @@ NSString *const RANGE_MANUAL = @"Manual";
 - (void)setTargetTimeLength:(int)value
 {
 	time_offset = 0.0;
-	time_length = (NSTimeInterval)value / 10.0;
+	time_length = (NSTimeInterval)value / 20.0;
+}
+
+- (void)setSMALength:(int)value
+{
+	sma_length = (NSTimeInterval)value / 20.0;
 }
 
 - (void)drawGraph
@@ -287,88 +292,40 @@ NSString *const RANGE_MANUAL = @"Manual";
 - (void)importData:(DataQueue *)data
 {
 	DataResampler *sampler = [[DataResampler alloc] init];
-	NSDate *start = [NSDate date];
+	NSDate *start, *end;
+	NSTimeInterval dataLength;
 	NSUInteger viewSMA;
+	float viewWidth;
 	float unit_conv, tick;
 
 	// calculate tick
-	start = [start dateByAddingTimeInterval:(-time_length)];
-	tick = time_length / _bounds.size.width; // [sec]
-	NSLog(@"view tick: %f [sec]", tick);
+	end = [data last_update];
+	viewWidth = _bounds.size.width;
+	dataLength = 0 - time_length - sma_length;
+	start = [end dateByAddingTimeInterval:dataLength];
+	tick = time_length / viewWidth; // [sec]
 
 	// make bar graph
-	NSLog(@"%lu data entries", [data count]);
 	[sampler importData:data];
-	NSLog(@"clip data by last %f seconds", time_length);
 	[sampler clipQueueFromDate:start];
-
-	NSLog(@"clipped data is %lu entries", [[sampler data] count]);
-	NSLog(@"align data with tick %f", tick);
-	[sampler alignWithTick:tick fromDate:start];
-	NSLog(@"aligned data is %lu entries", [[sampler data] count]);
-
+	[sampler alignWithTick:tick fromDate:start toDate:end];
 	_marker = [[sampler data] duplicate]; // before SMA
 
-	if (_SMASize > 1) {
-		viewSMA = ceil((float)_SMASize * [self dataScale]);
-		if (viewSMA > 1)
-			[sampler triangleMovingAverage:viewSMA];
-	}
-	[sampler clipQueueTail:[self viewRange]];
+	viewSMA = ceil(sma_length / tick);
+	if (viewSMA > 1)
+		[sampler triangleMovingAverage:viewSMA];
+	[sampler clipQueueTail:NSMakeRange(_viewOffset, viewWidth)];
 
 	// convert [bytes] => [Mbps]
-	unit_conv = 8.0f / 0.0005; // XXX
+	unit_conv = 8.0f / tick; // [bps]
 	unit_conv = unit_conv / 1000.0f / 1000.0f; // [Mbps]
 	[sampler scaleAllValue:unit_conv];
 	_data = [sampler data];
 
 	[sampler importData:_marker];
-	[sampler clipQueueTail:[self markerRange]];
+	[sampler clipQueueTail:NSMakeRange((_viewOffset + (viewSMA/2.0)), viewWidth)];
+
 	_marker = [sampler data];
-}
-
-- (float)dataScale
-{
-	float scale;
-	float target_length;
-
-	target_length = time_length;
-	if (target_length < 2.0)
-		target_length = 2.0; // at least 2 sample
-
-	scale = (float)[self bounds].size.width;
-	scale = scale / target_length;
-
-	return scale;
-}
-
-- (NSRange)dataRangeTail
-{
-	NSRange range;
-
-	// range from 'tail'
-	range.location = time_offset;
-	range.length = time_length + _SMASize;
-	return range;
-}
-
-- (NSRange)viewRange
-{
-	NSRange range;
-
-	range.location = _viewOffset;
-	range.length = (int)_bounds.size.width;
-	return range;
-}
-
-- (NSRange)markerRange
-{
-	NSRange range;
-
-	range.location = _viewOffset + (_SMASize/2) * [self dataScale];
-	range.length = (int)_bounds.size.width;
-
-	return range;
 }
 
 - (void)drawRect:(NSRect)dirty_rect

@@ -26,8 +26,8 @@
 	if (_data == nil)
 		return;
 
-	[_data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
-		[dst addFloatValue:value];
+	[_data enumerateFloatWithTimeUsingBlock:^(float value, NSDate *date, NSUInteger idx, BOOL *stop) {
+		[dst addDataEntry:[DataEntry dataWithFloat:value atDate:date]];
 	}];
 	write_protect = FALSE;
 	_data = dst;
@@ -76,46 +76,41 @@
 			dst_idx++;
 		}
 	}];
+	write_protect = FALSE;
 	_data = dst;
 }
 
-- (void)alignWithTick:(NSTimeInterval)tick fromDate:(NSDate *)date
+- (void)alignWithTick:(NSTimeInterval)tick fromDate:(NSDate *)start toDate:(NSDate *)end
 {
 	DataQueue *dst = [[DataQueue alloc] init];
-	__block NSDate *slot;
-	__block float new_value, remain;
+	DataEntry *entry;
+	NSDate *slot;
+	float slot_value, remain;
 
-	slot = [_data firstDate];
-	if (!slot)
-		slot = [NSDate date];
-
-	// pad to start date
-	while ([date earlierDate:slot] == date) {
-		[dst addDataEntry:[DataEntry dataWithFloat:0.0f atDate:date]];
-		date = [date dateByAddingTimeInterval:tick];
-	}
-
-	new_value = remain = 0.0f;
-	[_data enumerateFloatWithTimeUsingBlock:^(float value, NSDate *date, NSUInteger idx, BOOL *stop) {
-		NSTimeInterval delta;
-
-		delta = [date timeIntervalSinceDate:slot];
-		if (delta < tick) {
-			new_value += value + remain;
-			remain = new_value - (value + remain);
-			return;
-		}
-
-		// new slot
-		while (delta >= tick) {
-			[dst addDataEntry:[DataEntry dataWithFloat:new_value atDate:slot]];
-			slot = [slot dateByAddingTimeInterval:tick];
-			new_value = remain = 0.0f;
-			delta -= tick;
-		}
-	}];
+	[self makeMutable];
 	
-	write_protect = FALSE;
+	slot = start;
+
+	while ([[_data firstDate] laterDate:start] == start)
+		[_data dequeueDataEntry];
+
+	slot_value = remain = 0.0f;
+	while ([slot laterDate:end] == end) {
+		while ([[_data firstDate] laterDate:slot] == slot) {
+			float value, new_value;
+
+			entry = [_data dequeueDataEntry];
+			value = [entry floatValue];
+			value = value + remain;
+
+			new_value = slot_value + value;
+			remain = (new_value - slot_value) - value;
+			slot_value = new_value;
+		}
+		[dst addDataEntry:[DataEntry dataWithFloat:slot_value atDate:slot]];
+		slot = [slot dateByAddingTimeInterval:tick];
+		slot_value = remain = 0.0f;
+	}
 	_data = dst;
 }
 

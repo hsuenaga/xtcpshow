@@ -84,12 +84,12 @@
 	NSTimeInterval date;
 
 	if (tv == NULL) {
-		date = 0.0;
+		_timestamp = nil;
+		return;
 	}
-	else {
-		date = tv->tv_sec;
-		date = date + ((double)tv->tv_usec / 1000000.0);
-	}
+
+	date = tv->tv_sec;
+	date = date + ((double)tv->tv_usec / 1000000.0);
 	_timestamp = [NSDate dateWithTimeIntervalSince1970:date];
 }
 

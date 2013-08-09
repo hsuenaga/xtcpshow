@@ -19,6 +19,7 @@
 }
 @property (readonly, strong) DataEntry *head;
 @property (readonly, strong) DataEntry *tail;
+@property (strong) NSDate *last_update;
 @property (readonly) NSUInteger count;
 
 // protected
