@@ -11,12 +11,13 @@
 @interface DataEntry : NSObject
 
 @property (strong, readonly) NSNumber *number;
-@property (assign, readonly) struct timeval timestamp;
+@property (strong) NSDate *timestamp;
 @property (strong) DataEntry *next;
 
-+ (DataEntry *)dataWithFloat:(float)data atTime:(struct timeval *)time;
-+ (DataEntry *)dataWithFloat:(float)data atSeconds:(float)seconds;
-+ (DataEntry *)dataWithInt:(int)data atTime:(struct timeval *)time;
++ (DataEntry *)dataWithFloat:(float)data atTimeval:(struct timeval *)time;
++ (DataEntry *)dataWithFloat:(float)data atDate:(NSDate *)date;
++ (DataEntry *)dataWithInt:(int)data atTimeval:(struct timeval *)time;
++ (DataEntry *)dataWIthInt:(int)data atDate:(NSDate *)date;
 
 - (void)setFloatValue:(float)value;
 - (float)floatValue;
@@ -25,8 +26,6 @@
 - (int)intValue;
 
 - (void)setTimeval:(struct timeval *)tv;
-- (void)setFloatTime:(float)value;
-- (float)floatTime; // [sec]
 
 - (void)invalidTimeException;
 @end

@@ -27,7 +27,6 @@
 
 	_head = nil;
 	_tail = nil;
-	_interval = 0.0f;
 	_count = 0;
 	refresh_count = REFRESH_THR;
 	[self clearSumState];
@@ -155,14 +154,14 @@
 
 - (void)addFloatValue:(float)value
 {
-	[self addDataEntry:[DataEntry dataWithFloat:value atTime:NULL]];
+	[self addDataEntry:[DataEntry dataWithFloat:value atTimeval:NULL]];
 }
 
 - (float)addFloatValue:(float)value withLimit:(size_t)limit
 {
 	DataEntry *old;
 
-	old = [self addDataEntry:[DataEntry dataWithFloat:value atTime:NULL] withLimit:limit];
+	old = [self addDataEntry:[DataEntry dataWithFloat:value atTimeval:NULL] withLimit:limit];
 	if (old)
 		return [old floatValue];
 
@@ -173,7 +172,7 @@
 {
 	DataEntry *entry;
 
-	entry = [DataEntry dataWithFloat:value atTime:NULL];
+	entry = [DataEntry dataWithFloat:value atTimeval:NULL];
 	if (_head) {
 		entry.next = _head;
 		_head = entry;
@@ -220,21 +219,21 @@
 
 - (float)shiftFloatValueWithNewValue:(float)newvalue
 {
-	return [[self shiftDataWithNewData:[DataEntry dataWithFloat:newvalue atTime:NULL]] floatValue];
+	return [[self shiftDataWithNewData:[DataEntry dataWithFloat:newvalue atTimeval:NULL]] floatValue];
 }
 
-- (float)lastSeconds
+- (NSDate *)lastDate
 {
 	if (!_tail)
-		return 0.0f;
-	return [_tail floatTime];
+		return nil;
+	return _tail.timestamp;
 }
 
-- (float)firstSeconds
+- (NSDate *)firstDate
 {
 	if (!_head)
-		return 0.0f;
-	return [_head floatTime];
+		return nil;
+	return _head.timestamp;
 }
 
 - (void)enumerateFloatUsingBlock:(void(^)(float value, NSUInteger idx,  BOOL *stop))block
@@ -255,18 +254,15 @@
 	CHECK_COUNTER(self);
 }
 
-- (void)enumerateFloatWithTimeUsingBlock:(void(^)(float value, float seconds, NSUInteger idx,  BOOL *stop))block
+- (void)enumerateFloatWithTimeUsingBlock:(void(^)(float value, NSDate *date, NSUInteger idx,  BOOL *stop))block
 {
 	DataEntry *entry;
 	NSUInteger idx = 0;
 
 	for (entry = _head; entry; entry = entry.next) {
 		BOOL stop = FALSE;
-		float value, seconds;
 
-		value = [entry floatValue];
-		seconds = [entry floatTime];
-		block(value, seconds, idx, &stop);
+		block([entry floatValue], [entry timestamp], idx, &stop);
 		if (stop == TRUE)
 			break;
 		idx++;
@@ -316,8 +312,6 @@
 {
 	DataEntry *entry;
 	DataQueue *new = [[DataQueue alloc] init];
-
-	new.interval = _interval;
 
 	for (entry = _head; entry; entry = entry.next)
 		[new addFloatValue:[entry floatValue]];

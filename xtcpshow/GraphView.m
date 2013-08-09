@@ -19,12 +19,11 @@ NSString *const RANGE_MANUAL = @"Manual";
 - (void)initData
 {
 	_data = nil;
-	_TargetTimeOffset = 0;
-	_TargetTimeLength = 0;
 	_viewOffset = 0;
-	_scalingMode = DISCRETE_SCALING;
 	_showPacketMarker = TRUE;
-
+	time_offset = 0;
+	time_length = 0;
+	
 	graph_gradient = [[NSGradient alloc]
 			  initWithStartingColor:[NSColor clearColor]
 			  endingColor:[NSColor greenColor]];
@@ -69,8 +68,8 @@ NSString *const RANGE_MANUAL = @"Manual";
 		needRedrawImage = TRUE;
 
 	y_range = new_range; // [Mbps]
-	x_range = _samplingInterval * _TargetTimeLength * 1000.0f; // [ms]
-	sma_range = _samplingInterval * _SMASize * 1000.0f; // [ms]
+	x_range = time_length * 1000.0f; // [ms]
+	sma_range = _SMASize * 1000.0f; // [ms]
 }
 
 - (float)setRange:(NSString *)mode withRange:(float)range
@@ -117,6 +116,12 @@ NSString *const RANGE_MANUAL = @"Manual";
 	NSLog(@"range:%f step:%d", range, step);
 
 	return step;
+}
+
+- (void)setTargetTimeLength:(int)value
+{
+	time_offset = 0.0;
+	time_length = (NSTimeInterval)value / 10.0;
 }
 
 - (void)drawGraph
@@ -282,19 +287,26 @@ NSString *const RANGE_MANUAL = @"Manual";
 - (void)importData:(DataQueue *)data
 {
 	DataResampler *sampler = [[DataResampler alloc] init];
+	NSDate *start = [NSDate date];
 	NSUInteger viewSMA;
-	float unit_conv;
+	float unit_conv, tick;
 
-	// remember sampling interval of original data
-	_samplingInterval = [data interval];
+	// calculate tick
+	start = [start dateByAddingTimeInterval:(-time_length)];
+	tick = time_length / _bounds.size.width; // [sec]
+	NSLog(@"view tick: %f [sec]", tick);
 
 	// make bar graph
+	NSLog(@"%lu data entries", [data count]);
 	[sampler importData:data];
-	[sampler clipQueueTail:[self dataRangeTail]];
-	if (_scalingMode == DISCRETE_SCALING)
-		[sampler discreteScaleQueue:[self dataScale]];
-	else
-		[sampler linearScaleQueue:[self dataScale]];
+	NSLog(@"clip data by last %f seconds", time_length);
+	[sampler clipQueueFromDate:start];
+
+	NSLog(@"clipped data is %lu entries", [[sampler data] count]);
+	NSLog(@"align data with tick %f", tick);
+	[sampler alignWithTick:tick fromDate:start];
+	NSLog(@"aligned data is %lu entries", [[sampler data] count]);
+
 	_marker = [[sampler data] duplicate]; // before SMA
 
 	if (_SMASize > 1) {
@@ -305,7 +317,7 @@ NSString *const RANGE_MANUAL = @"Manual";
 	[sampler clipQueueTail:[self viewRange]];
 
 	// convert [bytes] => [Mbps]
-	unit_conv = 8.0f / [[sampler data] interval]; // [bps]
+	unit_conv = 8.0f / 0.0005; // XXX
 	unit_conv = unit_conv / 1000.0f / 1000.0f; // [Mbps]
 	[sampler scaleAllValue:unit_conv];
 	_data = [sampler data];
@@ -320,7 +332,7 @@ NSString *const RANGE_MANUAL = @"Manual";
 	float scale;
 	float target_length;
 
-	target_length = (float)_TargetTimeLength;
+	target_length = time_length;
 	if (target_length < 2.0)
 		target_length = 2.0; // at least 2 sample
 
@@ -335,8 +347,8 @@ NSString *const RANGE_MANUAL = @"Manual";
 	NSRange range;
 
 	// range from 'tail'
-	range.location = _TargetTimeOffset;
-	range.length = _TargetTimeLength + _SMASize;
+	range.location = time_offset;
+	range.length = time_length + _SMASize;
 	return range;
 }
 

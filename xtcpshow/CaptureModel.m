@@ -75,16 +75,6 @@
 	_samplingIntervalLast = 0.0f;
 }
 
-- (void) setSamplingInterval:(float)interval
-{
-	[_data setInterval:interval];
-}
-
-- (float) samplingInterval
-{
-	return [_data interval];
-}
-
 - (float) samplingIntervalMS
 {
 	return ([self samplingInterval] * 1000.0f);
@@ -101,7 +91,6 @@
 - (void) samplingNotify:(DataEntry *)entry
 {
 	[_data addDataEntry:entry withLimit:_history_size];
-
 }
 
 - (void) samplingError:(NSString *)message

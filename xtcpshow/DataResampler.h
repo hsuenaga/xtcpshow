@@ -23,13 +23,15 @@
 
 - (void)discreteScaleQueue:(float)scale;
 
+- (void)alignWithTick:(NSTimeInterval)tick fromDate:(NSDate *)date;
+
 - (void)linearScaleQueue:(float)scale;
 - (void)linearDownSamplingQueue:(float)scale;
 - (void)linearUpSamplingQueue:(float)scale;
 
 - (void)clipQueueHead:(NSRange)range;
 - (void)clipQueueTail:(NSRange)range;
-- (void)clipQueueBySeconds:(float)length;
+- (void)clipQueueFromDate:(NSDate *)start;
 
 - (void)movingAverage:(NSUInteger)samples;
 - (void)triangleMovingAverage:(NSUInteger)samples;

@@ -26,7 +26,6 @@
 	if (_data == nil)
 		return;
 
-	[dst setInterval:[_data interval]];
 	[_data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
 		[dst addFloatValue:value];
 	}];
@@ -63,7 +62,6 @@
 	__block NSUInteger dst_idx;
 	__block float newvalue;
 
-	[dst setInterval:([_data interval] / scale)];
 	newvalue = 0.0;
 	dst_idx = 0;
 	[_data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
@@ -78,6 +76,46 @@
 			dst_idx++;
 		}
 	}];
+	_data = dst;
+}
+
+- (void)alignWithTick:(NSTimeInterval)tick fromDate:(NSDate *)date
+{
+	DataQueue *dst = [[DataQueue alloc] init];
+	__block NSDate *slot;
+	__block float new_value, remain;
+
+	slot = [_data firstDate];
+	if (!slot)
+		slot = [NSDate date];
+
+	// pad to start date
+	while ([date earlierDate:slot] == date) {
+		[dst addDataEntry:[DataEntry dataWithFloat:0.0f atDate:date]];
+		date = [date dateByAddingTimeInterval:tick];
+	}
+
+	new_value = remain = 0.0f;
+	[_data enumerateFloatWithTimeUsingBlock:^(float value, NSDate *date, NSUInteger idx, BOOL *stop) {
+		NSTimeInterval delta;
+
+		delta = [date timeIntervalSinceDate:slot];
+		if (delta < tick) {
+			new_value += value + remain;
+			remain = new_value - (value + remain);
+			return;
+		}
+
+		// new slot
+		while (delta >= tick) {
+			[dst addDataEntry:[DataEntry dataWithFloat:new_value atDate:slot]];
+			slot = [slot dateByAddingTimeInterval:tick];
+			new_value = remain = 0.0f;
+			delta -= tick;
+		}
+	}];
+	
+	write_protect = FALSE;
 	_data = dst;
 }
 
@@ -97,7 +135,6 @@
 	NSUInteger src0_idx;
 
 	[self makeMutable];
-	[dst setInterval:([_data interval] / scale)];
 
 	dst_samples = (float)[_data count];
 	dst_samples = (NSUInteger)(ceil((float)dst_samples * scale));
@@ -135,7 +172,6 @@
 
 	dst0_idx = 0;
 	dst0 = dst1 = 0.0;
-	[dst setInterval:([_data interval] / scale)];
 	[_data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
 		NSUInteger pivot_idx;
 		float pivot;
@@ -204,21 +240,15 @@
 	[self clipQueueHead:reverse];
 }
 
-- (void)clipQueueBySeconds:(float)length
+- (void)clipQueueFromDate:(NSDate *)start;
 {
 	DataQueue *dst = [[DataQueue alloc] init];
-	float last_time = [_data lastSeconds];
-	float start;
 
-	if (last_time < length)
-		start = 0;
-	else
-		start = last_time - length;
-
-	[_data enumerateFloatWithTimeUsingBlock:^(float value, float seconds, NSUInteger idx, BOOL *stop) {
-		if (seconds < start)
+	[_data enumerateFloatWithTimeUsingBlock:^(float value, NSDate *date, NSUInteger idx, BOOL *stop) {
+		if ([date earlierDate:start] == date)
 			return;
-		[dst addDataEntry:[DataEntry dataWithFloat:value atSeconds:seconds]];
+
+		[dst addDataEntry:[DataEntry dataWithFloat:value atDate:date]];
 	}];
 
 	write_protect = FALSE;
@@ -230,10 +260,8 @@
 	DataQueue *dst, *sma;
 
 	dst = [[DataQueue alloc] init];
-	[dst setInterval:[_data interval]];
 
 	sma = [[DataQueue alloc] init];
-	[sma setInterval:[_data interval]];
 	[sma zeroFill:samples];
 
 	[_data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
@@ -253,14 +281,11 @@
 	half_samples = samples / 2 + 1;
 
 	dst = [[DataQueue alloc] init];
-	[dst setInterval:[_data interval]];
-	
+
 	sma1 = [[DataQueue alloc] init];
-	[sma1 setInterval:[_data interval]];
 	[sma1 zeroFill:half_samples];
 
 	sma2 = [[DataQueue alloc] init];
-	[sma2 setInterval:[_data interval]];
 	[sma2 zeroFill:half_samples];
 
 	[_data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {

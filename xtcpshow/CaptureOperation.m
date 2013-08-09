@@ -218,7 +218,7 @@
 {
 	[_model
 	 performSelectorOnMainThread:@selector(samplingNotify:)
-	 withObject:[DataEntry dataWithInt:size atTime:tv]
+	 withObject:[DataEntry dataWithInt:size atTimeval:tv]
 	 waitUntilDone:NO];
 }
 

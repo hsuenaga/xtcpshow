@@ -9,7 +9,7 @@
 #import "DataQueue.h"
 #import "AppDelegate.h"
 
-#define DEF_HISTORY 1024 * 1024 // packets
+#define DEF_HISTORY 2048 * 1024 // packets
 
 @interface CaptureModel : NSObject {
 	NSOperationQueue *capture_cue;
@@ -29,6 +29,7 @@
 @property (atomic, assign) float max_mbps;
 @property (atomic, assign) float peek_hold_mbps;
 @property (atomic, assign) float samplingIntervalLast; // [sec]
+@property (atomic, assign) float samplingInterval; // [sec]
 
 // data processing (don't acccess from other thread)
 @property (strong) DataQueue *data;

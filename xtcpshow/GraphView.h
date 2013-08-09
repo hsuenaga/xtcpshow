@@ -15,9 +15,6 @@ extern NSString *const RANGE_AUTO;
 extern NSString *const RANGE_PEEKHOLD;
 extern NSString *const RANGE_MANUAL;
 
-#define LINEAR_SCALING		0
-#define DISCRETE_SCALING	1
-
 @interface GraphView : NSView {
 	BOOL needRedrawImage;
 	BOOL needRedrawAll;
@@ -31,6 +28,9 @@ extern NSString *const RANGE_MANUAL;
 	NSString *range_mode;
 	float manual_range;
 	float peak_range;
+
+	NSTimeInterval time_offset; //[sec]
+	NSTimeInterval time_length; //[sec]
 	
 	NSGradient *graph_gradient;
 }
@@ -38,19 +38,20 @@ extern NSString *const RANGE_MANUAL;
 @property (strong) DataQueue *marker;
 @property (assign) int SMASize;
 @property (assign) int viewOffset;
-@property (assign) int TargetTimeOffset;
-@property (assign) int TargetTimeLength;
 @property (assign) float samplingInterval;
-@property (assign) int scalingMode;
 @property (assign) BOOL showPacketMarker;
 
 - (void)initData;
 
 - (void)updateRange;
+
+// Action from UI
 - (float)setRange:(NSString *)mode withRange:(float)range;
 - (float)setRange:(NSString *)mode withStep:(int)step;
 - (int)stepValueWithRange:(float)range;
+- (void)setTargetTimeLength:(int)value;
 
+// Drawing
 - (void)drawGraph;
 - (void)drawXMark:(float)height;
 - (void)drawText: (NSString *)t atPoint:(NSPoint)p;

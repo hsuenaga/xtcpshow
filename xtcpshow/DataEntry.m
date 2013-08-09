@@ -14,14 +14,13 @@
 	self = [super init];
 
 	_number = nil;
-	_timestamp.tv_sec = 0;
-	_timestamp.tv_usec = 0;
+	_timestamp = nil;
 	_next = nil;
 
 	return self;
 }
 
-+ (DataEntry *)dataWithFloat:(float)data atTime:(struct timeval *)time
++ (DataEntry *)dataWithFloat:(float)data atTimeval:(struct timeval *)time
 {
 	DataEntry *new = [[DataEntry alloc] init];
 
@@ -30,21 +29,32 @@
 	return new;
 }
 
-+ (DataEntry *)dataWithFloat:(float)data atSeconds:(float)seconds
++ (DataEntry *)dataWithFloat:(float)data atDate:(NSDate *)date
 {
 	DataEntry *new = [[DataEntry alloc] init];
 
 	[new setFloatValue:data];
-	[new setFloatTime:seconds];
+	new.timestamp = date;
+
 	return new;
 }
 
-+ (DataEntry *)dataWithInt:(int)data atTime:(struct timeval *)time
++ (DataEntry *)dataWithInt:(int)data atTimeval:(struct timeval *)time
 {
 	DataEntry *new = [[DataEntry alloc] init];
 
 	[new setIntValue:data];
 	[new setTimeval:time];
+
+	return new;
+}
+
++ (DataEntry *)dataWIthInt:(int)data atDate:(NSDate *)date
+{
+	DataEntry *new = [[DataEntry alloc] init];
+
+	[new setIntValue:data];
+	new.timestamp = date;
 
 	return new;
 }
@@ -71,36 +81,16 @@
 
 - (void)setTimeval:(struct timeval *)tv
 {
-	if (tv) {
-		_timestamp.tv_sec = tv->tv_sec;
-		_timestamp.tv_usec = tv->tv_usec;
+	NSTimeInterval date;
+
+	if (tv == NULL) {
+		date = 0.0;
 	}
 	else {
-		_timestamp.tv_sec = 0;
-		_timestamp.tv_usec = 0;
+		date = tv->tv_sec;
+		date = date + ((double)tv->tv_usec / 1000000.0);
 	}
-}
-
-- (void)setFloatTime:(float)value
-{
-	struct timeval tv;
-
-	if (value < 0.0f)
-		[self invalidTimeException];
-
-	tv.tv_sec = (int)(floor(value));
-	tv.tv_usec = (int)((value - floor(value)) * 1000000.0f);
-	[self setTimeval:&tv];
-}
-
-- (float)floatTime
-{
-	float time_second;
-
-	time_second = (float)(_timestamp.tv_usec / 1000000.0f);
-	time_second += (float)(_timestamp.tv_sec);
-
-	return time_second;
+	_timestamp = [NSDate dateWithTimeIntervalSince1970:date];
 }
 
 - (void)invalidTimeException

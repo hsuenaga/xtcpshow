@@ -20,7 +20,6 @@
 @property (readonly, strong) DataEntry *head;
 @property (readonly, strong) DataEntry *tail;
 @property (readonly) NSUInteger count;
-@property (assign) float interval; // Average Sampling interval
 
 // protected
 - (DataQueue *)init;
@@ -46,12 +45,12 @@
 - (float)shiftFloatValueWithNewValue:(float)newvalue;
 
 // time
-- (float)lastSeconds;
-- (float)firstSeconds;
+- (NSDate *)lastDate;
+- (NSDate *)firstDate;
 
 // enumerate all data
 - (void)enumerateFloatUsingBlock:(void(^)(float value, NSUInteger idx,  BOOL *stop))block;
-- (void)enumerateFloatWithTimeUsingBlock:(void(^)(float value, float seconds, NSUInteger idx, BOOL *stop))block;
+- (void)enumerateFloatWithTimeUsingBlock:(void(^)(float value, NSDate *date, NSUInteger idx, BOOL *stop))block;
 - (void)replaceValueUsingBlock:(void(^)(float *value, NSUInteger idx, BOOL *stop))block;
 
 // clear queue
