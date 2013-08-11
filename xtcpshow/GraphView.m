@@ -20,7 +20,6 @@ NSString *const RANGE_MANUAL = @"Manual";
 - (void)initData
 {
 	_data = nil;
-	_viewOffset = 0;
 	_showPacketMarker = TRUE;
 	time_offset = 0;
 	time_length = 0;
@@ -135,6 +134,11 @@ NSString *const RANGE_MANUAL = @"Manual";
 	[NSGraphicsContext saveGraphicsState];
 	[_data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
 		NSRect bar;
+
+		if (idx < GraphOffset)
+			return;
+		idx -= GraphOffset;
+
 		if (idx > _bounds.size.width) {
 			*stop = YES;
 			return;
@@ -159,6 +163,14 @@ NSString *const RANGE_MANUAL = @"Manual";
 		NSUInteger samples;
 		float h;
 
+		if (idx < XmarkOffset)
+			return;
+		idx -= XmarkOffset;
+
+		if (idx > _bounds.size.width) {
+			*stop = YES;
+			return;
+		}
 		if ( (samples = [data numberOfSamples]) == 0)
 			return;
 		h = _bounds.size.height / (float)_maxSamples;
@@ -315,7 +327,8 @@ NSString *const RANGE_MANUAL = @"Manual";
 	viewSMA = ceil(sma_length / tick);
 	if (viewSMA > 1)
 		[sampler triangleMovingAverage:viewSMA];
-	[sampler clipQueueTail:NSMakeRange(_viewOffset, viewWidth)];
+	GraphOffset = [[sampler data] count] - viewWidth;
+	XmarkOffset = GraphOffset / 2;
 
 	// convert [bytes] => [Mbps]
 	unit_conv = 8.0f / tick; // [bps]

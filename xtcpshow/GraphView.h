@@ -33,14 +33,21 @@ extern NSString *const RANGE_MANUAL;
 	NSTimeInterval time_length; //[sec]
 	NSTimeInterval sma_length; //[sec]
 
+	// X-axis adjustment
+	NSUInteger GraphOffset;
+	NSUInteger XmarkOffset;
+
 	NSGradient *graph_gradient;
 }
 @property (strong) DataQueue *data;
-@property (assign) int viewOffset;
 @property (assign) float samplingInterval;
+
+// statistics
 @property (assign) NSUInteger maxSamples;
 @property (assign) float maxValue;
 @property (assign) float averageValue;
+
+// configuration
 @property (assign) BOOL showPacketMarker;
 
 - (void)initData;
