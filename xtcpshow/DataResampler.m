@@ -84,10 +84,17 @@
 {
 	DataQueue *dst = [[DataQueue alloc] init];
 	DataEntry *entry;
+	NSTimeInterval unix_time;
 	NSDate *slot;
 	float slot_value, remain;
 
 	[self makeMutable];
+	
+	// round up start/end
+	unix_time = [start timeIntervalSince1970];
+	start = [NSDate dateWithTimeIntervalSince1970:(floor(unix_time/tick) * tick)];
+	unix_time = [end timeIntervalSince1970];
+	end = [NSDate dateWithTimeIntervalSince1970:(ceil(unix_time/tick) * tick)];
 	
 	slot = start;
 
