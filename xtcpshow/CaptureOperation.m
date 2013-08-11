@@ -99,7 +99,6 @@
 				break;
 			case 0:
 				// timeout
-				[self sendNotify:0 withTime:NULL];
 				break;
 			default:
 				NSLog(@"pcap error: %s",

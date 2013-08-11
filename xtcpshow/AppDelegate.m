@@ -171,6 +171,7 @@ static void setup_interface(NSPopUpButton *);
 
 - (void)animationNotify:(id)sender
 {
+	[_model animationTick];
 	[_graphView importData:[_model data]];
 	[_graphView setNeedsDisplay:YES];
 

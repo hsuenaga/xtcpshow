@@ -85,6 +85,12 @@
 	return (_samplingIntervalLast * 1000.0f);
 }
 
+- (void) animationTick
+{
+	if (running)
+		_data.last_update = [NSDate date];
+}
+
 //
 // notify from Capture operation thread
 //
@@ -98,6 +104,7 @@
 - (void) samplingError:(NSString *)message
 {
 	[_controller samplingError:message];
+	running = FALSE;
 }
 
 - (void) samplingFinish:(id)sender

@@ -48,6 +48,8 @@
 - (float)samplingIntervalMS;
 - (float)samplingIntervalLastMS;
 
+- (void)animationTick;
+
 - (void)samplingNotify:(NSNumber *)number;
 - (void)samplingError:(NSString *)message;
 - (void)samplingFinish:(id)sender;
