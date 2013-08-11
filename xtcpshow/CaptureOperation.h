@@ -11,10 +11,10 @@
 
 #import "AppDelegate.h"
 
-#define TIMESLOT (0.05f) /* [sec] (= 100[ms])*/
-#define HOLDSLOT (1.0f) /* [sec] */
+#define TIMESLOT (0.10f) // [sec] (= 100[ms])
+#define HOLDSLOT (1.0f)  // [sec]
 
-#define CAP_TICK 1
+#define CAP_TICK 100      // 50 [ms]
 #define CAP_SNAPLEN 64
 #define CAP_BUFSIZ (CAP_SNAPLEN * 128)
 

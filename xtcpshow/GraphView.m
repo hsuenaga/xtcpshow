@@ -10,6 +10,7 @@
 #import "GraphView.h"
 #import "DataQueue.h"
 #import "DataResampler.h"
+#import "DataEntry.h"
 
 NSString *const RANGE_AUTO = @"Auto";
 NSString *const RANGE_PEEKHOLD = @"PeekHold";
@@ -19,7 +20,6 @@ NSString *const RANGE_MANUAL = @"Manual";
 - (void)initData
 {
 	_data = nil;
-	_viewOffset = 0;
 	_showPacketMarker = TRUE;
 	time_offset = 0;
 	time_length = 0;
@@ -64,12 +64,9 @@ NSString *const RANGE_MANUAL = @"Manual";
 		else
 			new_range = 5.0f * (ceil(max / 5.0f));
 	}
-	if (new_range != y_range)
-		needRedrawImage = TRUE;
-
 	y_range = new_range; // [Mbps]
 	x_range = time_length * 1000.0f; // [ms]
-	sma_range = sma_length * 1000.0f; // [ms]
+	ma_range = sma_length * 1000.0f; // [ms]
 }
 
 - (float)setRange:(NSString *)mode withRange:(float)range
@@ -120,20 +117,27 @@ NSString *const RANGE_MANUAL = @"Manual";
 
 - (void)setTargetTimeLength:(int)value
 {
-	time_offset = 0.0;
+	// UI resolution is 1/20 [sec]
 	time_length = (NSTimeInterval)value / 20.0;
 }
 
-- (void)setSMALength:(int)value
+- (void)setMATimeLength:(int)value
 {
+	// UI resolution is 1/20 [sec]
 	sma_length = (NSTimeInterval)value / 20.0;
 }
 
 - (void)drawGraph
 {
 	[NSGraphicsContext saveGraphicsState];
-	[_data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
+	[_data enumerateDataUsingBlock:^(DataEntry *data, NSUInteger idx, BOOL *stop) {
 		NSRect bar;
+		float value = [data floatValue];
+
+		if (idx < GraphOffset)
+			return;
+		idx -= GraphOffset;
+
 		if (idx > _bounds.size.width) {
 			*stop = YES;
 			return;
@@ -149,24 +153,35 @@ NSString *const RANGE_MANUAL = @"Manual";
 	[NSGraphicsContext restoreGraphicsState];
 }
 
-- (void)drawXMark:(float)height;
+- (void)drawXMark;
 {
-	height = _bounds.size.height * height;
-
 	[NSGraphicsContext saveGraphicsState];
 	[[NSColor cyanColor] set];
-	[_marker enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
+	[_data enumerateDataUsingBlock:^(DataEntry *data, NSUInteger idx, BOOL *stop) {
 		NSBezierPath *path;
+		NSUInteger samples;
+		float h;
 
-		if (value < 1.0f)
+		if (idx < XmarkOffset)
 			return;
+		idx -= XmarkOffset;
 
+		if (idx > _bounds.size.width) {
+			*stop = YES;
+			return;
+		}
+		if ( (samples = [data numberOfSamples]) == 0)
+			return;
+		h = _bounds.size.height / (float)_maxSamples;
+		h = h * (float)samples;
 		path = [NSBezierPath bezierPath];
 		[path moveToPoint:NSMakePoint((float)idx, 0.0f)];
-		[path lineToPoint:NSMakePoint((float)idx, height)];
+		[path lineToPoint:NSMakePoint((float)idx, h)];
 		[path setLineCapStyle:NSRoundLineCapStyle];
 		[path stroke];
 	}];
+
+	[self drawText:[NSString stringWithFormat:@" Max %lu [packets/sample]", _maxSamples] atPoint:NSMakePoint(0.0f, _bounds.size.height - 14.0f)];
 
 	[NSGraphicsContext restoreGraphicsState];
 }
@@ -188,36 +203,34 @@ NSString *const RANGE_MANUAL = @"Manual";
 	NSRect rect;
 	NSBezierPath *path;
 	NSString *marker;
-	float y, y_max, y_avg;
+	float y;
 
 	[NSGraphicsContext saveGraphicsState];
 
 	rect = [self bounds];
-	y_max = [[self data] maxFloatValue];
-	y_avg = [[self data] averageFloatValue];
 
 	[[NSColor redColor] set];
 	path = [NSBezierPath bezierPath];
 	y =
-	rect.size.height * (y_avg / y_range);
+	rect.size.height * (_averageValue / y_range);
 	[path moveToPoint:NSMakePoint(0.0, y)];
 	[path lineToPoint:NSMakePoint(rect.size.width, y)];
 	[path stroke];
 
 	[[NSColor blueColor] set];
 	path = [NSBezierPath bezierPath];
-	y = rect.size.height * (y_max / y_range);
+	y = rect.size.height * (_maxValue / y_range);
 	[path moveToPoint:NSMakePoint(0.0, y)];
 	[path lineToPoint:NSMakePoint(rect.size.width, y)];
 	[path stroke];
 
-	/* max maker */
+	/* max text */
 	if (y < (rect.size.height / 5))
 		y = (rect.size.height / 5);
 	else if (y > ((rect.size.height / 5) * 4))
 		y = (rect.size.height / 5) * 4;
 
-	marker = [NSString stringWithFormat:@" Max %6.3f", y_max];
+	marker = [NSString stringWithFormat:@" Max %6.3f [mbps]", _maxValue];
 	[self drawText:marker atPoint:NSMakePoint(0.0, y)];
 
 	[NSGraphicsContext restoreGraphicsState];
@@ -225,31 +238,29 @@ NSString *const RANGE_MANUAL = @"Manual";
 
 - (void)drawGrid
 {
-	NSRect rect = [self bounds];
-
+	[NSGraphicsContext saveGraphicsState];
 	[[NSColor whiteColor] set];
 	for (int i = 1; i < 5; i++) {
 		CGFloat pattern[2] = {5.0, 5.0};
 		NSBezierPath *path;
-		float y = (rect.size.height / 5.0) * (float)i;
+		float y = (_bounds.size.height / 5.0) * (float)i;
+		float x = (_bounds.size.width / 5.0) * (float)i;
 
+		// vertical line
 		path = [NSBezierPath bezierPath];
 		[path setLineDash:pattern count:2 phase:0.0];
 		[path moveToPoint:NSMakePoint(0, y)];
-		[path lineToPoint:NSMakePoint(rect.size.width, y)];
+		[path lineToPoint:NSMakePoint(_bounds.size.width, y)];
 		[path stroke];
-	}
-	for (int i = 1; i < 5; i++) {
-		CGFloat pattern[2] = {5.0, 5.0};
-		NSBezierPath *path;
-		float x = (rect.size.width / 5.0) * (float)i;
 
+		// horizontal line
 		path = [NSBezierPath bezierPath];
 		[path setLineDash:pattern count:2 phase:0.0];
 		[path moveToPoint:NSMakePoint(x, 0)];
-		[path lineToPoint:NSMakePoint(x, rect.size.height)];
+		[path lineToPoint:NSMakePoint(x, _bounds.size.height)];
 		[path stroke];
 	}
+	[NSGraphicsContext restoreGraphicsState];
 }
 
 - (void)drawAll
@@ -263,7 +274,7 @@ NSString *const RANGE_MANUAL = @"Manual";
 	[[NSColor clearColor] set];
 	NSRectFill(rect);
 
-	/* caclulate size */
+	/* update x/y axis */
 	[self updateRange];
 
 	/* show matrix */
@@ -271,20 +282,20 @@ NSString *const RANGE_MANUAL = @"Manual";
 
 	/* plot x mark */
 	if (_showPacketMarker == TRUE)
-		[self drawXMark:0.2f];
+		[self drawXMark];
 
 	/* plot bar graph */
 	[self drawGraph];
 
-	/* bar graph params */
+	/* plot guide line (max, average, ...) */
+	[self drawGuide];
+
+	/* graph params */
 	title =
 	[NSString stringWithFormat:@" Y-Range %6.3f [Mbps] / X-Range %6.1f [ms] / MA %6.1f [ms] / Avg %6.3f [Mbps] ",
-	 y_range, x_range, sma_range,
+	 y_range, x_range, ma_range,
 	 [[self data] averageFloatValue]];
 	[self drawText:title atPoint:NSMakePoint(0.0, 0.0)];
-
-	/* plot trend line */
-	[self drawGuide];
 
 	[NSGraphicsContext restoreGraphicsState];
 }
@@ -309,23 +320,24 @@ NSString *const RANGE_MANUAL = @"Manual";
 	[sampler importData:data];
 	[sampler clipQueueFromDate:start];
 	[sampler alignWithTick:tick fromDate:start toDate:end];
-	_marker = [[sampler data] duplicate]; // before SMA
 
 	viewSMA = ceil(sma_length / tick);
 	if (viewSMA > 1)
 		[sampler triangleMovingAverage:viewSMA];
-	[sampler clipQueueTail:NSMakeRange(_viewOffset, viewWidth)];
+	GraphOffset = [[sampler data] count] - viewWidth;
+	XmarkOffset = GraphOffset / 2;
 
 	// convert [bytes] => [Mbps]
 	unit_conv = 8.0f / tick; // [bps]
 	unit_conv = unit_conv / 1000.0f / 1000.0f; // [Mbps]
 	[sampler scaleAllValue:unit_conv];
+
 	_data = [sampler data];
 
-	[sampler importData:_marker];
-	[sampler clipQueueTail:NSMakeRange((_viewOffset + (viewSMA/2.0)), viewWidth)];
-
-	_marker = [sampler data];
+	// update statistics
+	_maxSamples = [_data maxSamples];
+	_maxValue = [_data maxFloatValue];
+	_averageValue = [_data averageFloatValue];
 }
 
 - (void)drawRect:(NSRect)dirty_rect

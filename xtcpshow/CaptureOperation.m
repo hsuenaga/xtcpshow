@@ -99,7 +99,6 @@
 				break;
 			case 0:
 				// timeout
-				[self sendNotify:0 withTime:NULL];
 				break;
 			default:
 				NSLog(@"pcap error: %s",
@@ -117,7 +116,7 @@
 		mbps = mbps / (1000.0f * 1000.0f); // [mbps]
 		if (max_mbps < mbps)
 			max_mbps = mbps;
-		[max_buffer shiftFloatValueWithNewValue:mbps];
+		[max_buffer shiftDataWithNewData:[DataEntry dataWithFloat:mbps]];
 		peak_mbps = [max_buffer maxFloatValue];
 
 		// update model
@@ -217,9 +216,19 @@
 
 - (void)sendNotify:(int)size withTime:(struct timeval *)tv
 {
+	DataEntry *sample;
+	NSTimeInterval unix_time;
+	NSDate *date;
+
+	unix_time = tv->tv_sec;
+	unix_time += ((double)tv->tv_usec / 1000000.0);
+	date = [NSDate dateWithTimeIntervalSince1970:unix_time];
+	sample = [DataEntry dataWithInt:size atDate:date];
+	[sample setNumberOfSamples:1];
+
 	[_model
 	 performSelectorOnMainThread:@selector(samplingNotify:)
-	 withObject:[DataEntry dataWithInt:size atTimeval:tv]
+	 withObject:sample
 	 waitUntilDone:NO];
 }
 

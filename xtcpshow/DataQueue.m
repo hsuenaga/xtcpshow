@@ -34,6 +34,10 @@
 	return self;
 }
 
+
+//
+// protected
+//
 - (void)addSumState:(float)value
 {
 	float new_value;
@@ -125,6 +129,19 @@
 	return sum;
 }
 
+//
+// public
+//
+- (void)zeroFill:(size_t)size
+{
+	_head = _tail = nil;
+	_count = 0;
+	for (int i = 0; i < size; i++)
+		[self addDataEntry:[DataEntry dataWithFloat:0.0f]];
+	[self refreshSumState];
+	CHECK_COUNTER(self);
+}
+
 - (void)addDataEntry:(DataEntry *)entry
 {
 	if (!entry)
@@ -152,41 +169,6 @@
 	return [self shiftDataWithNewData:entry];
 }
 
-- (void)addFloatValue:(float)value
-{
-	[self addDataEntry:[DataEntry dataWithFloat:value atTimeval:NULL]];
-}
-
-- (float)addFloatValue:(float)value withLimit:(size_t)limit
-{
-	DataEntry *old;
-
-	old = [self addDataEntry:[DataEntry dataWithFloat:value atTimeval:NULL] withLimit:limit];
-	if (old)
-		return [old floatValue];
-
-	return 0.0f;
-}
-
-- (BOOL)prependFloatValue:(float)value
-{
-	DataEntry *entry;
-
-	entry = [DataEntry dataWithFloat:value atTimeval:NULL];
-	if (_head) {
-		entry.next = _head;
-		_head = entry;
-	}
-	else {
-		_head = _tail = entry;
-	}
-	[self addSumState:value];
-	_count++;
-	
-	CHECK_COUNTER(self);
-	return TRUE;
-}
-
 - (DataEntry *)dequeueDataEntry
 {
 	DataEntry *entry;
@@ -206,142 +188,46 @@
 	return entry;
 }
 
-- (float)dequeueFloatValue
-{
-	return [[self dequeueDataEntry] floatValue];
-}
-
 - (DataEntry *)shiftDataWithNewData:(DataEntry *)entry
 {
 	[self addDataEntry:entry];
 	return [self dequeueDataEntry];
 }
 
-- (float)shiftFloatValueWithNewValue:(float)newvalue
+- (void)enumerateDataUsingBlock:(void (^)(DataEntry *data, NSUInteger, BOOL *))block
 {
-	return [[self shiftDataWithNewData:[DataEntry dataWithFloat:newvalue atTimeval:NULL]] floatValue];
-}
-
-- (NSDate *)lastDate
-{
-	if (!_tail)
-		return nil;
-	return _tail.timestamp;
-}
-
-- (NSDate *)firstDate
-{
-	if (!_head)
-		return nil;
-	return _head.timestamp;
-}
-
-- (void)enumerateFloatUsingBlock:(void(^)(float value, NSUInteger idx,  BOOL *stop))block
-{
+	BOOL stop = FALSE;
 	DataEntry *entry;
 	NSUInteger idx = 0;
 
+	add = sub = add_remain = sub_remain = 0.0f;
 	for (entry = _head; entry; entry = entry.next) {
-		BOOL stop = FALSE;
-		float value;
+		float v, new_add;
 
-		value = [entry floatValue];
-		block(value, idx, &stop);
-		if (stop == TRUE)
-			break;
+		if (!stop)
+			block(entry, idx, &stop);
+		
+		v = [entry floatValue] + add_remain;
+		new_add = add + v;
+		add_remain = (new_add - add) - v;
+		add = new_add;
 		idx++;
 	}
+	refresh_count = REFRESH_THR;
 	CHECK_COUNTER(self);
 }
 
-- (void)enumerateFloatWithTimeUsingBlock:(void(^)(float value, NSDate *date, NSUInteger idx,  BOOL *stop))block
-{
-	DataEntry *entry;
-	NSUInteger idx = 0;
-
-	for (entry = _head; entry; entry = entry.next) {
-		BOOL stop = FALSE;
-
-		block([entry floatValue], [entry timestamp], idx, &stop);
-		if (stop == TRUE)
-			break;
-		idx++;
-	}
-	CHECK_COUNTER(self);
-}
-
-- (void)replaceValueUsingBlock:(void(^)(float *value, NSUInteger idx, BOOL *stop))block
-{
-	DataEntry *entry;
-	NSUInteger idx = 0;
-
-	_count = 0;
-	for (entry = _head; entry; entry = entry.next) {
-		BOOL stop = FALSE;
-		float value;
-
-		value = [entry floatValue];
-		block(&value, idx, &stop);
-		if (stop == TRUE)
-			break;
-		[entry setFloatValue:value];
-		_count++;
-		idx++;
-	}
-	entry.next = nil;
-	[self refreshSumState];
-	CHECK_COUNTER(self);
-}
-
-- (void)zeroFill:(size_t)size
-{
-	[self deleteAll];
-	for (int i = 0; i < size; i++)
-		[self addFloatValue:0.0];
-	CHECK_COUNTER(self);
-}
-
-- (void)deleteAll
-{
-	_head = _tail = nil;
-	[self clearSumState];
-	_count = 0;
-}
-
-- (DataQueue *)duplicate
+- (DataQueue *)copy
 {
 	DataEntry *entry;
 	DataQueue *new = [[DataQueue alloc] init];
 
 	for (entry = _head; entry; entry = entry.next)
-		[new addFloatValue:[entry floatValue]];
+		[new addDataEntry:[entry copy]];
+	[new refreshSumState];
+
 	CHECK_COUNTER(self);
 	return new;
-}
-
-- (void)removeFromHead:(size_t)size
-{
-	while (size-- && _head)
-		[self dequeueFloatValue];
-	CHECK_COUNTER(self);
-}
-
-- (void)clipFromHead:(size_t)size
-{
-	DataEntry *entry;
-
-	[self clearSumState];
-	_count = 0;
-
-	for (entry = _head; entry; entry = entry.next) {
-		_count++;
-		if (size-- == 0) {
-			entry.next = nil;
-			_tail = entry;
-			break;
-		}
-	}
-	CHECK_COUNTER(self);
 }
 
 - (BOOL)isEmpty
@@ -350,6 +236,18 @@
 		return TRUE;
 
 	return FALSE;
+}
+
+- (NSUInteger)maxSamples
+{
+	DataEntry *entry;
+	NSUInteger max = 0;
+
+	for (entry = _head; entry; entry = entry.next) {
+		if (max < entry.numberOfSamples)
+			max = entry.numberOfSamples;
+	}
+	return max;
 }
 
 - (float)maxFloatValue
@@ -367,6 +265,20 @@
 			max = value;
 	}
 	return max;
+}
+
+- (NSDate *)lastDate
+{
+	if (!_tail)
+		return nil;
+	return _tail.timestamp;
+}
+
+- (NSDate *)firstDate
+{
+	if (!_head)
+		return nil;
+	return _head.timestamp;
 }
 
 - (float)averageFloatValue
