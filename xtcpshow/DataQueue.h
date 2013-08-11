@@ -54,18 +54,21 @@
 - (void)enumerateFloatWithTimeUsingBlock:(void(^)(float value, NSDate *date, NSUInteger idx, BOOL *stop))block;
 - (void)replaceValueUsingBlock:(void(^)(float *value, NSUInteger idx, BOOL *stop))block;
 
+- (void)enumerateDataUsingBlock:(void(^)(DataEntry *data, NSUInteger idx, BOOL *stop))block;
+
 // clear queue
 - (void)zeroFill:(size_t)size;
 - (void)deleteAll;
 
 // copy/clipping queue
-- (DataQueue *)duplicate;
+- (DataQueue *)copy;
 - (void)removeFromHead:(size_t)size;
 - (void)clipFromHead:(size_t)size;
 
 // queue status
 - (BOOL)isEmpty;
 - (float)maxFloatValue;
+- (NSUInteger)maxSamples;
 - (float)averageFloatValue;
 
 // debug & exception

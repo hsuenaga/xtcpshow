@@ -270,6 +270,22 @@
 	CHECK_COUNTER(self);
 }
 
+- (void)enumerateDataUsingBlock:(void (^)(DataEntry *data, NSUInteger, BOOL *))block
+{
+	DataEntry *entry;
+	NSUInteger idx = 0;
+
+	for (entry = _head; entry; entry = entry.next) {
+		BOOL stop = FALSE;
+
+		block(entry, idx, &stop);
+		if (stop == TRUE)
+			break;
+		idx++;
+	}
+	CHECK_COUNTER(self);
+}
+
 - (void)replaceValueUsingBlock:(void(^)(float *value, NSUInteger idx, BOOL *stop))block
 {
 	DataEntry *entry;
@@ -308,13 +324,15 @@
 	_count = 0;
 }
 
-- (DataQueue *)duplicate
+- (DataQueue *)copy
 {
 	DataEntry *entry;
 	DataQueue *new = [[DataQueue alloc] init];
 
 	for (entry = _head; entry; entry = entry.next)
-		[new addFloatValue:[entry floatValue]];
+		[new addDataEntry:[entry copy]];
+	[new refreshSumState];
+
 	CHECK_COUNTER(self);
 	return new;
 }
@@ -350,6 +368,18 @@
 		return TRUE;
 
 	return FALSE;
+}
+
+- (NSUInteger)maxSamples
+{
+	DataEntry *entry;
+	NSUInteger max = 0;
+
+	for (entry = _head; entry; entry = entry.next) {
+		if (max < entry.numberOfSamples)
+			max = entry.numberOfSamples;
+	}
+	return max;
 }
 
 - (float)maxFloatValue

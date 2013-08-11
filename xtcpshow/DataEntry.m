@@ -16,6 +16,7 @@
 	_number = nil;
 	_timestamp = nil;
 	_next = nil;
+	_numberOfSamples = 0;
 
 	return self;
 }
@@ -26,6 +27,7 @@
 
 	[new setFloatValue:data];
 	[new setTimeval:time];
+
 	return new;
 }
 
@@ -91,6 +93,18 @@
 	date = tv->tv_sec;
 	date = date + ((double)tv->tv_usec / 1000000.0);
 	_timestamp = [NSDate dateWithTimeIntervalSince1970:date];
+}
+
+- (DataEntry *)copy
+{
+	DataEntry *new = [[DataEntry alloc] init];
+
+	new->_number = [_number copy];
+	new->_timestamp = [_timestamp copy];
+	new->_numberOfSamples = _numberOfSamples;
+	new->_next = nil;
+
+	return new;
 }
 
 - (void)invalidTimeException

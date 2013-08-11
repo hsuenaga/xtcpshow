@@ -217,9 +217,14 @@
 
 - (void)sendNotify:(int)size withTime:(struct timeval *)tv
 {
+	DataEntry *sample;
+
+	sample = [DataEntry dataWithInt:size atTimeval:tv];
+	[sample setNumberOfSamples:1];
+
 	[_model
 	 performSelectorOnMainThread:@selector(samplingNotify:)
-	 withObject:[DataEntry dataWithInt:size atTimeval:tv]
+	 withObject:sample
 	 waitUntilDone:NO];
 }
 

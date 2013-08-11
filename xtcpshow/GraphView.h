@@ -32,13 +32,15 @@ extern NSString *const RANGE_MANUAL;
 	NSTimeInterval time_offset; //[sec]
 	NSTimeInterval time_length; //[sec]
 	NSTimeInterval sma_length; //[sec]
-	
+
 	NSGradient *graph_gradient;
 }
 @property (strong) DataQueue *data;
-@property (strong) DataQueue *marker;
 @property (assign) int viewOffset;
 @property (assign) float samplingInterval;
+@property (assign) NSUInteger maxSamples;
+@property (assign) float maxValue;
+@property (assign) float averageValue;
 @property (assign) BOOL showPacketMarker;
 
 - (void)initData;
@@ -54,7 +56,7 @@ extern NSString *const RANGE_MANUAL;
 
 // Drawing
 - (void)drawGraph;
-- (void)drawXMark:(float)height;
+- (void)drawXMark;
 - (void)drawText: (NSString *)t atPoint:(NSPoint)p;
 - (void)drawGuide;
 - (void)drawGrid;

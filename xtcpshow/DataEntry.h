@@ -12,6 +12,7 @@
 
 @property (strong, readonly) NSNumber *number;
 @property (strong) NSDate *timestamp;
+@property (assign) NSUInteger numberOfSamples;
 @property (strong) DataEntry *next;
 
 + (DataEntry *)dataWithFloat:(float)data atTimeval:(struct timeval *)time;
@@ -26,6 +27,8 @@
 - (int)intValue;
 
 - (void)setTimeval:(struct timeval *)tv;
+
+- (DataEntry *)copy;
 
 - (void)invalidTimeException;
 @end
