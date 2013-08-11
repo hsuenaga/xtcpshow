@@ -16,20 +16,18 @@ extern NSString *const RANGE_PEEKHOLD;
 extern NSString *const RANGE_MANUAL;
 
 @interface GraphView : NSView {
-	BOOL needRedrawImage;
-	BOOL needRedrawAll;
-
-	float snap_mbps;
-	float trend_mbps;
+	// X, Y Range
 	float y_range;
 	float x_range;
-	float sma_range;
+	float ma_range;
 
+	// range configuration
 	NSString *range_mode;
 	float manual_range;
 	float peak_range;
 
-	NSTimeInterval time_offset; //[sec]
+	// configuration of data import
+	NSTimeInterval time_offset; //[sec] XXX: not used
 	NSTimeInterval time_length; //[sec]
 	NSTimeInterval sma_length; //[sec]
 
@@ -37,10 +35,10 @@ extern NSString *const RANGE_MANUAL;
 	NSUInteger GraphOffset;
 	NSUInteger XmarkOffset;
 
+	// gaphic object cache
 	NSGradient *graph_gradient;
 }
 @property (strong) DataQueue *data;
-@property (assign) float samplingInterval;
 
 // statistics
 @property (assign) NSUInteger maxSamples;
@@ -59,7 +57,7 @@ extern NSString *const RANGE_MANUAL;
 - (float)setRange:(NSString *)mode withStep:(int)step;
 - (int)stepValueWithRange:(float)range;
 - (void)setTargetTimeLength:(int)value;
-- (void)setSMALength:(int)value;
+- (void)setMATimeLength:(int)value;
 
 // Drawing
 - (void)drawGraph;

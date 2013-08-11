@@ -64,12 +64,9 @@ NSString *const RANGE_MANUAL = @"Manual";
 		else
 			new_range = 5.0f * (ceil(max / 5.0f));
 	}
-	if (new_range != y_range)
-		needRedrawImage = TRUE;
-
 	y_range = new_range; // [Mbps]
 	x_range = time_length * 1000.0f; // [ms]
-	sma_range = sma_length * 1000.0f; // [ms]
+	ma_range = sma_length * 1000.0f; // [ms]
 }
 
 - (float)setRange:(NSString *)mode withRange:(float)range
@@ -120,12 +117,13 @@ NSString *const RANGE_MANUAL = @"Manual";
 
 - (void)setTargetTimeLength:(int)value
 {
-	time_offset = 0.0;
+	// UI resolution is 1/20 [sec]
 	time_length = (NSTimeInterval)value / 20.0;
 }
 
-- (void)setSMALength:(int)value
+- (void)setMATimeLength:(int)value
 {
+	// UI resolution is 1/20 [sec]
 	sma_length = (NSTimeInterval)value / 20.0;
 }
 
@@ -239,31 +237,29 @@ NSString *const RANGE_MANUAL = @"Manual";
 
 - (void)drawGrid
 {
-	NSRect rect = [self bounds];
-
+	[NSGraphicsContext saveGraphicsState];
 	[[NSColor whiteColor] set];
 	for (int i = 1; i < 5; i++) {
 		CGFloat pattern[2] = {5.0, 5.0};
 		NSBezierPath *path;
-		float y = (rect.size.height / 5.0) * (float)i;
+		float y = (_bounds.size.height / 5.0) * (float)i;
+		float x = (_bounds.size.width / 5.0) * (float)i;
 
+		// vertical line
 		path = [NSBezierPath bezierPath];
 		[path setLineDash:pattern count:2 phase:0.0];
 		[path moveToPoint:NSMakePoint(0, y)];
-		[path lineToPoint:NSMakePoint(rect.size.width, y)];
+		[path lineToPoint:NSMakePoint(_bounds.size.width, y)];
 		[path stroke];
-	}
-	for (int i = 1; i < 5; i++) {
-		CGFloat pattern[2] = {5.0, 5.0};
-		NSBezierPath *path;
-		float x = (rect.size.width / 5.0) * (float)i;
 
+		// horizontal line
 		path = [NSBezierPath bezierPath];
 		[path setLineDash:pattern count:2 phase:0.0];
 		[path moveToPoint:NSMakePoint(x, 0)];
-		[path lineToPoint:NSMakePoint(x, rect.size.height)];
+		[path lineToPoint:NSMakePoint(x, _bounds.size.height)];
 		[path stroke];
 	}
+	[NSGraphicsContext restoreGraphicsState];
 }
 
 - (void)drawAll
@@ -277,7 +273,7 @@ NSString *const RANGE_MANUAL = @"Manual";
 	[[NSColor clearColor] set];
 	NSRectFill(rect);
 
-	/* caclulate size */
+	/* update x/y axis */
 	[self updateRange];
 
 	/* show matrix */
@@ -293,7 +289,7 @@ NSString *const RANGE_MANUAL = @"Manual";
 	/* bar graph params */
 	title =
 	[NSString stringWithFormat:@" Y-Range %6.3f [Mbps] / X-Range %6.1f [ms] / MA %6.1f [ms] / Avg %6.3f [Mbps] ",
-	 y_range, x_range, sma_range,
+	 y_range, x_range, ma_range,
 	 [[self data] averageFloatValue]];
 	[self drawText:title atPoint:NSMakePoint(0.0, 0.0)];
 

@@ -71,7 +71,7 @@ static void setup_interface(NSPopUpButton *);
 		_model.filter =
 		[[_filterField stringValue] cStringUsingEncoding:NSASCIIStringEncoding];
 		[_graphView setTargetTimeLength:[_zoomBar intValue]];
-		[_graphView setSMALength:[_smoothBar intValue]];
+		[_graphView setMATimeLength:[_smoothBar intValue]];
 
 		[_startButton setTitle:LBL_STOP];
 		input_enabled = FALSE;
@@ -100,7 +100,7 @@ static void setup_interface(NSPopUpButton *);
 }
 
 - (IBAction)changeSmooth:(id)sender {
-	[_graphView setSMALength:[sender intValue]];
+	[_graphView setMATimeLength:[sender intValue]];
 	[self animationNotify:nil];
 	[self updateUserInterface];
 }
