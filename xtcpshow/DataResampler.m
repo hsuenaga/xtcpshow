@@ -118,6 +118,8 @@
 	DataQueue *dst, *sma1, *sma2;
 	NSUInteger half_samples;
 
+	[self makeMutable];
+
 	half_samples = samples / 2 + 1;
 
 	dst = [[DataQueue alloc] init];
@@ -129,19 +131,10 @@
 	[sma2 zeroFill:half_samples];
 
 	[_data enumerateDataUsingBlock:^(DataEntry *data, NSUInteger idx, BOOL *stop) {
-		DataEntry *new_data;
-
 		[sma1 shiftDataWithNewData:[data copy]];
 		[sma2 shiftDataWithNewData:[DataEntry dataWithFloat:[sma1 averageFloatValue]]];
-
-		new_data = [data copy];
-		[new_data setFloatValue:[sma2 averageFloatValue]];
-		[new_data setNumberOfSamples:[data numberOfSamples]];
-		[dst addDataEntry:new_data];
+		[data setFloatValue:[sma2 averageFloatValue]];
 	}];
-
-	write_protect = FALSE;
-	_data = dst;
 }
 
 - (void)invalidValueException

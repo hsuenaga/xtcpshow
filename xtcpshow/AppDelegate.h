@@ -7,7 +7,7 @@
 //
 #import <Cocoa/Cocoa.h>
 
-#define UPDATE_FPS (12.0f)
+#define UPDATE_FPS (10.0f)
 #define UPDATE_INT (1.0f/UPDATE_FPS)
 
 @class CaptureModel;
