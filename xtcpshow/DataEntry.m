@@ -30,12 +30,11 @@
 	return new;
 }
 
-+ (DataEntry *)dataWithFloat:(float)data atTimeval:(struct timeval *)time
++ (DataEntry *)dataWithInt:(int)data
 {
 	DataEntry *new = [[DataEntry alloc] init];
 
-	[new setFloatValue:data];
-	[new setTimeval:time];
+	[new setIntValue:data];
 
 	return new;
 }
@@ -50,17 +49,7 @@
 	return new;
 }
 
-+ (DataEntry *)dataWithInt:(int)data atTimeval:(struct timeval *)time
-{
-	DataEntry *new = [[DataEntry alloc] init];
-
-	[new setIntValue:data];
-	[new setTimeval:time];
-
-	return new;
-}
-
-+ (DataEntry *)dataWIthInt:(int)data atDate:(NSDate *)date
++ (DataEntry *)dataWithInt:(int)data atDate:(NSDate *)date
 {
 	DataEntry *new = [[DataEntry alloc] init];
 
@@ -88,20 +77,6 @@
 - (int)intValue
 {
 	return [_number intValue];
-}
-
-- (void)setTimeval:(struct timeval *)tv
-{
-	NSTimeInterval date;
-
-	if (tv == NULL) {
-		_timestamp = nil;
-		return;
-	}
-
-	date = tv->tv_sec;
-	date = date + ((double)tv->tv_usec / 1000000.0);
-	_timestamp = [NSDate dateWithTimeIntervalSince1970:date];
 }
 
 - (DataEntry *)copy

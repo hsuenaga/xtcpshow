@@ -16,18 +16,15 @@
 @property (strong) DataEntry *next;
 
 + (DataEntry *)dataWithFloat:(float)data;
-+ (DataEntry *)dataWithFloat:(float)data atTimeval:(struct timeval *)time;
++ (DataEntry *)dataWithInt:(int)data;
 + (DataEntry *)dataWithFloat:(float)data atDate:(NSDate *)date;
-+ (DataEntry *)dataWithInt:(int)data atTimeval:(struct timeval *)time;
-+ (DataEntry *)dataWIthInt:(int)data atDate:(NSDate *)date;
++ (DataEntry *)dataWithInt:(int)data atDate:(NSDate *)date;
 
 - (void)setFloatValue:(float)value;
 - (float)floatValue;
 
 - (void)setIntValue:(int)value;
 - (int)intValue;
-
-- (void)setTimeval:(struct timeval *)tv;
 
 - (DataEntry *)copy;
 
