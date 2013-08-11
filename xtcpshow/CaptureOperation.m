@@ -117,7 +117,7 @@
 		mbps = mbps / (1000.0f * 1000.0f); // [mbps]
 		if (max_mbps < mbps)
 			max_mbps = mbps;
-		[max_buffer shiftFloatValueWithNewValue:mbps];
+		[max_buffer shiftDataWithNewData:[DataEntry dataWithFloat:mbps atTimeval:NULL]];
 		peak_mbps = [max_buffer maxFloatValue];
 
 		// update model

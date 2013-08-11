@@ -21,6 +21,15 @@
 	return self;
 }
 
++ (DataEntry *)dataWithFloat:(float)data
+{
+	DataEntry *new = [[DataEntry alloc] init];
+
+	[new setFloatValue:data];
+	
+	return new;
+}
+
 + (DataEntry *)dataWithFloat:(float)data atTimeval:(struct timeval *)time
 {
 	DataEntry *new = [[DataEntry alloc] init];

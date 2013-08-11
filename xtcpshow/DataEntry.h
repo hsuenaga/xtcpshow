@@ -15,6 +15,7 @@
 @property (assign) NSUInteger numberOfSamples;
 @property (strong) DataEntry *next;
 
++ (DataEntry *)dataWithFloat:(float)data;
 + (DataEntry *)dataWithFloat:(float)data atTimeval:(struct timeval *)time;
 + (DataEntry *)dataWithFloat:(float)data atDate:(NSDate *)date;
 + (DataEntry *)dataWithInt:(int)data atTimeval:(struct timeval *)time;

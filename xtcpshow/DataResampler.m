@@ -45,8 +45,8 @@
 		NSLog(@"data is empty");
 		return;
 	}
-	[_data replaceValueUsingBlock:^(float *value, NSUInteger idx, BOOL *stop) {
-		(*value) = (*value) * scale;
+	[_data enumerateDataUsingBlock:^(DataEntry *data, NSUInteger idx, BOOL *stop) {
+		[data setFloatValue:([data floatValue] * scale)];
 	}];
 }
 
@@ -131,11 +131,12 @@
 	[_data enumerateDataUsingBlock:^(DataEntry *data, NSUInteger idx, BOOL *stop) {
 		DataEntry *new_data;
 
-		[sma1 shiftFloatValueWithNewValue:[data floatValue]];
-		[sma2 shiftFloatValueWithNewValue:[sma1 averageFloatValue]];
-		new_data = [DataEntry dataWithFloat:[sma2 averageFloatValue] atDate:[data timestamp]];
-		[new_data setNumberOfSamples:[data numberOfSamples]];
+		[sma1 shiftDataWithNewData:[data copy]];
+		[sma2 shiftDataWithNewData:[DataEntry dataWithFloat:[sma1 averageFloatValue]]];
 
+		new_data = [data copy];
+		[new_data setFloatValue:[sma2 averageFloatValue]];
+		[new_data setNumberOfSamples:[data numberOfSamples]];
 		[dst addDataEntry:new_data];
 	}];
 

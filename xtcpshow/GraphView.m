@@ -130,8 +130,9 @@ NSString *const RANGE_MANUAL = @"Manual";
 - (void)drawGraph
 {
 	[NSGraphicsContext saveGraphicsState];
-	[_data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
+	[_data enumerateDataUsingBlock:^(DataEntry *data, NSUInteger idx, BOOL *stop) {
 		NSRect bar;
+		float value = [data floatValue];
 
 		if (idx < GraphOffset)
 			return;
