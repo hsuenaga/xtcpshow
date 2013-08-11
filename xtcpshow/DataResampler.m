@@ -34,12 +34,6 @@
 	_data = dst;
 }
 
-- (void)purgeData
-{
-	write_protect = FALSE;
-	_data = nil;
-}
-
 - (void)scaleAllValue:(float)scale
 {
 	if (isnan(scale))
@@ -54,37 +48,6 @@
 	[_data replaceValueUsingBlock:^(float *value, NSUInteger idx, BOOL *stop) {
 		(*value) = (*value) * scale;
 	}];
-}
-
-
-- (void)discreteScaleQueue:(float)scale
-{
-	DataQueue *dst = [[DataQueue alloc] init];
-	__block NSUInteger dst_idx, sample_count;
-	__block float newvalue;
-
-	sample_count = 0;
-	newvalue = 0.0;
-	dst_idx = 0;
-	[_data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
-		float f_idx;
-
-		newvalue += value;
-		sample_count++;
-
-		f_idx = (float)idx * scale;
-		while (dst_idx < (NSUInteger)floor(f_idx)) {
-			DataEntry *entry =
-			[DataEntry dataWithFloat:newvalue atTimeval:NULL];
-			[entry setNumberOfSamples:sample_count];
-			[dst addDataEntry:entry];
-			newvalue = 0.0;
-			sample_count = 0;
-			dst_idx++;
-		}
-	}];
-	write_protect = FALSE;
-	_data = dst;
 }
 
 - (void)alignWithTick:(NSTimeInterval)tick fromDate:(NSDate *)start toDate:(NSDate *)end
@@ -135,127 +98,6 @@
 	_data = dst;
 }
 
-- (void)linearScaleQueue:(float)scale
-{
-	if (scale < 1.0)
-		[self linearDownSamplingQueue:scale];
-	else
-		[self linearUpSamplingQueue:scale];
-}
-
-- (void)linearUpSamplingQueue:(float)scale
-{
-	DataQueue *dst = [[DataQueue alloc] init];
-	NSUInteger dst_idx, dst_samples;
-	float src0, src1;
-	NSUInteger src0_idx;
-
-	[self makeMutable];
-
-	dst_samples = (float)[_data count];
-	dst_samples = (NSUInteger)(ceil((float)dst_samples * scale));
-
-	src0 = [_data dequeueFloatValue];
-	src1 = [_data dequeueFloatValue];
-	src0_idx = 0;
-	for (dst_idx = 0; dst_idx < dst_samples; dst_idx++) {
-		NSUInteger pivot_idx;
-		float pivot = (float)dst_idx / scale;
-		float value;
-
-		pivot_idx = (NSUInteger)(floor(pivot));
-		while (pivot_idx > src0_idx) {
-			/* get left side and right side value */
-			src0 = src1;
-			src1 = [_data dequeueFloatValue];
-			src0_idx++;
-		}
-		if (isnan(src0) || isnan(src1))
-			break;
-
-		value = src0 * (ceil(pivot) - pivot);
-		value += src1 * (pivot - floor(pivot));
-		[dst addFloatValue:value];
-	}
-	_data = dst;
-}
-
-- (void)linearDownSamplingQueue:(float)scale
-{
-	DataQueue *dst = [[DataQueue alloc] init];
-	__block NSUInteger dst0_idx;
-	__block float dst0, dst1;
-
-	dst0_idx = 0;
-	dst0 = dst1 = 0.0;
-	[_data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
-		NSUInteger pivot_idx;
-		float pivot;
-
-		pivot = (float)idx * scale;
-		pivot_idx = (NSUInteger)(floor(pivot));
-		while (dst0_idx < pivot_idx) {
-			[dst addFloatValue:dst0];
-			dst0 = dst1;
-			dst1 = 0.0;
-			dst0_idx++;
-		}
-		dst0 += value * (ceil(pivot) - pivot);
-		dst1 += value * (pivot - floor(pivot));
-	}];
-	[dst addFloatValue:dst0];
-
-	_data = dst;
-}
-
-//
-// clip head(older sample) of queue
-//
-//
-//           |<--location-->|
-//  original |------------------------------------|
-//
-//       new                |------------|
-//
-//                          |<--length-->|
-//
-- (void)clipQueueHead:(NSRange)range
-{
-	[self makeMutable];
-	if (range.location != 0)
-		[_data removeFromHead:range.location];
-	if (range.length != 0)
-		[_data clipFromHead:range.length];
-}
-
-//
-// clip tail(= newer sample) of queue
-//
-//                                   |<--location-->|
-//  original |--------------------------------------|
-//
-//       new            |------------|
-//
-//                      |<--length-->|
-//
-- (void)clipQueueTail:(NSRange)range
-{
-	NSRange reverse = range;
-
-	[self makeMutable];
-
-	if ([_data count] < (range.location + range.length)) {
-		NSUInteger under_flow;
-		under_flow = (range.location + range.length) - [_data count];
-
-		while (under_flow-- > 0)
-			[_data prependFloatValue:0.0];
-	}
-	reverse.location = [_data count] - range.location;
-	reverse.location -= range.length;
-	[self clipQueueHead:reverse];
-}
-
 - (void)clipQueueFromDate:(NSDate *)start;
 {
 	DataQueue *dst = [[DataQueue alloc] init];
@@ -265,24 +107,6 @@
 			return;
 
 		[dst addDataEntry:[data copy]];
-	}];
-
-	write_protect = FALSE;
-	_data = dst;
-}
-
-- (void)movingAverage:(NSUInteger)samples
-{
-	DataQueue *dst, *sma;
-
-	dst = [[DataQueue alloc] init];
-
-	sma = [[DataQueue alloc] init];
-	[sma zeroFill:samples];
-
-	[_data enumerateFloatUsingBlock:^(float value, NSUInteger idx, BOOL *stop) {
-		[sma shiftFloatValueWithNewValue:value];
-		[dst addFloatValue:[sma averageFloatValue]];
 	}];
 
 	write_protect = FALSE;
