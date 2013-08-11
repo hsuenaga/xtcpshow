@@ -166,6 +166,7 @@ static void setup_interface(NSPopUpButton *);
 		[_graphView setShowPacketMarker:YES];
 	else
 		[_graphView setShowPacketMarker:NO];
+	[_graphView setNeedsDisplay:YES];
 }
 
 - (void)animationNotify:(id)sender
