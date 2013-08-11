@@ -224,7 +224,7 @@ NSString *const RANGE_MANUAL = @"Manual";
 	[path lineToPoint:NSMakePoint(rect.size.width, y)];
 	[path stroke];
 
-	/* max maker */
+	/* max text */
 	if (y < (rect.size.height / 5))
 		y = (rect.size.height / 5);
 	else if (y > ((rect.size.height / 5) * 4))
@@ -287,15 +287,15 @@ NSString *const RANGE_MANUAL = @"Manual";
 	/* plot bar graph */
 	[self drawGraph];
 
-	/* bar graph params */
+	/* plot guide line (max, average, ...) */
+	[self drawGuide];
+
+	/* graph params */
 	title =
 	[NSString stringWithFormat:@" Y-Range %6.3f [Mbps] / X-Range %6.1f [ms] / MA %6.1f [ms] / Avg %6.3f [Mbps] ",
 	 y_range, x_range, ma_range,
 	 [[self data] averageFloatValue]];
 	[self drawText:title atPoint:NSMakePoint(0.0, 0.0)];
-
-	/* plot trend line */
-	[self drawGuide];
 
 	[NSGraphicsContext restoreGraphicsState];
 }

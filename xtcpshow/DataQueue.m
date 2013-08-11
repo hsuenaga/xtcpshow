@@ -188,11 +188,6 @@
 	return entry;
 }
 
-- (float)dequeueFloatValue
-{
-	return [[self dequeueDataEntry] floatValue];
-}
-
 - (DataEntry *)shiftDataWithNewData:(DataEntry *)entry
 {
 	[self addDataEntry:entry];
@@ -201,17 +196,24 @@
 
 - (void)enumerateDataUsingBlock:(void (^)(DataEntry *data, NSUInteger, BOOL *))block
 {
+	BOOL stop = FALSE;
 	DataEntry *entry;
 	NSUInteger idx = 0;
 
+	add = sub = add_remain = sub_remain = 0.0f;
 	for (entry = _head; entry; entry = entry.next) {
-		BOOL stop = FALSE;
+		float v, new_add;
 
-		block(entry, idx, &stop);
-		if (stop == TRUE)
-			break;
+		if (!stop)
+			block(entry, idx, &stop);
+		
+		v = [entry floatValue] + add_remain;
+		new_add = add + v;
+		add_remain = (new_add - add) - v;
+		add = new_add;
 		idx++;
 	}
+	refresh_count = REFRESH_THR;
 	CHECK_COUNTER(self);
 }
 

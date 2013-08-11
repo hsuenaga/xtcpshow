@@ -41,9 +41,9 @@ extern NSString *const RANGE_MANUAL;
 @property (strong) DataQueue *data;
 
 // statistics
-@property (assign) NSUInteger maxSamples;
-@property (assign) float maxValue;
-@property (assign) float averageValue;
+@property (assign, readonly) NSUInteger maxSamples;
+@property (assign, readonly) float maxValue;
+@property (assign, readonly) float averageValue;
 
 // configuration
 @property (assign) BOOL showPacketMarker;
