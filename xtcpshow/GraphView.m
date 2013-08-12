@@ -7,6 +7,7 @@
 //
 #include "math.h"
 
+#import "AppDelegate.h"
 #import "GraphView.h"
 #import "DataQueue.h"
 #import "DataResampler.h"
@@ -127,10 +128,45 @@ NSString *const RANGE_MANUAL = @"Manual";
 	time_length = (NSTimeInterval)value / 20.0;
 }
 
+- (int)targetTimeLength
+{
+	return (int)(time_length * 20.0f);
+}
+
 - (void)setMATimeLength:(int)value
 {
 	// UI resolution is 1/20 [sec]
 	sma_length = (NSTimeInterval)value / 20.0;
+}
+
+- (int)MATimeLength
+{
+	return (int)(sma_length * 20.0f);
+}
+
+- (void)magnifyWithEvent:(NSEvent *)event
+{
+	time_length *= 1.0/(event.magnification + 1.0);
+	if (time_length < (1.0/20.0))
+		time_length = (1.0/20.0);
+	else if (time_length > ((NSTimeInterval)_maxTimeLength / 20.0))
+		time_length = (NSTimeInterval)_maxTimeLength / 20.0;
+
+	[_controller zoomGesture:self];
+}
+
+- (void)scrollWheel:(NSEvent *)event
+{
+	sma_length -= (event.deltaY / 20.0);
+
+	if (sma_length < (1.0/20.0))
+		sma_length = (1.0/20.0);
+	else if (sma_length > ((NSTimeInterval)_maxMATimeLength / 20.0))
+		sma_length = (NSTimeInterval)_maxMATimeLength / 20.0;
+
+	time_offset += (event.deltaX / 20.0f);
+
+	[_controller scrollGesture:self];
 }
 
 - (void)drawGraph
@@ -315,6 +351,12 @@ NSString *const RANGE_MANUAL = @"Manual";
 	float viewWidth;
 	float unit_conv, tick;
 
+	if (data == nil || [data count] == 0) {
+		/* empty data */
+		_data = [[DataQueue alloc] init];
+		return;
+	}
+
 	// calculate tick
 	end = [data last_update];
 	viewWidth = _bounds.size.width;
@@ -352,15 +394,4 @@ NSString *const RANGE_MANUAL = @"Manual";
 	[self drawAll];
 	NSEnableScreenUpdates();
 }
-
-- (void)magnifyWithEvent:(NSEvent *)event
-{
-	NSLog(@"maginfy!");
-}
-
-- (void)scrollWheel:(NSEvent *)theEvent
-{
-	NSLog(@"scroll!");
-}
-
 @end

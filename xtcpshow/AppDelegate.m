@@ -34,8 +34,11 @@ static void setup_interface(NSPopUpButton *);
 	[_model setController:self]; // weak
 
 	// widget initialization
+	[_graphView setController:self];
 	[_graphView setRange:RANGE_AUTO withRange:0.0];
 	[_graphView setShowPacketMarker:NO];
+	[_graphView setMaxTimeLength:(int)[_zoomBar maxValue]];
+	[_graphView setMaxMATimeLength:(int)[_smoothBar maxValue]];
 	[_startButton setEnabled:TRUE];
 
 	// setup intrface labels
@@ -166,6 +169,26 @@ static void setup_interface(NSPopUpButton *);
 	else
 		[_graphView setShowPacketMarker:NO];
 	[_graphView setNeedsDisplay:YES];
+}
+
+- (void)zoomGesture:(id)sender
+{
+	int value;
+
+	value = [_graphView targetTimeLength];
+	[_zoomBar setIntValue:value];
+	[self animationNotify:nil];
+	[self updateUserInterface];
+}
+
+- (void)scrollGesture:(id)sender
+{
+	int value;
+
+	value = [_graphView MATimeLength];
+	[_smoothBar setIntValue:value];
+	[self animationNotify:nil];
+	[self updateUserInterface];
 }
 
 - (void)animationNotify:(id)sender

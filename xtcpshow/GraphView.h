@@ -7,6 +7,7 @@
 //
 #import <Cocoa/Cocoa.h>
 
+@class AppDelegate;
 @class GraphData;
 @class DataQueue;
 @class DataResampler;
@@ -38,6 +39,7 @@ extern NSString *const RANGE_MANUAL;
 	// gaphic object cache
 	NSGradient *graph_gradient;
 }
+@property (strong) AppDelegate *controller;
 @property (strong) DataQueue *data;
 
 // statistics
@@ -46,6 +48,8 @@ extern NSString *const RANGE_MANUAL;
 @property (assign, readonly) float averageValue;
 
 // configuration
+@property (assign) int maxTimeLength;
+@property (assign) int maxMATimeLength;
 @property (assign) BOOL showPacketMarker;
 
 - (void)updateRange;
@@ -55,7 +59,11 @@ extern NSString *const RANGE_MANUAL;
 - (float)setRange:(NSString *)mode withStep:(int)step;
 - (int)stepValueWithRange:(float)range;
 - (void)setTargetTimeLength:(int)value;
+- (int)targetTimeLength;
 - (void)setMATimeLength:(int)value;
+- (int)MATimeLength;
+- (void)magnifyWithEvent:(NSEvent *)event;
+- (void)scrollWheel:(NSEvent *)event;
 
 // Drawing
 - (void)drawGraph;

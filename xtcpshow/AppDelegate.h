@@ -48,6 +48,9 @@
 - (IBAction)setRangeType:(id)sender;
 - (IBAction)togglePacketMarker:(id)sender;
 
+/* Action form CustomView (GraphView) */
+- (void)zoomGesture:(id)sender;
+- (void)scrollGesture:(id)sender;
 
 /* the model */
 @property (strong) CaptureModel *model;
