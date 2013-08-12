@@ -48,8 +48,6 @@ extern NSString *const RANGE_MANUAL;
 // configuration
 @property (assign) BOOL showPacketMarker;
 
-- (void)initData;
-
 - (void)updateRange;
 
 // Action from UI

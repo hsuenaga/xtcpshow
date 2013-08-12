@@ -34,7 +34,6 @@ static void setup_interface(NSPopUpButton *);
 	[_model setController:self]; // weak
 
 	// widget initialization
-	[_graphView initData];
 	[_graphView setRange:RANGE_AUTO withRange:0.0];
 	[_graphView setShowPacketMarker:NO];
 	[_startButton setEnabled:TRUE];

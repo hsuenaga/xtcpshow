@@ -48,6 +48,7 @@
 - (IBAction)setRangeType:(id)sender;
 - (IBAction)togglePacketMarker:(id)sender;
 
+
 /* the model */
 @property (strong) CaptureModel *model;
 @property (strong) NSTimer *timer;

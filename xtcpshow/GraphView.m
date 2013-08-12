@@ -17,16 +17,22 @@ NSString *const RANGE_PEEKHOLD = @"PeekHold";
 NSString *const RANGE_MANUAL = @"Manual";
 
 @implementation GraphView
-- (void)initData
+- (GraphView *)initWithFrame:(CGRect)aRect
 {
+	self = [super initWithFrame:aRect];
+	if (!self)
+		return nil;
+
 	_data = nil;
 	_showPacketMarker = TRUE;
 	time_offset = 0;
 	time_length = 0;
-	
+
 	graph_gradient = [[NSGradient alloc]
 			  initWithStartingColor:[NSColor clearColor]
 			  endingColor:[NSColor greenColor]];
+
+	return self;
 }
 
 - (void)updateRange
@@ -345,6 +351,16 @@ NSString *const RANGE_MANUAL = @"Manual";
 	NSDisableScreenUpdates();
 	[self drawAll];
 	NSEnableScreenUpdates();
+}
+
+- (void)magnifyWithEvent:(NSEvent *)event
+{
+	NSLog(@"maginfy!");
+}
+
+- (void)scrollWheel:(NSEvent *)theEvent
+{
+	NSLog(@"scroll!");
 }
 
 @end
