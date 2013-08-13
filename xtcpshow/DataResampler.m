@@ -11,133 +11,21 @@
 #import "DataEntry.h"
 
 @implementation DataResampler
-- (void)importData:(DataQueue *)data
-{
-	write_protect = TRUE;
-	_data = data;
-}
-
-- (void)makeMutable
-{
-	DataQueue *dst = [[DataQueue alloc] init];
-
-	if (!write_protect)
-		return;
-	if (_data == nil)
-		return;
-
-	[_data enumerateDataUsingBlock:^(DataEntry *data, NSUInteger idx, BOOL *stop) {
-		[dst addDataEntry:[data copy]];
-	}];
-
-	write_protect = FALSE;
-	_data = dst;
-}
-
-- (void)scaleAllValue:(float)scale
-{
-	if (isnan(scale))
-		[self invalidValueException];
-	if (isinf(scale))
-		[self invalidValueException];
-
-	if ([_data isEmpty]) {
-		NSLog(@"data is empty");
-		return;
-	}
-	[_data enumerateDataUsingBlock:^(DataEntry *data, NSUInteger idx, BOOL *stop) {
-		[data setFloatValue:([data floatValue] * scale)];
-	}];
-}
-
-- (void)alignWithTick:(NSTimeInterval)tick fromDate:(NSDate *)start toDate:(NSDate *)end
-{
-	DataQueue *dst = [[DataQueue alloc] init];
-	NSTimeInterval unix_time;
-	NSDate *slot;
-	float slot_value, remain;
-
-	[self makeMutable];
-	
-	// round up start/end
-	unix_time = [start timeIntervalSince1970];
-	start = [NSDate dateWithTimeIntervalSince1970:(floor(unix_time/tick) * tick)];
-	unix_time = [end timeIntervalSince1970];
-	end = [NSDate dateWithTimeIntervalSince1970:(ceil(unix_time/tick) * tick)];
-	
-	slot = start;
-
-	while ([[_data firstDate] laterDate:start] == start)
-		[_data dequeueDataEntry];
-
-	slot_value = remain = 0.0f;
-	while ([slot laterDate:end] == end) {
-		DataEntry *sample;
-		NSUInteger sample_count = 0;
-
-		while ([[_data firstDate] laterDate:slot] == slot) {
-			DataEntry *source;
-			float value, new_value;
-
-			source = [_data dequeueDataEntry];
-			value = [source floatValue];
-			value = value + remain;
-
-			new_value = slot_value + value;
-			remain = (new_value - slot_value) - value;
-			slot_value = new_value;
-			sample_count += [source numberOfSamples];
-		}
-		sample = [DataEntry dataWithFloat:slot_value atDate:slot];
-		[sample setNumberOfSamples:sample_count];
-		[dst addDataEntry:sample];
-
-		slot = [slot dateByAddingTimeInterval:tick];
-		slot_value = remain = 0.0f;
-	}
-	_data = dst;
-}
-
 //
-// get Queue Data after start. (don't include start)
+// protected:
 //
-- (void)clipQueueFromDate:(NSDate *)start;
+- (DataQueue *)copyQueue:(DataQueue *)source FromDate:(NSDate *)start;
 {
 	DataQueue *dst = [[DataQueue alloc] init];
 
-	[_data enumerateDataUsingBlock:^(DataEntry *data, NSUInteger idx, BOOL *stop) {
+	[source enumerateDataUsingBlock:^(DataEntry *data, NSUInteger idx, BOOL *stop) {
 		if ([[data timestamp] earlierDate:start] != start)
 			return;
 
 		[dst addDataEntry:[data copy]];
 	}];
 
-	write_protect = FALSE;
-	_data = dst;
-}
-
-- (void)triangleMovingAverage:(NSUInteger)samples
-{
-	DataQueue *dst, *sma1, *sma2;
-	NSUInteger half_samples;
-
-	[self makeMutable];
-
-	half_samples = samples / 2 + 1;
-
-	dst = [[DataQueue alloc] init];
-
-	sma1 = [[DataQueue alloc] init];
-	[sma1 zeroFill:half_samples];
-
-	sma2 = [[DataQueue alloc] init];
-	[sma2 zeroFill:half_samples];
-
-	[_data enumerateDataUsingBlock:^(DataEntry *data, NSUInteger idx, BOOL *stop) {
-		[sma1 shiftDataWithNewData:[data copy]];
-		[sma2 shiftDataWithNewData:[DataEntry dataWithFloat:[sma1 averageFloatValue]]];
-		[data setFloatValue:[sma2 averageFloatValue]];
-	}];
+	return dst;
 }
 
 - (void)invalidValueException
@@ -147,5 +35,103 @@
 	ex = [NSException exceptionWithName:@"Invalid value" reason:@"Invalid value in DataResampler" userInfo:nil];
 
 	@throw ex;
+}
+
+//
+// public:
+//
+- (void)purgeData
+{
+	_data = nil;
+}
+
+- (void)resampleData:(DataQueue *)input
+{
+	NSTimeInterval dataLength, unix_time;
+	NSDate *start, *end;
+	NSUInteger MASamples, maxSamples;
+	DataQueue *delta;
+	float bytes2mbps, tick;
+
+	// convert units
+	tick = _outputTimeLength / _outputSamples; // [sec/sample]
+	MASamples = ceil(_MATimeLength / tick);
+	maxSamples = _outputSamples + MASamples;
+	bytes2mbps = 8.0f / tick; // [bps]
+	bytes2mbps = bytes2mbps / 1000.0f / 1000.0f; // [Mbps]
+
+	// allocate data if need
+	if (_data == nil) {
+		NSUInteger TMASamples = MASamples / 2;
+
+		_data = [[DataQueue alloc] init];
+		sma[0] = [[DataQueue alloc] init];
+		sma[1] = [[DataQueue alloc] init];
+		[sma[0] zeroFill:TMASamples];
+		[sma[1] zeroFill:TMASamples];
+	}
+
+	// get range of time
+	dataLength = -(_outputTimeLength + _MATimeLength);
+	end = [input last_update];
+	start = [end dateByAddingTimeInterval:dataLength];
+	if ([_data count] != 0)
+		start = [start laterDate:[_data lastDate]];
+
+	// round start/end
+	unix_time = [start timeIntervalSince1970];
+	unix_time = floor(unix_time/tick) * tick;
+	start = [NSDate dateWithTimeIntervalSince1970:unix_time];
+	unix_time = [end timeIntervalSince1970];
+	unix_time = ceil(unix_time/tick) * tick;
+	end = [NSDate dateWithTimeIntervalSince1970:unix_time];
+
+	// clip updated data only
+	delta = [self copyQueue:input FromDate:start];
+	if (!delta || [delta count] == 0)
+		return;
+
+	// filter
+	for (NSDate *slot = start;
+	     [slot laterDate:end] == end;
+	     slot = [slot dateByAddingTimeInterval:tick]) {
+		DataEntry *sample;
+		NSUInteger sample_count = 0;
+		float slot_value = 0.0f, remain = 0.0f;
+
+		// Step1: folding(sum) source data before slot
+		while ([[delta firstDate] laterDate:slot] == slot) {
+			DataEntry *source;
+			float value, new_value;
+
+			source = [delta dequeueDataEntry];
+			value = [source floatValue] + remain;
+			new_value = slot_value + value;
+			remain = (new_value - slot_value) - value;
+			slot_value = new_value;
+
+			sample_count += [source numberOfSamples];
+		}
+		sample = [DataEntry dataWithFloat:slot_value];
+
+		// Step2: MA filter
+		if (MASamples > 2) {
+			sample = [sma[0] shiftDataWithNewData:sample];
+			[sample setFloatValue:[sma[0] averageFloatValue]];
+			sample = [sma[1] shiftDataWithNewData:sample];
+			[sample setFloatValue:[sma[1] averageFloatValue]];
+		}
+
+		// Step3: convert unit of sample
+		[sample setFloatValue:([sample floatValue] * bytes2mbps)];
+
+		// finalize and output sample
+		[sample setNumberOfSamples:sample_count];
+		[sample setTimestamp:slot];
+		[_data addDataEntry:sample withLimit:maxSamples];
+	}
+
+	// get additional data(noise) generated by filter
+	_overSample = [_data count] - _outputSamples;
 }
 @end

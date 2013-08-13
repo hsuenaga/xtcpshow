@@ -32,7 +32,7 @@ NSString *const RANGE_MANUAL = @"Manual";
 	graph_gradient = [[NSGradient alloc]
 			  initWithStartingColor:[NSColor clearColor]
 			  endingColor:[NSColor greenColor]];
-
+	resampler = [[DataResampler alloc] init];
 	return self;
 }
 
@@ -74,7 +74,6 @@ NSString *const RANGE_MANUAL = @"Manual";
 	y_range = new_range; // [Mbps]
 
 	// Y-axis MA
-	NSLog(@"_MATime:%f", _MATimeLength);
 	_MATimeLength = floor(_MATimeLength / round) * round;
 	if (_MATimeLength < _minMATimeLength)
 		_MATimeLength = _minMATimeLength;
@@ -83,7 +82,6 @@ NSString *const RANGE_MANUAL = @"Manual";
 	ma_range = _MATimeLength * 1000.0f; // [ms]
 
 	// X-axis
-	NSLog(@"_viewTIme:%f", _viewTimeLength);
 	_viewTimeLength = floor(_viewTimeLength / round) * round;
 	if (_viewTimeLength < _minViewTimeLength)
 		_viewTimeLength = _minViewTimeLength;
@@ -330,48 +328,20 @@ NSString *const RANGE_MANUAL = @"Manual";
 
 - (void)importData:(DataQueue *)data
 {
-	DataResampler *sampler = [[DataResampler alloc] init];
-	NSDate *start, *end;
-	NSTimeInterval dataLength;
-	NSUInteger viewSMA;
-	float viewWidth;
-	float unit_conv, tick;
+	resampler.outputTimeLength = _viewTimeLength;
+	resampler.outputSamples = _bounds.size.width;
+	resampler.MATimeLength = _MATimeLength;
 
-	if (data == nil || [data count] == 0) {
-		/* empty data */
-		_data = [[DataQueue alloc] init];
-		return;
-	}
+	[resampler purgeData];
+	[resampler resampleData:data];
 
-	// calculate tick
-	end = [data last_update];
-	viewWidth = _bounds.size.width;
-	dataLength = 0 - _viewTimeLength - _MATimeLength;
-	start = [end dateByAddingTimeInterval:dataLength];
-	tick = _viewTimeLength / viewWidth; // [sec]
-
-	// make bar graph
-	[sampler importData:data];
-	[sampler clipQueueFromDate:start];
-	[sampler alignWithTick:tick fromDate:start toDate:end];
-
-	viewSMA = ceil(_MATimeLength / tick);
-	if (viewSMA > 1)
-		[sampler triangleMovingAverage:viewSMA];
-	GraphOffset = [[sampler data] count] - viewWidth;
-	XmarkOffset = GraphOffset / 2;
-
-	// convert [bytes] => [Mbps]
-	unit_conv = 8.0f / tick; // [bps]
-	unit_conv = unit_conv / 1000.0f / 1000.0f; // [Mbps]
-	[sampler scaleAllValue:unit_conv];
-
-	_data = [sampler data];
-
-	// update statistics
+	_data = [resampler data];
 	_maxSamples = [_data maxSamples];
 	_maxValue = [_data maxFloatValue];
 	_averageValue = [_data averageFloatValue];
+
+	GraphOffset = [resampler overSample];
+	XmarkOffset = [resampler overSample] / 2;
 }
 
 - (void)drawRect:(NSRect)dirty_rect

@@ -11,20 +11,23 @@
 
 @interface DataResampler : NSObject {
 	BOOL write_protect;
+
+	// MA filter states
+	DataQueue *sma[2];
 }
 
 @property (strong, readonly) DataQueue *data;
+@property (assign) NSUInteger outputSamples;
+@property (assign) NSTimeInterval outputTimeLength;
+@property (assign) NSTimeInterval MATimeLength;
+@property (assign, readonly) NSUInteger overSample;
 
-- (void)importData:(DataQueue *)data;
-- (void)makeMutable;
-
-- (void)scaleAllValue:(float)scale;
-
-- (void)alignWithTick:(NSTimeInterval)tick fromDate:(NSDate *)start toDate:(NSDate *)end;
-
-- (void)clipQueueFromDate:(NSDate *)start;
-
-- (void)triangleMovingAverage:(NSUInteger)samples;
-
+// protected
+- (DataQueue *)copyQueue:(DataQueue *)source FromDate:(NSDate *)start;
 - (void)invalidValueException;
+
+// public
+- (void)purgeData;
+- (void)resampleData:(DataQueue *)input;
+
 @end

@@ -33,6 +33,8 @@ extern NSString *const RANGE_MANUAL;
 
 	// gaphic object cache
 	NSGradient *graph_gradient;
+
+	DataResampler *resampler;
 }
 @property (strong) AppDelegate *controller;
 @property (strong) DataQueue *data;
