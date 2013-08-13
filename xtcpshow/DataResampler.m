@@ -88,8 +88,6 @@
 
 	// clip updated data only
 	delta = [self copyQueue:input FromDate:start];
-	if (!delta || [delta count] == 0)
-		return;
 
 	// filter
 	for (NSDate *slot = start;

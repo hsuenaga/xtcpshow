@@ -41,6 +41,7 @@ NSString *const RANGE_MANUAL = @"Manual";
 	const double round = 0.05; // 50 [ms]
 	float max;
 	float new_range;
+	BOOL resample = NO;
 
 	// Y-axis
 	max = [[self data] maxFloatValue];
@@ -79,7 +80,12 @@ NSString *const RANGE_MANUAL = @"Manual";
 		_MATimeLength = _minMATimeLength;
 	else if (_MATimeLength > _maxMATimeLength)
 		_MATimeLength = _maxMATimeLength;
-	ma_range = _MATimeLength * 1000.0f; // [ms]
+	new_range = _MATimeLength * 1000.0f; // [ms]
+	if (ma_range < (new_range - round)
+	    || ma_range > (new_range + round)) {
+		resample = YES;
+		ma_range = new_range;
+	}
 
 	// X-axis
 	_viewTimeLength = floor(_viewTimeLength / round) * round;
@@ -87,7 +93,15 @@ NSString *const RANGE_MANUAL = @"Manual";
 		_viewTimeLength = _minViewTimeLength;
 	else if (_viewTimeLength > _maxViewTimeLength)
 		_viewTimeLength = _maxViewTimeLength;
-	x_range = _viewTimeLength * 1000.0f; // [ms]
+	new_range = _viewTimeLength * 1000.0f; // [ms]
+	if (x_range < (new_range - round)
+	    || x_range > (new_range + round)) {
+		resample = YES;
+		x_range = new_range;
+	}
+
+	if (resample)
+		[resampler purgeData];
 }
 
 - (float)setRange:(NSString *)mode withRange:(float)range
@@ -332,7 +346,6 @@ NSString *const RANGE_MANUAL = @"Manual";
 	resampler.outputSamples = _bounds.size.width;
 	resampler.MATimeLength = _MATimeLength;
 
-	[resampler purgeData];
 	[resampler resampleData:data];
 
 	_data = [resampler data];
@@ -346,6 +359,11 @@ NSString *const RANGE_MANUAL = @"Manual";
 
 - (void)drawRect:(NSRect)dirty_rect
 {
+	if (_bounds.size.width != resampler.outputSamples) {
+		[resampler purgeData];
+		resampler.outputSamples = _bounds.size.width;
+	}
+
 	NSDisableScreenUpdates();
 	[self drawAll];
 	NSEnableScreenUpdates();
