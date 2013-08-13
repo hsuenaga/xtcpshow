@@ -13,10 +13,28 @@
 #import "DataResampler.h"
 #import "DataEntry.h"
 
+//
+// string resources
+//
 NSString *const RANGE_AUTO = @"Auto";
 NSString *const RANGE_PEEKHOLD = @"PeekHold";
 NSString *const RANGE_MANUAL = @"Manual";
 
+NSString *const CAP_MAX_SMPL = @" Max %lu [packets/sample]";
+NSString *const CAP_MAX_MBPS = @" Max %6.3f [mbps]";
+NSString *const FMT_RANGE = @" Y-Range %6.3f [Mbps] / X-Range %6.1f [ms] / MA %6.1f [ms] / Avg %6.3f [Mbps] ";
+NSString *const FMT_DATE = @"yyyy-MM-dd HH:mm:ss.SSS zzz ";
+NSString *const FMT_NODATA = @"NO DATA RECORD ";
+
+//
+// gesture sensitivities
+//
+float const magnify_sensitivity = 2.0f;
+float const scroll_sensitivity = 10.0f;
+
+//
+// class
+//
 @implementation GraphView
 - (GraphView *)initWithFrame:(CGRect)aRect
 {
@@ -26,13 +44,20 @@ NSString *const RANGE_MANUAL = @"Manual";
 
 	_data = nil;
 	_showPacketMarker = TRUE;
-	_magnifySense = 2.0f;
-	_scrollSense = 10.0f;
+	_magnifySense = magnify_sensitivity;
+	_scrollSense = scroll_sensitivity;
 
 	graph_gradient = [[NSGradient alloc]
 			  initWithStartingColor:[NSColor clearColor]
 			  endingColor:[NSColor greenColor]];
 	resampler = [[DataResampler alloc] init];
+
+	text_attr = [[NSMutableDictionary alloc] init];
+	[text_attr setValue:[NSColor whiteColor]
+		forKey:NSForegroundColorAttributeName];
+	[text_attr setValue:[NSFont fontWithName:@"Menlo Regular" size:12]
+		forKey:NSFontAttributeName];
+
 	return self;
 }
 
@@ -223,21 +248,40 @@ NSString *const RANGE_MANUAL = @"Manual";
 		[path stroke];
 	}];
 
-	[self drawText:[NSString stringWithFormat:@" Max %lu [packets/sample]", _maxSamples] atPoint:NSMakePoint(0.0f, _bounds.size.height - 14.0f)];
+	[self drawText:[NSString stringWithFormat:CAP_MAX_SMPL, _maxSamples]
+	       atPoint:NSMakePoint(0.0f, _bounds.size.height - 14.0f)];
 
 	[NSGraphicsContext restoreGraphicsState];
 }
 
-- (void)drawText: (NSString *)t atPoint:(NSPoint) p
+- (void)drawText: (NSString *)text atPoint:(NSPoint)point
 {
-	NSMutableDictionary *attr;
+	NSAttributedString *atext = [NSAttributedString alloc];
+	NSSize size;
 
-	attr = [[NSMutableDictionary alloc] init];
-	[attr setValue:[NSColor whiteColor]
-		forKey:NSForegroundColorAttributeName];
-	[attr setValue:[NSFont fontWithName:@"Menlo Regular" size:12]
-		forKey:NSFontAttributeName];
-	[t drawAtPoint:p withAttributes:attr];
+	atext = [atext initWithString:text attributes:text_attr];
+	size = [atext size];
+	if ((point.x + size.width) > _bounds.size.width)
+		point.x = _bounds.size.width - size.width;
+	if ((point.y + size.height) > _bounds.size.height)
+		point.y = _bounds.size.height - size.height;
+
+	[atext drawAtPoint:point];
+}
+
+- (void)drawText:(NSString *)text alignRight:(CGFloat)y
+{
+	NSAttributedString *atext = [NSAttributedString alloc];
+	NSSize size;
+	NSPoint point;
+
+	atext = [atext initWithString:text attributes:text_attr];
+	size = [atext size];
+	point.x = _bounds.size.width - size.width;
+	point.y = y;
+	if ((point.y + size.height) > _bounds.size.height)
+		point.y = _bounds.size.height - size.height;
+	[atext drawAtPoint:point];
 }
 
 - (void)drawGuide
@@ -272,7 +316,7 @@ NSString *const RANGE_MANUAL = @"Manual";
 	else if (y > ((rect.size.height / 5) * 4))
 		y = (rect.size.height / 5) * 4;
 
-	marker = [NSString stringWithFormat:@" Max %6.3f [mbps]", _maxValue];
+	marker = [NSString stringWithFormat:CAP_MAX_MBPS, _maxValue];
 	[self drawText:marker atPoint:NSMakePoint(0.0, y)];
 
 	[NSGraphicsContext restoreGraphicsState];
@@ -305,16 +349,43 @@ NSString *const RANGE_MANUAL = @"Manual";
 	[NSGraphicsContext restoreGraphicsState];
 }
 
+- (void)drawRange
+{
+	NSString *text;
+	[NSGraphicsContext saveGraphicsState];
+	text =
+	[NSString stringWithFormat:FMT_RANGE,
+	 y_range, x_range, ma_range,
+	 [[self data] averageFloatValue]];
+	[self drawText:text atPoint:NSMakePoint(0.0, 0.0)];
+
+	[NSGraphicsContext restoreGraphicsState];
+}
+
+- (void)drawDate
+{
+	NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+	NSString *text;
+
+	[NSGraphicsContext saveGraphicsState];
+	[dateFormatter setDateFormat:FMT_DATE];
+	if (_data && ![_data isEmpty])
+		text = [dateFormatter stringFromDate:[_data lastDate]];
+	else
+		text = FMT_NODATA;
+
+	[self drawText:text alignRight:_bounds.size.height];
+	
+	[NSGraphicsContext restoreGraphicsState];
+}
+
 - (void)drawAll
 {
-	NSRect rect = [self bounds];
-	NSString *title;
-
 	[NSGraphicsContext saveGraphicsState];
 
 	/* clear screen */
 	[[NSColor clearColor] set];
-	NSRectFill(rect);
+	NSRectFill(_bounds);
 
 	/* update x/y axis */
 	[self updateRange];
@@ -322,7 +393,7 @@ NSString *const RANGE_MANUAL = @"Manual";
 	/* show matrix */
 	[self drawGrid];
 
-	/* plot x mark */
+	/* plot packet marker */
 	if (_showPacketMarker == TRUE)
 		[self drawXMark];
 
@@ -333,12 +404,10 @@ NSString *const RANGE_MANUAL = @"Manual";
 	[self drawGuide];
 
 	/* graph params */
-	title =
-	[NSString stringWithFormat:@" Y-Range %6.3f [Mbps] / X-Range %6.1f [ms] / MA %6.1f [ms] / Avg %6.3f [Mbps] ",
-	 y_range, x_range, ma_range,
-	 [[self data] averageFloatValue]];
-	[self drawText:title atPoint:NSMakePoint(0.0, 0.0)];
+	[self drawRange];
 
+	// date
+	[self drawDate];
 	[NSGraphicsContext restoreGraphicsState];
 }
 

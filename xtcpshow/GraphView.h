@@ -33,7 +33,9 @@ extern NSString *const RANGE_MANUAL;
 
 	// gaphic object cache
 	NSGradient *graph_gradient;
+	NSMutableDictionary *text_attr;
 
+	// data filter
 	DataResampler *resampler;
 }
 @property (strong) AppDelegate *controller;
@@ -71,9 +73,12 @@ extern NSString *const RANGE_MANUAL;
 // Drawing
 - (void)drawGraph;
 - (void)drawXMark;
-- (void)drawText: (NSString *)t atPoint:(NSPoint)p;
+- (void)drawText:(NSString *)text atPoint:(NSPoint)point;
+- (void)drawText:(NSString *)text alignRight:(CGFloat)y;
 - (void)drawGuide;
 - (void)drawGrid;
+- (void)drawRange;
+- (void)drawDate;
 - (void)drawAll;
 
 - (void)importData:(DataQueue *)data;
