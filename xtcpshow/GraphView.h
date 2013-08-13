@@ -27,11 +27,6 @@ extern NSString *const RANGE_MANUAL;
 	float manual_range;
 	float peak_range;
 
-	// configuration of data import
-	NSTimeInterval time_offset; //[sec] XXX: not used
-	NSTimeInterval time_length; //[sec]
-	NSTimeInterval sma_length; //[sec]
-
 	// X-axis adjustment
 	NSUInteger GraphOffset;
 	NSUInteger XmarkOffset;
@@ -48,8 +43,18 @@ extern NSString *const RANGE_MANUAL;
 @property (assign, readonly) float averageValue;
 
 // configuration
-@property (assign) int maxTimeLength;
-@property (assign) int maxMATimeLength;
+@property (assign) float magnifySense;
+@property (assign) float scrollSense;
+@property (assign) NSTimeInterval minViewTimeLength;
+@property (assign) NSTimeInterval maxViewTimeLength;
+@property (assign) NSTimeInterval viewTimeLength;
+
+@property (assign) NSTimeInterval maxMATimeLength;
+@property (assign) NSTimeInterval minMATimeLength;
+@property (assign) NSTimeInterval MATimeLength;
+
+@property (assign) NSTimeInterval viewTimeOffset;
+
 @property (assign) BOOL showPacketMarker;
 
 - (void)updateRange;
@@ -58,10 +63,6 @@ extern NSString *const RANGE_MANUAL;
 - (float)setRange:(NSString *)mode withRange:(float)range;
 - (float)setRange:(NSString *)mode withStep:(int)step;
 - (int)stepValueWithRange:(float)range;
-- (void)setTargetTimeLength:(int)value;
-- (int)targetTimeLength;
-- (void)setMATimeLength:(int)value;
-- (int)MATimeLength;
 - (void)magnifyWithEvent:(NSEvent *)event;
 - (void)scrollWheel:(NSEvent *)event;
 

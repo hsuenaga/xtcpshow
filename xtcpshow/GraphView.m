@@ -26,8 +26,8 @@ NSString *const RANGE_MANUAL = @"Manual";
 
 	_data = nil;
 	_showPacketMarker = TRUE;
-	time_offset = 0;
-	time_length = 0;
+	_magnifySense = 2.0f;
+	_scrollSense = 10.0f;
 
 	graph_gradient = [[NSGradient alloc]
 			  initWithStartingColor:[NSColor clearColor]
@@ -38,12 +38,12 @@ NSString *const RANGE_MANUAL = @"Manual";
 
 - (void)updateRange
 {
+	const double round = 0.05; // 50 [ms]
 	float max;
 	float new_range;
 
+	// Y-axis
 	max = [[self data] maxFloatValue];
-
-	/* auto ranging */
 	if (range_mode == RANGE_MANUAL) {
 		if (manual_range <= 0.5f)
 			new_range = 0.5f;
@@ -72,8 +72,22 @@ NSString *const RANGE_MANUAL = @"Manual";
 			new_range = 5.0f * (ceil(max / 5.0f));
 	}
 	y_range = new_range; // [Mbps]
-	x_range = time_length * 1000.0f; // [ms]
-	ma_range = sma_length * 1000.0f; // [ms]
+
+	// Y-axis MA
+	_MATimeLength = floor(_MATimeLength / round) * round;
+	if (_MATimeLength < _minMATimeLength)
+		_MATimeLength = _minMATimeLength;
+	else if (_MATimeLength > _maxMATimeLength)
+		_MATimeLength = _maxMATimeLength;
+	ma_range = _MATimeLength * 1000.0f; // [ms]
+
+	// X-axis
+	_viewTimeLength = floor(_viewTimeLength / round) * round;
+	if (_viewTimeLength < _minViewTimeLength)
+		_viewTimeLength = _minViewTimeLength;
+	else if (_viewTimeLength > _maxViewTimeLength)
+		_viewTimeLength = _maxViewTimeLength;
+	x_range = _viewTimeLength * 1000.0f; // [ms]
 }
 
 - (float)setRange:(NSString *)mode withRange:(float)range
@@ -122,49 +136,19 @@ NSString *const RANGE_MANUAL = @"Manual";
 	return step;
 }
 
-- (void)setTargetTimeLength:(int)value
-{
-	// UI resolution is 1/20 [sec]
-	time_length = (NSTimeInterval)value / 20.0;
-}
-
-- (int)targetTimeLength
-{
-	return (int)(time_length * 20.0f);
-}
-
-- (void)setMATimeLength:(int)value
-{
-	// UI resolution is 1/20 [sec]
-	sma_length = (NSTimeInterval)value / 20.0;
-}
-
-- (int)MATimeLength
-{
-	return (int)(sma_length * 20.0f);
-}
-
 - (void)magnifyWithEvent:(NSEvent *)event
 {
-	time_length *= 1.0/(event.magnification + 1.0);
-	if (time_length < (1.0/20.0))
-		time_length = (1.0/20.0);
-	else if (time_length > ((NSTimeInterval)_maxTimeLength / 20.0))
-		time_length = (NSTimeInterval)_maxTimeLength / 20.0;
+	_viewTimeLength *= 1.0/(1.0 + (event.magnification/_magnifySense));
+	[self updateRange];
 
 	[_controller zoomGesture:self];
 }
 
 - (void)scrollWheel:(NSEvent *)event
 {
-	sma_length -= (event.deltaY / 20.0);
-
-	if (sma_length < (1.0/20.0))
-		sma_length = (1.0/20.0);
-	else if (sma_length > ((NSTimeInterval)_maxMATimeLength / 20.0))
-		sma_length = (NSTimeInterval)_maxMATimeLength / 20.0;
-
-	time_offset += (event.deltaX / 20.0f);
+	_MATimeLength -= (event.deltaY/_scrollSense);
+	_viewTimeOffset += ((event.deltaX/_scrollSense) / 20.0f);
+	[self updateRange];
 
 	[_controller scrollGesture:self];
 }
@@ -360,16 +344,16 @@ NSString *const RANGE_MANUAL = @"Manual";
 	// calculate tick
 	end = [data last_update];
 	viewWidth = _bounds.size.width;
-	dataLength = 0 - time_length - sma_length;
+	dataLength = 0 - _viewTimeLength - _MATimeLength;
 	start = [end dateByAddingTimeInterval:dataLength];
-	tick = time_length / viewWidth; // [sec]
+	tick = _viewTimeLength / viewWidth; // [sec]
 
 	// make bar graph
 	[sampler importData:data];
 	[sampler clipQueueFromDate:start];
 	[sampler alignWithTick:tick fromDate:start toDate:end];
 
-	viewSMA = ceil(sma_length / tick);
+	viewSMA = ceil(_MATimeLength / tick);
 	if (viewSMA > 1)
 		[sampler triangleMovingAverage:viewSMA];
 	GraphOffset = [[sampler data] count] - viewWidth;

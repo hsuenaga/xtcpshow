@@ -98,6 +98,9 @@
 	_data = dst;
 }
 
+//
+// get Queue Data after start. (don't include start)
+//
 - (void)clipQueueFromDate:(NSDate *)start;
 {
 	DataQueue *dst = [[DataQueue alloc] init];

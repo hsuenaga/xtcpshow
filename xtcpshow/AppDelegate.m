@@ -37,8 +37,12 @@ static void setup_interface(NSPopUpButton *);
 	[_graphView setController:self];
 	[_graphView setRange:RANGE_AUTO withRange:0.0];
 	[_graphView setShowPacketMarker:NO];
-	[_graphView setMaxTimeLength:(int)[_zoomBar maxValue]];
-	[_graphView setMaxMATimeLength:(int)[_smoothBar maxValue]];
+	[_graphView setMaxViewTimeLength:[_zoomBar maxValue]];
+	[_graphView setMinViewTimeLength:[_zoomBar minValue]];
+	[_graphView setViewTimeLength:[_zoomBar intValue]];
+	[_graphView setMaxMATimeLength:[_smoothBar maxValue]];
+	[_graphView setMinMATimeLength:[_smoothBar minValue]];
+	[_graphView setMATimeLength:[_smoothBar intValue]];
 	[_startButton setEnabled:TRUE];
 
 	// setup intrface labels
@@ -72,7 +76,7 @@ static void setup_interface(NSPopUpButton *);
 		_model.device =	[[_deviceSelector titleOfSelectedItem] cStringUsingEncoding:NSASCIIStringEncoding];
 		_model.filter =
 		[[_filterField stringValue] cStringUsingEncoding:NSASCIIStringEncoding];
-		[_graphView setTargetTimeLength:[_zoomBar intValue]];
+		[_graphView setViewTimeLength:[_zoomBar intValue]];
 		[_graphView setMATimeLength:[_smoothBar intValue]];
 
 		[_startButton setTitle:LBL_STOP];
@@ -96,13 +100,13 @@ static void setup_interface(NSPopUpButton *);
 }
 
 - (IBAction)changeZoom:(id)sender {
-	[_graphView setTargetTimeLength:[sender intValue]];
+	[_graphView setViewTimeLength:[sender floatValue]];
 	[self animationNotify:nil];
 	[self updateUserInterface];
 }
 
 - (IBAction)changeSmooth:(id)sender {
-	[_graphView setMATimeLength:[sender intValue]];
+	[_graphView setMATimeLength:[sender floatValue]];
 	[self animationNotify:nil];
 	[self updateUserInterface];
 }
@@ -175,8 +179,8 @@ static void setup_interface(NSPopUpButton *);
 {
 	int value;
 
-	value = [_graphView targetTimeLength];
-	[_zoomBar setIntValue:value];
+	value = [_graphView viewTimeLength];
+	[_zoomBar setFloatValue:value];
 	[self animationNotify:nil];
 	[self updateUserInterface];
 }
@@ -186,7 +190,7 @@ static void setup_interface(NSPopUpButton *);
 	int value;
 
 	value = [_graphView MATimeLength];
-	[_smoothBar setIntValue:value];
+	[_smoothBar setFloatValue:value];
 	[self animationNotify:nil];
 	[self updateUserInterface];
 }

@@ -1352,9 +1352,9 @@
 												<string key="NSContents"/>
 												<string key="NSCellIdentifier">_NS:9</string>
 												<reference key="NSControlView" ref="32660970"/>
-												<double key="NSMaxValue">100</double>
-												<double key="NSMinValue">1</double>
-												<double key="NSValue">10</double>
+												<double key="NSMaxValue">10</double>
+												<double key="NSMinValue">0.10000000000000001</double>
+												<double key="NSValue">0.5</double>
 												<double key="NSAltIncValue">0.0</double>
 												<int key="NSNumberOfTickMarks">5</int>
 												<int key="NSTickMarkPosition">0</int>
@@ -1378,9 +1378,9 @@
 												<string key="NSContents"/>
 												<string key="NSCellIdentifier">_NS:9</string>
 												<reference key="NSControlView" ref="288708077"/>
-												<double key="NSMaxValue">1000</double>
+												<double key="NSMaxValue">60</double>
 												<double key="NSMinValue">1</double>
-												<double key="NSValue">100</double>
+												<double key="NSValue">5</double>
 												<double key="NSAltIncValue">0.0</double>
 												<int key="NSNumberOfTickMarks">5</int>
 												<int key="NSTickMarkPosition">1</int>
@@ -1471,7 +1471,7 @@
 											<object class="NSTextFieldCell" key="NSCell" id="106762220">
 												<int key="NSCellFlags">68157504</int>
 												<int key="NSCellFlags2">272630784</int>
-												<string key="NSContents">Time</string>
+												<string key="NSContents">X-Scale</string>
 												<reference key="NSSupport" ref="306472317"/>
 												<string key="NSCellIdentifier">_NS:1535</string>
 												<reference key="NSControlView" ref="353715511"/>
