@@ -199,7 +199,7 @@ static void setup_interface(NSPopUpButton *);
 - (void)animationNotify:(id)sender
 {
 	[_model animationTick];
-#if 1
+#if 0
 	// disable differential update
 	[_graphView purgeData];
 #endif

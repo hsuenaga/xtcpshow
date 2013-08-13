@@ -19,7 +19,7 @@
 	DataQueue *dst = [[DataQueue alloc] init];
 
 	[source enumerateDataUsingBlock:^(DataEntry *data, NSUInteger idx, BOOL *stop) {
-		if ([[data timestamp] laterDate:start] == start)
+		if ([start earlierDate:[data timestamp]] == start)
 			return;
 
 		[dst addDataEntry:[data copy]];
@@ -45,9 +45,18 @@
 	_data = nil;
 }
 
+- (NSDate *)roundDate:(NSDate *)date toTick:(NSTimeInterval)tick
+{
+	NSTimeInterval unixTime;
+
+	unixTime = [date timeIntervalSince1970];
+	unixTime = floor(unixTime / tick) * tick;
+	return [NSDate dateWithTimeIntervalSince1970:unixTime];
+}
+
 - (void)resampleData:(DataQueue *)input
 {
-	NSTimeInterval dataLength, unix_time;
+	NSTimeInterval dataLength;
 	NSDate *start, *end;
 	NSUInteger MASamples, maxSamples;
 	DataQueue *delta;
@@ -75,19 +84,18 @@
 	// get range of time
 	dataLength = -(_outputTimeLength + _MATimeLength);
 	end = input.last_update;
-	start = [end dateByAddingTimeInterval:dataLength];
-	if ([_data count] != 0)
+	start = [self roundDate:[end dateByAddingTimeInterval:dataLength]
+			 toTick:tick];
+	if ([_data count] != 0) {
+		// continue from last update
 		start = [start laterDate:_data.lastDate];
-
-	// round start
-	unix_time = [start timeIntervalSince1970];
-	unix_time = floor(unix_time/tick) * tick;
-	start = [NSDate dateWithTimeIntervalSince1970:unix_time];
+		start = [start dateByAddingTimeInterval:tick];
+	}
 	if (!_data.last_update)
 		_data.last_update = start;
 
-	// clip updated data only
-	delta = [self copyQueue:input FromDate:start];
+	// continue from last update
+	delta = [self copyQueue:input FromDate:_data.last_update];
 
 	// filter
 	for (NSDate *slot = start; [slot laterDate:end] == end;
@@ -113,7 +121,7 @@
 		}
 		sample = [DataEntry dataWithFloat:slot_value];
 
-		// Step2: MA filter
+		// Step2: TMA filter
 		if (MASamples > 2) {
 			sample = [sma[0] shiftDataWithNewData:sample];
 			[sample setFloatValue:[sma[0] averageFloatValue]];
