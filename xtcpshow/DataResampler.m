@@ -19,7 +19,7 @@
 	DataQueue *dst = [[DataQueue alloc] init];
 
 	[source enumerateDataUsingBlock:^(DataEntry *data, NSUInteger idx, BOOL *stop) {
-		if ([[data timestamp] earlierDate:start] != start)
+		if ([[data timestamp] laterDate:start] == start)
 			return;
 
 		[dst addDataEntry:[data copy]];
@@ -65,6 +65,7 @@
 		NSUInteger TMASamples = MASamples / 2;
 
 		_data = [[DataQueue alloc] init];
+		_data.last_update = nil;
 		sma[0] = [[DataQueue alloc] init];
 		sma[1] = [[DataQueue alloc] init];
 		[sma[0] zeroFill:TMASamples];
@@ -73,36 +74,31 @@
 
 	// get range of time
 	dataLength = -(_outputTimeLength + _MATimeLength);
-	end = [input last_update];
+	end = input.last_update;
 	start = [end dateByAddingTimeInterval:dataLength];
 	if ([_data count] != 0)
-		start = [start laterDate:[_data lastDate]];
+		start = [start laterDate:_data.lastDate];
 
-	// round start/end
+	// round start
 	unix_time = [start timeIntervalSince1970];
 	unix_time = floor(unix_time/tick) * tick;
 	start = [NSDate dateWithTimeIntervalSince1970:unix_time];
-	unix_time = [end timeIntervalSince1970];
-	unix_time = floor(unix_time/tick) * tick;
-	end = [NSDate dateWithTimeIntervalSince1970:unix_time];
+	if (!_data.last_update)
+		_data.last_update = start;
 
-	// wait for at least 1 tick of data.
-	if ([[start dateByAddingTimeInterval:tick] laterDate:end] != end)
-		return;
-
-	// clip updated data only (not include start)
+	// clip updated data only
 	delta = [self copyQueue:input FromDate:start];
 
 	// filter
-	for (NSDate *slot = start;
-	     [slot laterDate:end] == end;
+	for (NSDate *slot = start; [slot laterDate:end] == end;
 	     slot = [slot dateByAddingTimeInterval:tick]) {
 		DataEntry *sample;
 		NSUInteger sample_count = 0;
 		float slot_value = 0.0f, remain = 0.0f;
 
 		// Step1: folding(sum) source data before slot
-		while ([[delta firstDate] laterDate:slot] == slot) {
+		while (![delta isEmpty]
+		       && [[delta firstDate] earlierDate:slot] != slot) {
 			DataEntry *source;
 			float value, new_value;
 
@@ -112,7 +108,8 @@
 			remain = (new_value - slot_value) - value;
 			slot_value = new_value;
 
-			sample_count += [source numberOfSamples];
+			sample_count += source.numberOfSamples;
+			_data.last_update = source.timestamp;
 		}
 		sample = [DataEntry dataWithFloat:slot_value];
 

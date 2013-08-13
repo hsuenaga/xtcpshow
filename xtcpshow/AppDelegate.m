@@ -109,6 +109,26 @@ static void setup_interface(NSPopUpButton *);
 	[self updateUserInterface];
 }
 
+- (void)zoomGesture:(id)sender
+{
+	int value;
+
+	value = [_graphView viewTimeLength];
+	[_zoomBar setFloatValue:value];
+	[self animationNotify:nil];
+	[self updateUserInterface];
+}
+
+- (void)scrollGesture:(id)sender
+{
+	int value;
+
+	value = [_graphView MATimeLength];
+	[_smoothBar setFloatValue:value];
+	[self animationNotify:nil];
+	[self updateUserInterface];
+}
+
 - (IBAction)changeRange:(id)sender {
 	NSString *mode;
 	float range;
@@ -170,32 +190,19 @@ static void setup_interface(NSPopUpButton *);
 		[_graphView setShowPacketMarker:YES];
 	else
 		[_graphView setShowPacketMarker:NO];
+
+	[_graphView purgeData];
+	[_graphView importData:[_model data]];
 	[_graphView setNeedsDisplay:YES];
-}
-
-- (void)zoomGesture:(id)sender
-{
-	int value;
-
-	value = [_graphView viewTimeLength];
-	[_zoomBar setFloatValue:value];
-	[self animationNotify:nil];
-	[self updateUserInterface];
-}
-
-- (void)scrollGesture:(id)sender
-{
-	int value;
-
-	value = [_graphView MATimeLength];
-	[_smoothBar setFloatValue:value];
-	[self animationNotify:nil];
-	[self updateUserInterface];
 }
 
 - (void)animationNotify:(id)sender
 {
 	[_model animationTick];
+#if 1
+	// disable differential update
+	[_graphView purgeData];
+#endif
 	[_graphView importData:[_model data]];
 	[_graphView setNeedsDisplay:YES];
 

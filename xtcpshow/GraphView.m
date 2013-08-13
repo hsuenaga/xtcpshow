@@ -154,6 +154,7 @@ NSString *const RANGE_MANUAL = @"Manual";
 {
 	_viewTimeLength *= 1.0/(1.0 + (event.magnification/_magnifySense));
 	[self updateRange];
+	[resampler purgeData];
 
 	[_controller zoomGesture:self];
 }
@@ -163,6 +164,7 @@ NSString *const RANGE_MANUAL = @"Manual";
 	_MATimeLength -= (event.deltaY/_scrollSense);
 	_viewTimeOffset += ((event.deltaX/_scrollSense) / 20.0f);
 	[self updateRange];
+	[resampler purgeData];
 
 	[_controller scrollGesture:self];
 }
@@ -355,6 +357,11 @@ NSString *const RANGE_MANUAL = @"Manual";
 
 	GraphOffset = [resampler overSample];
 	XmarkOffset = [resampler overSample] / 2;
+}
+
+- (void)purgeData
+{
+	[resampler purgeData];
 }
 
 - (void)drawRect:(NSRect)dirty_rect

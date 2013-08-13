@@ -77,6 +77,7 @@ extern NSString *const RANGE_MANUAL;
 - (void)drawAll;
 
 - (void)importData:(DataQueue *)data;
+- (void)purgeData;
 - (void)drawRect:(NSRect)rect;
 
 @end
