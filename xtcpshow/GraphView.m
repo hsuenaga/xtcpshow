@@ -74,6 +74,7 @@ NSString *const RANGE_MANUAL = @"Manual";
 	y_range = new_range; // [Mbps]
 
 	// Y-axis MA
+	NSLog(@"_MATime:%f", _MATimeLength);
 	_MATimeLength = floor(_MATimeLength / round) * round;
 	if (_MATimeLength < _minMATimeLength)
 		_MATimeLength = _minMATimeLength;
@@ -82,6 +83,7 @@ NSString *const RANGE_MANUAL = @"Manual";
 	ma_range = _MATimeLength * 1000.0f; // [ms]
 
 	// X-axis
+	NSLog(@"_viewTIme:%f", _viewTimeLength);
 	_viewTimeLength = floor(_viewTimeLength / round) * round;
 	if (_viewTimeLength < _minViewTimeLength)
 		_viewTimeLength = _minViewTimeLength;

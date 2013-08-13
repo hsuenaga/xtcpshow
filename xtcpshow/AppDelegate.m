@@ -39,10 +39,11 @@ static void setup_interface(NSPopUpButton *);
 	[_graphView setShowPacketMarker:NO];
 	[_graphView setMaxViewTimeLength:[_zoomBar maxValue]];
 	[_graphView setMinViewTimeLength:[_zoomBar minValue]];
-	[_graphView setViewTimeLength:[_zoomBar intValue]];
+	[_graphView setViewTimeLength:[_zoomBar floatValue]];
 	[_graphView setMaxMATimeLength:[_smoothBar maxValue]];
 	[_graphView setMinMATimeLength:[_smoothBar minValue]];
-	[_graphView setMATimeLength:[_smoothBar intValue]];
+	[_graphView setMATimeLength:[_smoothBar floatValue]];
+	[_graphView setNeedsDisplay:YES];
 	[_startButton setEnabled:TRUE];
 
 	// setup intrface labels
@@ -76,9 +77,6 @@ static void setup_interface(NSPopUpButton *);
 		_model.device =	[[_deviceSelector titleOfSelectedItem] cStringUsingEncoding:NSASCIIStringEncoding];
 		_model.filter =
 		[[_filterField stringValue] cStringUsingEncoding:NSASCIIStringEncoding];
-		[_graphView setViewTimeLength:[_zoomBar intValue]];
-		[_graphView setMATimeLength:[_smoothBar intValue]];
-
 		[_startButton setTitle:LBL_STOP];
 		input_enabled = FALSE;
 
