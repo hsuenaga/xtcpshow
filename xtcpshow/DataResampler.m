@@ -83,10 +83,14 @@
 	unix_time = floor(unix_time/tick) * tick;
 	start = [NSDate dateWithTimeIntervalSince1970:unix_time];
 	unix_time = [end timeIntervalSince1970];
-	unix_time = ceil(unix_time/tick) * tick;
+	unix_time = floor(unix_time/tick) * tick;
 	end = [NSDate dateWithTimeIntervalSince1970:unix_time];
 
-	// clip updated data only
+	// wait for at least 1 tick of data.
+	if ([[start dateByAddingTimeInterval:tick] laterDate:end] != end)
+		return;
+
+	// clip updated data only (not include start)
 	delta = [self copyQueue:input FromDate:start];
 
 	// filter
