@@ -9,7 +9,7 @@
 #import "DataQueue.h"
 #import "AppDelegate.h"
 
-#define DEF_HISTORY 1024 * 1024 // packets
+#define DEF_HISTORY 50000 // packets
 
 @interface CaptureModel : NSObject {
 	NSOperationQueue *capture_cue;
