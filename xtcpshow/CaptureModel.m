@@ -87,8 +87,7 @@
 
 - (void) animationTick
 {
-	if (running)
-		_data.last_update = [NSDate date];
+	// nothing to do
 }
 
 //
@@ -96,9 +95,9 @@
 //
 - (void) samplingNotify:(DataEntry *)entry
 {
-	if (entry.timestamp)
+	if (entry.numberOfSamples > 0)
 		[_data addDataEntry:entry withLimit:_history_size];
-	_data.last_update = [NSDate date];
+	_data.last_update = [entry timestamp];
 }
 
 - (void) samplingError:(NSString *)message

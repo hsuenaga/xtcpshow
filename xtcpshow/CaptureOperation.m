@@ -99,6 +99,7 @@
 				break;
 			case 0:
 				// timeout
+				[self sendNotify:0 withTime:NULL];
 				break;
 			default:
 				NSLog(@"pcap error: %s",
@@ -220,11 +221,18 @@
 	NSTimeInterval unix_time;
 	NSDate *date;
 
-	unix_time = tv->tv_sec;
-	unix_time += ((double)tv->tv_usec / 1000000.0);
-	date = [NSDate dateWithTimeIntervalSince1970:unix_time];
-	sample = [DataEntry dataWithInt:size atDate:date];
-	[sample setNumberOfSamples:1];
+	if (tv) {
+		unix_time = tv->tv_sec;
+		unix_time += ((double)tv->tv_usec / 1000000.0);
+		date = [NSDate dateWithTimeIntervalSince1970:unix_time];
+		sample = [DataEntry dataWithInt:size atDate:date];
+		[sample setNumberOfSamples:1];
+	}
+	else {
+		// psuedo clock frame
+		sample = [DataEntry dataWithInt:0 atDate:[NSDate date]];
+		[sample setNumberOfSamples:0];
+	}
 
 	[_model
 	 performSelectorOnMainThread:@selector(samplingNotify:)

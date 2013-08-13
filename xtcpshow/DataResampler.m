@@ -18,8 +18,9 @@
 {
 	DataQueue *dst = [[DataQueue alloc] init];
 
-	[source enumerateDataUsingBlock:^(DataEntry *data, NSUInteger idx, BOOL *stop) {
-		if ([start earlierDate:[data timestamp]] == start)
+	[source enumerateDataUsingBlock:^(DataEntry *data,
+					  NSUInteger idx, BOOL *stop) {
+		if ([start laterDate:[data timestamp]] == start)
 			return;
 
 		[dst addDataEntry:[data copy]];
@@ -32,8 +33,9 @@
 {
 	NSException *ex;
 
-	ex = [NSException exceptionWithName:@"Invalid value" reason:@"Invalid value in DataResampler" userInfo:nil];
-
+	ex = [NSException exceptionWithName:@"Invalid value"
+				     reason:@"Invalid value in DataResampler"
+				   userInfo:nil];
 	@throw ex;
 }
 
@@ -106,7 +108,7 @@
 
 		// Step1: folding(sum) source data before slot
 		while (![delta isEmpty]
-		       && [[delta firstDate] earlierDate:slot] != slot) {
+		       && [slot laterDate:[delta firstDate]] == slot) {
 			DataEntry *source;
 			float value, new_value;
 
