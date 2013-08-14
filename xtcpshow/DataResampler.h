@@ -25,7 +25,6 @@
 @property (assign, readonly) NSUInteger overSample;
 
 // protected
-- (DataQueue *)copyQueue:(DataQueue *)source FromDate:(NSDate *)start;
 - (void)invalidValueException;
 
 // public

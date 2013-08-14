@@ -14,21 +14,6 @@
 //
 // protected:
 //
-- (DataQueue *)copyQueue:(DataQueue *)source FromDate:(NSDate *)start;
-{
-	DataQueue *dst = [[DataQueue alloc] init];
-
-	[source enumerateNewDataUsingBlock:^(DataEntry *data,
-					  NSUInteger idx, BOOL *stop) {
-		if ([start laterDate:[data timestamp]] == start)
-			return;
-
-		[dst addDataEntry:[data copy]];
-	}];
-
-	return dst;
-}
-
 - (void)invalidValueException
 {
 	NSException *ex;
@@ -61,7 +46,6 @@
 	NSTimeInterval dataLength;
 	NSDate *start, *end;
 	NSUInteger MASamples, maxSamples;
-	DataQueue *delta;
 	float bytes2mbps, tick;
 
 	// convert units
@@ -81,25 +65,28 @@
 		sma[1] = [[DataQueue alloc] init];
 		[sma[0] zeroFill:TMASamples];
 		[sma[1] zeroFill:TMASamples];
-		[input rewindEnumeration];
+		[input rewind];
 	}
 
 	// get range of time
 	dataLength = -(_outputTimeLength + _MATimeLength);
 	end = input.last_update;
-	start = [self roundDate:[end dateByAddingTimeInterval:dataLength]
-			 toTick:tick];
-	if ([_data count] != 0) {
+	start = [self roundDate:[end dateByAddingTimeInterval:dataLength] toTick:tick];
+
+	if (!_data.last_update) {
+		// 1st time. adjust input date.
+		while ([input nextDate] &&
+		       [start laterDate:[input nextDate]] == start) {
+			[input readNextData];
+		}
+		_data.last_update = start;
+	}
+	else {
 		// continue from last update
 		start = [start laterDate:_data.lastDate];
 		start = [start dateByAddingTimeInterval:tick];
 	}
-	if (!_data.last_update)
-		_data.last_update = start;
-
-	// continue from last update
-	delta = [self copyQueue:input FromDate:_data.last_update];
-
+	
 	// filter
 	for (NSDate *slot = start; [slot laterDate:end] == end;
 	     slot = [slot dateByAddingTimeInterval:tick]) {
@@ -108,12 +95,12 @@
 		float slot_value = 0.0f, remain = 0.0f;
 
 		// Step1: folding(sum) source data before slot
-		while (![delta isEmpty]
-		       && [slot laterDate:[delta firstDate]] == slot) {
+		while ([input nextDate] &&
+		       [slot laterDate:[input nextDate]] == slot) {
 			DataEntry *source;
 			float value, new_value;
 
-			source = [delta dequeueDataEntry];
+			source = [input readNextData];
 			value = [source floatValue] + remain;
 			new_value = slot_value + value;
 			remain = (new_value - slot_value) - value;

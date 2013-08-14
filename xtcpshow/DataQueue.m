@@ -29,6 +29,7 @@
 	_tail = nil;
 	_count = 0;
 	refresh_count = REFRESH_THR;
+	last_read = nil;
 	[self clearSumState];
 
 	return self;
@@ -181,8 +182,8 @@
 	entry.next = nil;
 	if (!_head)
 		_tail = nil;
-	if (bookmark == entry)
-		bookmark = nil;
+	if (last_read == entry)
+		last_read = nil;
 	[self subSumState:[entry floatValue]];
 	_count--;
 
@@ -194,6 +195,35 @@
 {
 	[self addDataEntry:entry];
 	return [self dequeueDataEntry];
+}
+
+- (DataEntry *)readNextData
+{
+	DataEntry *entry;
+
+	if (!_head)
+		return nil;
+
+	if (last_read && last_read.next == nil)
+		return nil; // no new data arrived.
+
+	if (!last_read) {
+		entry = [_head copy];
+		entry.next = nil;
+		last_read = _head;
+	}
+	else {
+		entry = [last_read.next copy];
+		entry.next = nil;
+		last_read = last_read.next;
+	}
+
+	return entry;
+}
+
+- (void)rewind
+{
+	last_read = nil;
 }
 
 - (void)enumerateDataUsingBlock:(void (^)(DataEntry *data, NSUInteger, BOOL *))block
@@ -217,29 +247,6 @@
 	}
 	refresh_count = REFRESH_THR;
 	CHECK_COUNTER(self);
-}
-
-- (void)enumerateNewDataUsingBlock:(void (^)(DataEntry *, NSUInteger, BOOL *))block
-{
-	BOOL stop = FALSE;
-	DataEntry *entry;
-	NSUInteger idx = 0;
-
-	if (!bookmark)
-		bookmark = _head;
-
-	for (entry = bookmark; entry; entry = entry.next) {
-		block(entry, idx, &stop);
-		if (stop)
-			break;
-		bookmark = entry;
-	}
-	CHECK_COUNTER(self);
-}
-
-- (void)rewindEnumeration
-{
-	bookmark = nil;
 }
 
 - (DataQueue *)copy
@@ -304,6 +311,20 @@
 	if (!_head)
 		return nil;
 	return _head.timestamp;
+}
+
+- (NSDate *)nextDate
+{
+	if (!_head)
+		return nil;
+
+	if (!last_read)
+		return _head.timestamp;
+
+	if (!last_read.next)
+		return nil;
+
+	return last_read.next.timestamp;
 }
 
 - (float)averageFloatValue

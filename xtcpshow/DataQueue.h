@@ -17,7 +17,7 @@
 	float sub;
 	float sub_remain;
 
-	DataEntry *bookmark;
+	DataEntry *last_read;
 }
 @property (readonly, strong) DataEntry *head;
 @property (readonly, strong) DataEntry *tail;
@@ -47,10 +47,12 @@
 - (DataEntry *)dequeueDataEntry;
 - (DataEntry *)shiftDataWithNewData:(DataEntry *)entry;
 
+// read data
+- (DataEntry *)readNextData;
+- (void)rewind;
+
 // enumerate all data
 - (void)enumerateDataUsingBlock:(void(^)(DataEntry *data, NSUInteger idx, BOOL *stop))block;
-- (void)enumerateNewDataUsingBlock:(void (^)(DataEntry *, NSUInteger, BOOL *))block;
-- (void)rewindEnumeration;
 
 // copy/clipping queue
 - (DataQueue *)copy;
@@ -62,6 +64,7 @@
 - (float)averageFloatValue;
 - (NSDate *)lastDate;
 - (NSDate *)firstDate;
+- (NSDate *)nextDate;
 
 // debug & exception
 - (void)assertCounting;
