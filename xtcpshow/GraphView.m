@@ -17,7 +17,7 @@
 // string resources
 //
 NSString *const RANGE_AUTO = @"Auto";
-NSString *const RANGE_PEEKHOLD = @"PeekHold";
+NSString *const RANGE_PEAKHOLD = @"PeakHold";
 NSString *const RANGE_MANUAL = @"Manual";
 
 NSString *const CAP_MAX_SMPL = @" Max %lu [packets/sample]";
@@ -81,7 +81,7 @@ float const scroll_sensitivity = 10.0f;
 			new_range =
 			5.0f * (ceil(manual_range/5.0f));
 	} else {
-		if (range_mode == RANGE_PEEKHOLD) {
+		if (range_mode == RANGE_PEAKHOLD) {
 			if (peak_range < max)
 				peak_range = max;
 			max = peak_range;

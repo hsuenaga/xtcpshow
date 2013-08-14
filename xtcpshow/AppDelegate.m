@@ -52,7 +52,7 @@ static void setup_interface(NSPopUpButton *);
 	// setup range labels
 	[_rangeSelector removeAllItems];
 	[_rangeSelector addItemWithTitle:RANGE_AUTO];
-	[_rangeSelector addItemWithTitle:RANGE_PEEKHOLD];
+	[_rangeSelector addItemWithTitle:RANGE_PEAKHOLD];
 	[_rangeSelector addItemWithTitle:RANGE_MANUAL];
 	[_rangeSelector selectItemWithTitle:RANGE_AUTO];
 

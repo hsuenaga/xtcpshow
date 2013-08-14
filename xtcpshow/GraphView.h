@@ -13,7 +13,7 @@
 @class DataResampler;
 
 extern NSString *const RANGE_AUTO;
-extern NSString *const RANGE_PEEKHOLD;
+extern NSString *const RANGE_PEAKHOLD;
 extern NSString *const RANGE_MANUAL;
 
 @interface GraphView : NSView {
