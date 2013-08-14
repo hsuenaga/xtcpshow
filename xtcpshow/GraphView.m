@@ -209,7 +209,7 @@ float const scroll_sensitivity = 10.0f;
 	[_controller scrollGesture:self];
 }
 
-- (void)drawGraph
+- (void)drawGraph:(NSRect)rect
 {
 	[NSGraphicsContext saveGraphicsState];
 	[_data enumerateDataUsingBlock:^(DataEntry *data, NSUInteger idx, BOOL *stop) {
@@ -220,14 +220,14 @@ float const scroll_sensitivity = 10.0f;
 			return;
 		idx -= GraphOffset;
 
-		if (idx > _bounds.size.width) {
+		if (idx > rect.size.width) {
 			*stop = YES;
 			return;
 		}
 		bar.origin.x = (float)idx;
 		bar.origin.y = 0;
 		bar.size.width = 1.0;
-		bar.size.height = value * _bounds.size.height / y_range;
+		bar.size.height = value * rect.size.height / y_range;
 		if (bar.size.height < 1.0)
 			return;
 		[graph_gradient drawInRect:bar angle:90.0];
@@ -235,7 +235,7 @@ float const scroll_sensitivity = 10.0f;
 	[NSGraphicsContext restoreGraphicsState];
 }
 
-- (void)drawPPS;
+- (void)drawPPS:(NSRect)rect;
 {
 	[NSGraphicsContext saveGraphicsState];
 	[[NSColor cyanColor] set];
@@ -248,13 +248,13 @@ float const scroll_sensitivity = 10.0f;
 			return;
 		idx -= XmarkOffset;
 
-		if (idx > _bounds.size.width) {
+		if (idx > rect.size.width) {
 			*stop = YES;
 			return;
 		}
 		if ( (samples = [data numberOfSamples]) == 0)
 			return;
-		h = _bounds.size.height / (float)pps_range;
+		h = rect.size.height / (float)pps_range;
 		h = h * (float)samples;
 		path = [NSBezierPath bezierPath];
 		[path moveToPoint:NSMakePoint((float)idx, 0.0f)];
@@ -264,27 +264,28 @@ float const scroll_sensitivity = 10.0f;
 	}];
 
 	[self drawText:[NSString stringWithFormat:CAP_MAX_SMPL, pps_range]
-	       atPoint:NSMakePoint(0.0f, _bounds.size.height)];
+		inRect:rect
+	       atPoint:NSMakePoint(0.0f, rect.size.height)];
 
 	[NSGraphicsContext restoreGraphicsState];
 }
 
-- (void)drawText: (NSString *)text atPoint:(NSPoint)point
+- (void)drawText:(NSString *)text inRect:(NSRect)rect atPoint:(NSPoint)point
 {
 	NSAttributedString *atext = [NSAttributedString alloc];
 	NSSize size;
 
 	atext = [atext initWithString:text attributes:text_attr];
 	size = [atext size];
-	if ((point.x + size.width) > _bounds.size.width)
-		point.x = _bounds.size.width - size.width;
-	if ((point.y + size.height) > _bounds.size.height)
-		point.y = _bounds.size.height - size.height;
+	if ((point.x + size.width) > rect.size.width)
+		point.x = rect.size.width - size.width;
+	if ((point.y + size.height) > rect.size.height)
+		point.y = rect.size.height - size.height;
 
 	[atext drawAtPoint:point];
 }
 
-- (void)drawText:(NSString *)text alignRight:(CGFloat)y
+- (void)drawText:(NSString *)text inRect:(NSRect)rect alignRight:(CGFloat)y
 {
 	NSAttributedString *atext = [NSAttributedString alloc];
 	NSSize size;
@@ -292,23 +293,20 @@ float const scroll_sensitivity = 10.0f;
 
 	atext = [atext initWithString:text attributes:text_attr];
 	size = [atext size];
-	point.x = _bounds.size.width - size.width;
+	point.x = rect.size.width - size.width;
 	point.y = y;
-	if ((point.y + size.height) > _bounds.size.height)
-		point.y = _bounds.size.height - size.height;
+	if ((point.y + size.height) > rect.size.height)
+		point.y = rect.size.height - size.height;
 	[atext drawAtPoint:point];
 }
 
-- (void)drawGuide
+- (void)drawGuide:(NSRect)rect
 {
-	NSRect rect;
 	NSBezierPath *path;
 	NSString *marker;
 	float y;
 
 	[NSGraphicsContext saveGraphicsState];
-
-	rect = [self bounds];
 
 	[[NSColor redColor] set];
 	path = [NSBezierPath bezierPath];
@@ -332,39 +330,39 @@ float const scroll_sensitivity = 10.0f;
 		y = (rect.size.height / 5) * 4;
 
 	marker = [NSString stringWithFormat:CAP_MAX_MBPS, _maxValue];
-	[self drawText:marker atPoint:NSMakePoint(0.0, y)];
+	[self drawText:marker inRect:rect atPoint:NSMakePoint(0.0, y)];
 
 	[NSGraphicsContext restoreGraphicsState];
 }
 
-- (void)drawGrid
+- (void)drawGrid:(NSRect)rect
 {
 	[NSGraphicsContext saveGraphicsState];
 	[[NSColor whiteColor] set];
 	for (int i = 1; i < 5; i++) {
 		CGFloat pattern[2] = {5.0, 5.0};
 		NSBezierPath *path;
-		float y = (_bounds.size.height / 5.0) * (float)i;
-		float x = (_bounds.size.width / 5.0) * (float)i;
+		float y = (rect.size.height / 5.0) * (float)i;
+		float x = (rect.size.width / 5.0) * (float)i;
 
 		// vertical line
 		path = [NSBezierPath bezierPath];
 		[path setLineDash:pattern count:2 phase:0.0];
 		[path moveToPoint:NSMakePoint(0, y)];
-		[path lineToPoint:NSMakePoint(_bounds.size.width, y)];
+		[path lineToPoint:NSMakePoint(rect.size.width, y)];
 		[path stroke];
 
 		// horizontal line
 		path = [NSBezierPath bezierPath];
 		[path setLineDash:pattern count:2 phase:0.0];
 		[path moveToPoint:NSMakePoint(x, 0)];
-		[path lineToPoint:NSMakePoint(x, _bounds.size.height)];
+		[path lineToPoint:NSMakePoint(x, rect.size.height)];
 		[path stroke];
 	}
 	[NSGraphicsContext restoreGraphicsState];
 }
 
-- (void)drawRange
+- (void)drawRange:(NSRect)rect
 {
 	NSString *text;
 	[NSGraphicsContext saveGraphicsState];
@@ -372,12 +370,12 @@ float const scroll_sensitivity = 10.0f;
 	[NSString stringWithFormat:FMT_RANGE,
 	 y_range, x_range, ma_range,
 	 [[self data] averageFloatValue]];
-	[self drawText:text atPoint:NSMakePoint(0.0, 0.0)];
+	[self drawText:text inRect:rect atPoint:NSMakePoint(0.0, 0.0)];
 
 	[NSGraphicsContext restoreGraphicsState];
 }
 
-- (void)drawDate
+- (void)drawDate:(NSRect)rect;
 {
 	NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
 	NSString *text;
@@ -389,44 +387,48 @@ float const scroll_sensitivity = 10.0f;
 	else
 		text = FMT_NODATA;
 
-	[self drawText:text alignRight:_bounds.size.height];
+	[self drawText:text inRect:rect alignRight:rect.size.height];
 	
 	[NSGraphicsContext restoreGraphicsState];
 }
 
-- (void)drawAll
+- (void)drawAllWithSize:(NSRect)rect OffScreen:(BOOL)off
 {
 	[NSGraphicsContext saveGraphicsState];
 
 	/* clear screen */
-	[[NSColor clearColor] set];
-	NSRectFill(_bounds);
+	if (off)
+		[[NSColor blackColor] set];
+	else
+		[[NSColor clearColor] set];
+
+	NSRectFill(rect);
 
 	/* update x/y axis */
 	[self updateRange];
 
 	/* show matrix */
-	[self drawGrid];
+	[self drawGrid:rect];
 
 	/* plot packet marker */
 	if (_showPacketMarker == TRUE)
-		[self drawPPS];
+		[self drawPPS:rect];
 
 	/* plot bar graph */
-	[self drawGraph];
+	[self drawGraph:rect];
 
 	/* plot guide line (max, average, ...) */
-	[self drawGuide];
+	[self drawGuide:rect];
 
 	/* graph params */
-	[self drawRange];
+	[self drawRange:rect];
 
 	// date
-	[self drawDate];
+	[self drawDate:rect];
 	[NSGraphicsContext restoreGraphicsState];
 }
 
-- (void)importData:(DataQueue *)data
+- (void)resampleData:(DataQueue *)data inRect:(NSRect)rect
 {
 	NSDate *start;
 
@@ -439,7 +441,7 @@ float const scroll_sensitivity = 10.0f;
 
 	resampler.outputTimeLength = _viewTimeLength;
 	resampler.outputTimeOffset = _viewTimeOffset;
-	resampler.outputSamples = _bounds.size.width;
+	resampler.outputSamples = rect.size.width;
 	resampler.MATimeLength = _MATimeLength;
 
 	[resampler resampleData:data];
@@ -453,9 +455,52 @@ float const scroll_sensitivity = 10.0f;
 	XmarkOffset = [resampler overSample] / 2;
 }
 
+- (void)importData:(DataQueue *)data
+{
+	[self resampleData:data inRect:_bounds];
+}
+
 - (void)purgeData
 {
 	[resampler purgeData];
+}
+
+- (void)saveFile:(DataQueue *)data;
+{
+	NSSize image_size = NSMakeSize(640, 480);
+	NSRect image_rect;
+	NSBitmapImageRep *buffer = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:nil pixelsWide:image_size.width pixelsHigh:image_size.height bitsPerSample:8 samplesPerPixel:4 hasAlpha:YES isPlanar:NO colorSpaceName:NSCalibratedRGBColorSpace bitmapFormat:0 bytesPerRow:(image_size.width * 4) bitsPerPixel:32];
+	NSData *png;
+	NSGraphicsContext *gc = [NSGraphicsContext graphicsContextWithBitmapImageRep:buffer];
+	NSSavePanel *panel;
+
+	[NSGraphicsContext saveGraphicsState];
+	[NSGraphicsContext setCurrentContext:gc];
+	image_rect.size = image_size;
+	image_rect.origin.x = 0;
+	image_rect.origin.y = 0;
+	NSLog(@"create PNG image");
+	[self purgeData];
+	[self resampleData:data inRect:image_rect];
+	[self drawAllWithSize:image_rect OffScreen:YES];
+	[NSGraphicsContext restoreGraphicsState];
+
+	// get filename
+	panel = [NSSavePanel savePanel];
+	[panel setAllowedFileTypes:@[@"png"]];
+	[panel setNameFieldStringValue:@"xtcpshow.png"];
+	[panel runModal];
+	NSLog(@"save to %@%@",
+	      [panel directoryURL],
+	      [panel nameFieldStringValue]);
+	
+	png = [buffer representationUsingType:NSPNGFileType properties:nil];
+	[png writeToURL:[[panel directoryURL] URLByAppendingPathComponent:[panel nameFieldStringValue]]
+	      atomically:NO];
+
+	// restore data for display
+	[self purgeData];
+	[self resampleData:data inRect:_bounds];
 }
 
 - (void)drawRect:(NSRect)dirty_rect
@@ -465,8 +510,14 @@ float const scroll_sensitivity = 10.0f;
 		resampler.outputSamples = _bounds.size.width;
 	}
 
-	NSDisableScreenUpdates();
-	[self drawAll];
-	NSEnableScreenUpdates();
+	if ([NSGraphicsContext currentContextDrawingToScreen]) {
+		NSDisableScreenUpdates();
+		[self drawAllWithSize:_bounds OffScreen:NO];
+		NSEnableScreenUpdates();
+	}
+	else {
+		// off screen rendering
+		[self drawAllWithSize:_bounds OffScreen:YES];
+	}
 }
 @end

@@ -72,18 +72,20 @@ extern NSString *const RANGE_MANUAL;
 - (void)scrollWheel:(NSEvent *)event;
 
 // Drawing
-- (void)drawGraph;
-- (void)drawPPS;
-- (void)drawText:(NSString *)text atPoint:(NSPoint)point;
-- (void)drawText:(NSString *)text alignRight:(CGFloat)y;
-- (void)drawGuide;
-- (void)drawGrid;
-- (void)drawRange;
-- (void)drawDate;
-- (void)drawAll;
+- (void)drawGraph:(NSRect)rect;
+- (void)drawPPS:(NSRect)rect;
+- (void)drawText:(NSString *)text inRect:(NSRect)rect atPoint:(NSPoint)point;
+- (void)drawText:(NSString *)text inRect:(NSRect)rect alignRight:(CGFloat)y;
+- (void)drawGuide:(NSRect)rect;
+- (void)drawGrid:(NSRect)rect;
+- (void)drawRange:(NSRect)rect;
+- (void)drawDate:(NSRect)rect;
+- (void)drawAllWithSize:(NSRect)rect OffScreen:(BOOL)off;
 
 - (void)importData:(DataQueue *)data;
+- (void)resampleData:(DataQueue *)data inRect:(NSRect) rect;
 - (void)purgeData;
+- (void)saveFile:(DataQueue *)data;
 - (void)drawRect:(NSRect)rect;
 
 @end

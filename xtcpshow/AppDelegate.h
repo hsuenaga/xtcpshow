@@ -48,6 +48,7 @@
 - (IBAction)enterRange:(id)sender;
 - (IBAction)setRangeType:(id)sender;
 - (IBAction)togglePacketMarker:(id)sender;
+- (IBAction)copyGraphView:(id)sender;
 
 /* Action form CustomView (GraphView) */
 - (void)zoomGesture:(id)sender;
