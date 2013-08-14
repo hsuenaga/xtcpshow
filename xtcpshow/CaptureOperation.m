@@ -286,6 +286,15 @@
 		goto error;
 	}
 
+	if (_model.promisc == YES) {
+		NSLog(@"Enable promiscuous mode");
+		pcap_set_promisc(pcap, 1);
+	}
+	else {
+		NSLog(@"Disable promiscuous mode");
+		pcap_set_promisc(pcap, 0);
+	}
+
 	r = pcap_activate(pcap);
 	if (r == PCAP_WARNING) {
 		NSLog(@"WARNING: %s", pcap_geterr(pcap));

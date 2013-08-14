@@ -24,6 +24,7 @@
 @property (weak) IBOutlet NSTextField *rangeField;
 @property (weak) IBOutlet NSStepper *rangeStepper;
 @property (weak) IBOutlet NSPopUpButton *rangeSelector;
+@property (weak) IBOutlet NSButton *promiscCheck;
 
 /* Status TAB */
 @property (weak) IBOutlet NSTextField *snapshotField;

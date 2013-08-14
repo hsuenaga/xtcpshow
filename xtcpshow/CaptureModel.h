@@ -19,6 +19,7 @@
 // pcap binding
 @property (assign) const char *device;
 @property (assign) const char *filter;
+@property (assign) BOOL promisc;
 
 // data size
 @property (assign) size_t history_size;

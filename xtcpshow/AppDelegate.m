@@ -77,6 +77,10 @@ static void setup_interface(NSPopUpButton *);
 		_model.device =	[[_deviceSelector titleOfSelectedItem] cStringUsingEncoding:NSASCIIStringEncoding];
 		_model.filter =
 		[[_filterField stringValue] cStringUsingEncoding:NSASCIIStringEncoding];
+		if ([_promiscCheck state] == NSOnState)
+			_model.promisc = YES;
+		else
+			_model.promisc = NO;
 		[_startButton setTitle:LBL_STOP];
 		input_enabled = FALSE;
 
@@ -94,6 +98,7 @@ static void setup_interface(NSPopUpButton *);
 
 	[_deviceSelector setEnabled:input_enabled];
 	[_filterField setEnabled:input_enabled];
+	[_promiscCheck setEnabled:input_enabled];
 	[self updateUserInterface];
 }
 
@@ -199,10 +204,6 @@ static void setup_interface(NSPopUpButton *);
 - (void)animationNotify:(id)sender
 {
 	[_model animationTick];
-#if 0
-	// disable differential update
-	[_graphView purgeData];
-#endif
 	[_graphView importData:[_model data]];
 	[_graphView setNeedsDisplay:YES];
 
