@@ -165,7 +165,7 @@ static void setup_interface(NSPopUpButton *);
 	range = [_graphView setRange:mode withRange:range];
 	[_rangeField setFloatValue:range];
 	[_rangeStepper
-	 setIntValue:[_graphView stepValueWithRange:range]];
+	 setIntValue:[_graphView stepValueFromRange:range]];
 	[self updateUserInterface];
 }
 

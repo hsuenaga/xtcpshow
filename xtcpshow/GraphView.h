@@ -21,6 +21,7 @@ extern NSString *const RANGE_MANUAL;
 	float y_range;
 	float x_range;
 	float ma_range;
+	NSUInteger pps_range;
 
 	// range configuration
 	NSString *range_mode;
@@ -66,13 +67,13 @@ extern NSString *const RANGE_MANUAL;
 // Action from UI
 - (float)setRange:(NSString *)mode withRange:(float)range;
 - (float)setRange:(NSString *)mode withStep:(int)step;
-- (int)stepValueWithRange:(float)range;
+- (int)stepValueFromRange:(float)range;
 - (void)magnifyWithEvent:(NSEvent *)event;
 - (void)scrollWheel:(NSEvent *)event;
 
 // Drawing
 - (void)drawGraph;
-- (void)drawXMark;
+- (void)drawPPS;
 - (void)drawText:(NSString *)text atPoint:(NSPoint)point;
 - (void)drawText:(NSString *)text alignRight:(CGFloat)y;
 - (void)drawGuide;

@@ -112,6 +112,16 @@ float const scroll_sensitivity = 10.0f;
 		ma_range = new_range;
 	}
 
+	// Y-axis Packets per Sample
+	if (range_mode == RANGE_AUTO) {
+		// auto
+		pps_range = _maxSamples;
+	}
+	else if (pps_range < _maxSamples) {
+		// peak hold (no manual settting)
+		pps_range = _maxSamples;
+	}
+	
 	// X-axis
 	_viewTimeLength = floor(_viewTimeLength / round) * round;
 	if (_viewTimeLength < _minViewTimeLength)
@@ -125,6 +135,10 @@ float const scroll_sensitivity = 10.0f;
 		x_range = new_range;
 	}
 
+	_viewTimeOffset = floor(_viewTimeOffset / round) * round;
+	if (_viewTimeOffset > 0.0)
+		_viewTimeOffset = 0.0;
+
 	if (resample)
 		[resampler purgeData];
 }
@@ -133,6 +147,7 @@ float const scroll_sensitivity = 10.0f;
 {
 	range_mode = mode;
 	peak_range = 0.0f;
+	pps_range = 0;
 	if (mode == RANGE_MANUAL)
 		manual_range = range;
 
@@ -158,7 +173,7 @@ float const scroll_sensitivity = 10.0f;
 	return [self setRange:mode withRange:range];
 }
 
-- (int)stepValueWithRange:(float)range
+- (int)stepValueFromRange:(float)range
 {
 	int step;
 
@@ -187,7 +202,7 @@ float const scroll_sensitivity = 10.0f;
 - (void)scrollWheel:(NSEvent *)event
 {
 	_MATimeLength -= (event.deltaY/_scrollSense);
-	_viewTimeOffset += ((event.deltaX/_scrollSense) / 20.0f);
+	_viewTimeOffset += event.deltaX/_scrollSense;
 	[self updateRange];
 	[resampler purgeData];
 
@@ -220,7 +235,7 @@ float const scroll_sensitivity = 10.0f;
 	[NSGraphicsContext restoreGraphicsState];
 }
 
-- (void)drawXMark;
+- (void)drawPPS;
 {
 	[NSGraphicsContext saveGraphicsState];
 	[[NSColor cyanColor] set];
@@ -239,7 +254,7 @@ float const scroll_sensitivity = 10.0f;
 		}
 		if ( (samples = [data numberOfSamples]) == 0)
 			return;
-		h = _bounds.size.height / (float)_maxSamples;
+		h = _bounds.size.height / (float)pps_range;
 		h = h * (float)samples;
 		path = [NSBezierPath bezierPath];
 		[path moveToPoint:NSMakePoint((float)idx, 0.0f)];
@@ -248,8 +263,8 @@ float const scroll_sensitivity = 10.0f;
 		[path stroke];
 	}];
 
-	[self drawText:[NSString stringWithFormat:CAP_MAX_SMPL, _maxSamples]
-	       atPoint:NSMakePoint(0.0f, _bounds.size.height - 14.0f)];
+	[self drawText:[NSString stringWithFormat:CAP_MAX_SMPL, pps_range]
+	       atPoint:NSMakePoint(0.0f, _bounds.size.height)];
 
 	[NSGraphicsContext restoreGraphicsState];
 }
@@ -395,7 +410,7 @@ float const scroll_sensitivity = 10.0f;
 
 	/* plot packet marker */
 	if (_showPacketMarker == TRUE)
-		[self drawXMark];
+		[self drawPPS];
 
 	/* plot bar graph */
 	[self drawGraph];
@@ -413,7 +428,17 @@ float const scroll_sensitivity = 10.0f;
 
 - (void)importData:(DataQueue *)data
 {
+	NSDate *start;
+
+	// fix up _viewTimeOffset
+	start = [data lastDate];
+	start = [start dateByAddingTimeInterval:_viewTimeOffset];
+	if ([start laterDate:[data firstDate]] != start) {
+		_viewTimeOffset = [[data firstDate] timeIntervalSinceDate:[data lastDate]];
+	}
+
 	resampler.outputTimeLength = _viewTimeLength;
+	resampler.outputTimeOffset = _viewTimeOffset;
 	resampler.outputSamples = _bounds.size.width;
 	resampler.MATimeLength = _MATimeLength;
 

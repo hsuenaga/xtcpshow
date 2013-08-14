@@ -19,6 +19,7 @@
 @property (strong, readonly) DataQueue *data;
 @property (assign) NSUInteger outputSamples;
 @property (assign) NSTimeInterval outputTimeLength;
+@property (assign) NSTimeInterval outputTimeOffset;
 @property (assign) NSTimeInterval MATimeLength;
 @property (assign, readonly) NSUInteger overSample;
 
