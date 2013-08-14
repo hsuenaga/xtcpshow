@@ -17,6 +17,7 @@
 }
 
 @property (strong, readonly) DataQueue *data;
+@property (weak, readonly) DataQueue *lastInput;
 @property (assign) NSUInteger outputSamples;
 @property (assign) NSTimeInterval outputTimeLength;
 @property (assign) NSTimeInterval outputTimeOffset;

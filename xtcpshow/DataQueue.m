@@ -181,6 +181,8 @@
 	entry.next = nil;
 	if (!_head)
 		_tail = nil;
+	if (bookmark == entry)
+		bookmark = nil;
 	[self subSumState:[entry floatValue]];
 	_count--;
 
@@ -215,6 +217,29 @@
 	}
 	refresh_count = REFRESH_THR;
 	CHECK_COUNTER(self);
+}
+
+- (void)enumerateNewDataUsingBlock:(void (^)(DataEntry *, NSUInteger, BOOL *))block
+{
+	BOOL stop = FALSE;
+	DataEntry *entry;
+	NSUInteger idx = 0;
+
+	if (!bookmark)
+		bookmark = _head;
+
+	for (entry = bookmark; entry; entry = entry.next) {
+		block(entry, idx, &stop);
+		if (stop)
+			break;
+		bookmark = entry;
+	}
+	CHECK_COUNTER(self);
+}
+
+- (void)rewindEnumeration
+{
+	bookmark = nil;
 }
 
 - (DataQueue *)copy

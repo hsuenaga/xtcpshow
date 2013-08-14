@@ -16,6 +16,8 @@
 	float add_remain;
 	float sub;
 	float sub_remain;
+
+	DataEntry *bookmark;
 }
 @property (readonly, strong) DataEntry *head;
 @property (readonly, strong) DataEntry *tail;
@@ -47,6 +49,8 @@
 
 // enumerate all data
 - (void)enumerateDataUsingBlock:(void(^)(DataEntry *data, NSUInteger idx, BOOL *stop))block;
+- (void)enumerateNewDataUsingBlock:(void (^)(DataEntry *, NSUInteger, BOOL *))block;
+- (void)rewindEnumeration;
 
 // copy/clipping queue
 - (DataQueue *)copy;

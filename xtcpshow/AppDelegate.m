@@ -56,6 +56,9 @@ static void setup_interface(NSPopUpButton *);
 	[_rangeSelector addItemWithTitle:RANGE_MANUAL];
 	[_rangeSelector selectItemWithTitle:RANGE_AUTO];
 
+	// notification center
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(closeNofity:) name:NSWindowWillCloseNotification object:nil];
+
 	[self updateUserInterface];
 }
 
@@ -116,7 +119,7 @@ static void setup_interface(NSPopUpButton *);
 
 - (void)zoomGesture:(id)sender
 {
-	int value;
+	float value;
 
 	value = [_graphView viewTimeLength];
 	[_zoomBar setFloatValue:value];
@@ -126,7 +129,7 @@ static void setup_interface(NSPopUpButton *);
 
 - (void)scrollGesture:(id)sender
 {
-	int value;
+	float value;
 
 	value = [_graphView MATimeLength];
 	[_smoothBar setFloatValue:value];
@@ -203,6 +206,13 @@ static void setup_interface(NSPopUpButton *);
 
 - (IBAction)copyGraphView:(id)sender {
 	[_graphView saveFile:[_model data]];
+}
+
+- (void)closeNofity:(id)sender
+{
+	NSLog(@"close window. exitting..");
+	[_model stopCapture];
+	[NSApp performSelector:@selector(terminate:) withObject:nil afterDelay:0.0];
 }
 
 - (void)animationNotify:(id)sender

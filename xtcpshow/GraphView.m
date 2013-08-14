@@ -512,12 +512,13 @@ float const scroll_sensitivity = 10.0f;
 
 	if ([NSGraphicsContext currentContextDrawingToScreen]) {
 		NSDisableScreenUpdates();
+		// need to resample...
 		[self drawAllWithSize:_bounds OffScreen:NO];
 		NSEnableScreenUpdates();
 	}
 	else {
 		// off screen rendering
-		[self drawAllWithSize:_bounds OffScreen:YES];
+		[self drawAllWithSize:dirty_rect OffScreen:YES];
 	}
 }
 @end
