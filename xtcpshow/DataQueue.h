@@ -8,7 +8,7 @@
 #include <sys/queue.h>
 #import <Foundation/Foundation.h>
 
-@class DataEntry;
+@class SamplingData;
 
 @interface DataQueue : NSObject {
 	NSUInteger refresh_count;
@@ -17,10 +17,10 @@
 	float sub;
 	float sub_remain;
 
-	DataEntry *last_read;
+	SamplingData *last_read;
 }
-@property (readonly, strong) DataEntry *head;
-@property (readonly, strong) DataEntry *tail;
+@property (readonly, strong) SamplingData *head;
+@property (readonly, strong) SamplingData *tail;
 @property (strong) NSDate *last_update;
 @property (readonly) NSUInteger count;
 
@@ -40,19 +40,19 @@
 
 // add data
 - (void)zeroFill:(size_t)size;
-- (void)addDataEntry:(DataEntry *)entry;
-- (DataEntry *)addDataEntry:(DataEntry *)entry withLimit:(size_t)limit;
+- (void)addDataEntry:(SamplingData *)entry;
+- (SamplingData *)addDataEntry:(SamplingData *)entry withLimit:(size_t)limit;
 
 // get/delete/shift data
-- (DataEntry *)dequeueDataEntry;
-- (DataEntry *)shiftDataWithNewData:(DataEntry *)entry;
+- (SamplingData *)dequeueDataEntry;
+- (SamplingData *)shiftDataWithNewData:(SamplingData *)entry;
 
 // read data
-- (DataEntry *)readNextData;
+- (SamplingData *)readNextData;
 - (void)rewind;
 
 // enumerate all data
-- (void)enumerateDataUsingBlock:(void(^)(DataEntry *data, NSUInteger idx, BOOL *stop))block;
+- (void)enumerateDataUsingBlock:(void(^)(SamplingData *data, NSUInteger idx, BOOL *stop))block;
 
 // copy/clipping queue
 - (DataQueue *)copy;

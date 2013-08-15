@@ -11,7 +11,7 @@
 #import "GraphView.h"
 #import "DataQueue.h"
 #import "DataResampler.h"
-#import "DataEntry.h"
+#import "SamplingData.h"
 
 //
 // string resources
@@ -212,7 +212,7 @@ float const scroll_sensitivity = 10.0f;
 - (void)drawGraph:(NSRect)rect
 {
 	[NSGraphicsContext saveGraphicsState];
-	[_data enumerateDataUsingBlock:^(DataEntry *data, NSUInteger idx, BOOL *stop) {
+	[_data enumerateDataUsingBlock:^(SamplingData *data, NSUInteger idx, BOOL *stop) {
 		NSRect bar;
 		float value = [data floatValue];
 
@@ -239,7 +239,7 @@ float const scroll_sensitivity = 10.0f;
 {
 	[NSGraphicsContext saveGraphicsState];
 	[[NSColor cyanColor] set];
-	[_data enumerateDataUsingBlock:^(DataEntry *data, NSUInteger idx, BOOL *stop) {
+	[_data enumerateDataUsingBlock:^(SamplingData *data, NSUInteger idx, BOOL *stop) {
 		NSBezierPath *path;
 		NSUInteger samples;
 		float h;

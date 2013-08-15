@@ -10,7 +10,7 @@
 #import "CaptureModel.h"
 #import "CaptureOperation.h"
 #import "DataQueue.h"
-#import "DataEntry.h"
+#import "SamplingData.h"
 
 /*
  * Model object: almost values are updated by operation thread.
@@ -93,7 +93,7 @@
 //
 // notify from Capture operation thread
 //
-- (void) samplingNotify:(DataEntry *)entry
+- (void) samplingNotify:(SamplingData *)entry
 {
 	if (entry.numberOfSamples > 0)
 		[_data addDataEntry:entry withLimit:_history_size];

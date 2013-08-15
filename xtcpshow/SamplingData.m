@@ -6,55 +6,43 @@
 //  Copyright (c) 2013年 SUENAGA Hiroki. All rights reserved.
 //
 
-#import "DataEntry.h"
+#import "SamplingData.h"
 
-@implementation DataEntry
-- (DataEntry *)init
+@implementation SamplingData
++ (SamplingData *)dataWithFloat:(float)data
 {
-	self = [super init];
+	SamplingData *new = [[SamplingData alloc] init];
 
-	_number = nil;
-	_timestamp = nil;
-	_next = nil;
-	_numberOfSamples = 0;
-
-	return self;
-}
-
-+ (DataEntry *)dataWithFloat:(float)data
-{
-	DataEntry *new = [[DataEntry alloc] init];
-
-	[new setFloatValue:data];
-	
-	return new;
-}
-
-+ (DataEntry *)dataWithInt:(int)data
-{
-	DataEntry *new = [[DataEntry alloc] init];
-
-	[new setIntValue:data];
+	new->_number = [NSNumber numberWithFloat:data];
 
 	return new;
 }
 
-+ (DataEntry *)dataWithFloat:(float)data atDate:(NSDate *)date
++ (SamplingData *)dataWithInt:(int)data
 {
-	DataEntry *new = [[DataEntry alloc] init];
+	SamplingData *new = [[SamplingData alloc] init];
 
-	[new setFloatValue:data];
-	new.timestamp = date;
+	new->_number = [NSNumber numberWithInt:data];
 
 	return new;
 }
 
-+ (DataEntry *)dataWithInt:(int)data atDate:(NSDate *)date
++ (SamplingData *)dataWithFloat:(float)data atDate:(NSDate *)date
 {
-	DataEntry *new = [[DataEntry alloc] init];
+	SamplingData *new = [[SamplingData alloc] init];
 
-	[new setIntValue:data];
-	new.timestamp = date;
+	new->_number = [NSNumber numberWithFloat:data];
+	new->_timestamp = date;
+
+	return new;
+}
+
++ (SamplingData *)dataWithInt:(int)data atDate:(NSDate *)date
+{
+	SamplingData *new = [[SamplingData alloc] init];
+
+	new->_number = [NSNumber numberWithInt:data];
+	new->_timestamp = date;
 
 	return new;
 }
@@ -81,7 +69,7 @@
 
 - (id)copyWithZone:(NSZone *)zone
 {
-	DataEntry *new = [[DataEntry alloc] init];
+	SamplingData *new = [[SamplingData alloc] init];
 
 	new->_number = [_number copy];
 	new->_timestamp = [_timestamp copy];

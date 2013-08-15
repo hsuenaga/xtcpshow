@@ -20,7 +20,7 @@
 		46583CBA17A0D192007B6572 /* CaptureOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 46583CB917A0D192007B6572 /* CaptureOperation.m */; };
 		466E550717AB2AA500C978C9 /* DataQueue.m in Sources */ = {isa = PBXBuildFile; fileRef = 466E550617AB2AA500C978C9 /* DataQueue.m */; };
 		466E550A17AB491800C978C9 /* DataResampler.m in Sources */ = {isa = PBXBuildFile; fileRef = 466E550917AB491800C978C9 /* DataResampler.m */; };
-		4682948417B4634D008AC9D4 /* DataEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = 4682948317B4634D008AC9D4 /* DataEntry.m */; };
+		4682948417B4634D008AC9D4 /* SamplingData.m in Sources */ = {isa = PBXBuildFile; fileRef = 4682948317B4634D008AC9D4 /* SamplingData.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -49,8 +49,8 @@
 		466E550617AB2AA500C978C9 /* DataQueue.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DataQueue.m; sourceTree = "<group>"; };
 		466E550817AB491800C978C9 /* DataResampler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DataResampler.h; sourceTree = "<group>"; };
 		466E550917AB491800C978C9 /* DataResampler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DataResampler.m; sourceTree = "<group>"; };
-		4682948217B4634D008AC9D4 /* DataEntry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DataEntry.h; sourceTree = "<group>"; };
-		4682948317B4634D008AC9D4 /* DataEntry.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DataEntry.m; sourceTree = "<group>"; };
+		4682948217B4634D008AC9D4 /* SamplingData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SamplingData.h; sourceTree = "<group>"; };
+		4682948317B4634D008AC9D4 /* SamplingData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SamplingData.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -116,8 +116,8 @@
 				466E550917AB491800C978C9 /* DataResampler.m */,
 				466E550517AB2AA500C978C9 /* DataQueue.h */,
 				466E550617AB2AA500C978C9 /* DataQueue.m */,
-				4682948217B4634D008AC9D4 /* DataEntry.h */,
-				4682948317B4634D008AC9D4 /* DataEntry.m */,
+				4682948217B4634D008AC9D4 /* SamplingData.h */,
+				4682948317B4634D008AC9D4 /* SamplingData.m */,
 				46583CB917A0D192007B6572 /* CaptureOperation.m */,
 				46583CB717A0CA4D007B6572 /* GraphView.h */,
 				46583CB517A0CA41007B6572 /* GraphView.m */,
@@ -211,7 +211,7 @@
 				46583CBA17A0D192007B6572 /* CaptureOperation.m in Sources */,
 				466E550717AB2AA500C978C9 /* DataQueue.m in Sources */,
 				466E550A17AB491800C978C9 /* DataResampler.m in Sources */,
-				4682948417B4634D008AC9D4 /* DataEntry.m in Sources */,
+				4682948417B4634D008AC9D4 /* SamplingData.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

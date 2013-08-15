@@ -8,7 +8,7 @@
 #include <sys/queue.h>
 
 #import "DataQueue.h"
-#import "DataEntry.h"
+#import "SamplingData.h"
 
 #undef DEBUG_COUNTER
 
@@ -102,7 +102,7 @@
 
 - (void)refreshSumState
 {
-	DataEntry *entry;
+	SamplingData *entry;
 
 	[self clearSumState];
 	for (entry = _head; entry; entry = entry.next) {
@@ -138,12 +138,12 @@
 	_head = _tail = nil;
 	_count = 0;
 	for (int i = 0; i < size; i++)
-		[self addDataEntry:[DataEntry dataWithFloat:0.0f]];
+		[self addDataEntry:[SamplingData dataWithFloat:0.0f]];
 	[self refreshSumState];
 	CHECK_COUNTER(self);
 }
 
-- (void)addDataEntry:(DataEntry *)entry
+- (void)addDataEntry:(SamplingData *)entry
 {
 	if (!entry)
 		return;
@@ -160,7 +160,7 @@
 	CHECK_COUNTER(self);
 }
 
--(DataEntry *)addDataEntry:(DataEntry *)entry withLimit:(size_t)limit
+-(SamplingData *)addDataEntry:(SamplingData *)entry withLimit:(size_t)limit
 {
 	if (_count < limit) {
 		[self addDataEntry:entry];
@@ -170,9 +170,9 @@
 	return [self shiftDataWithNewData:entry];
 }
 
-- (DataEntry *)dequeueDataEntry
+- (SamplingData *)dequeueDataEntry
 {
-	DataEntry *entry;
+	SamplingData *entry;
 
 	if (!_head)
 		return nil;
@@ -191,15 +191,15 @@
 	return entry;
 }
 
-- (DataEntry *)shiftDataWithNewData:(DataEntry *)entry
+- (SamplingData *)shiftDataWithNewData:(SamplingData *)entry
 {
 	[self addDataEntry:entry];
 	return [self dequeueDataEntry];
 }
 
-- (DataEntry *)readNextData
+- (SamplingData *)readNextData
 {
-	DataEntry *entry;
+	SamplingData *entry;
 
 	if (!_head)
 		return nil;
@@ -226,10 +226,10 @@
 	last_read = nil;
 }
 
-- (void)enumerateDataUsingBlock:(void (^)(DataEntry *data, NSUInteger, BOOL *))block
+- (void)enumerateDataUsingBlock:(void (^)(SamplingData *data, NSUInteger, BOOL *))block
 {
 	BOOL stop = FALSE;
-	DataEntry *entry;
+	SamplingData *entry;
 	NSUInteger idx = 0;
 
 	add = sub = add_remain = sub_remain = 0.0f;
@@ -251,7 +251,7 @@
 
 - (DataQueue *)copy
 {
-	DataEntry *entry;
+	SamplingData *entry;
 	DataQueue *new = [[DataQueue alloc] init];
 
 	for (entry = _head; entry; entry = entry.next)
@@ -272,7 +272,7 @@
 
 - (NSUInteger)maxSamples
 {
-	DataEntry *entry;
+	SamplingData *entry;
 	NSUInteger max = 0;
 
 	for (entry = _head; entry; entry = entry.next) {
@@ -284,7 +284,7 @@
 
 - (float)maxFloatValue
 {
-	DataEntry *entry;
+	SamplingData *entry;
 	float max = 0.0;
 
 	for (entry = _head; entry; entry = entry.next) {
@@ -337,7 +337,7 @@
 
 - (void)assertCounting
 {
-	DataEntry *entry;
+	SamplingData *entry;
 	NSUInteger idx = 0;
 
 	for (entry = _head; entry; entry = entry.next)

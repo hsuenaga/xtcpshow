@@ -8,17 +8,17 @@
 #include <sys/queue.h>
 #import <Foundation/Foundation.h>
 
-@interface DataEntry : NSObject<NSCopying>
+@interface SamplingData : NSObject<NSCopying>
 
 @property (strong, readonly) NSNumber *number;
 @property (strong) NSDate *timestamp;
 @property (assign) NSUInteger numberOfSamples;
-@property (strong) DataEntry *next;
+@property (strong) SamplingData *next;
 
-+ (DataEntry *)dataWithFloat:(float)data;
-+ (DataEntry *)dataWithInt:(int)data;
-+ (DataEntry *)dataWithFloat:(float)data atDate:(NSDate *)date;
-+ (DataEntry *)dataWithInt:(int)data atDate:(NSDate *)date;
++ (SamplingData *)dataWithFloat:(float)data;
++ (SamplingData *)dataWithInt:(int)data;
++ (SamplingData *)dataWithFloat:(float)data atDate:(NSDate *)date;
++ (SamplingData *)dataWithInt:(int)data atDate:(NSDate *)date;
 
 - (void)setFloatValue:(float)value;
 - (float)floatValue;

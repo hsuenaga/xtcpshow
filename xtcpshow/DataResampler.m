@@ -8,7 +8,7 @@
 #include "math.h"
 
 #import "DataResampler.h"
-#import "DataEntry.h"
+#import "SamplingData.h"
 
 @implementation DataResampler
 //
@@ -90,14 +90,14 @@
 	// filter
 	for (NSDate *slot = start; [slot laterDate:end] == end;
 	     slot = [slot dateByAddingTimeInterval:tick]) {
-		DataEntry *sample;
+		SamplingData *sample;
 		NSUInteger sample_count = 0;
 		float slot_value = 0.0f, remain = 0.0f;
 
 		// Step1: folding(sum) source data before slot
 		while ([input nextDate] &&
 		       [slot laterDate:[input nextDate]] == slot) {
-			DataEntry *source;
+			SamplingData *source;
 			float value, new_value;
 
 			source = [input readNextData];
@@ -109,7 +109,7 @@
 			sample_count += source.numberOfSamples;
 			_data.last_update = source.timestamp;
 		}
-		sample = [DataEntry dataWithFloat:slot_value];
+		sample = [SamplingData dataWithFloat:slot_value];
 
 		// Step2: TMA filter
 		if (MASamples > 2) {
