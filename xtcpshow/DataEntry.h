@@ -8,7 +8,7 @@
 #include <sys/queue.h>
 #import <Foundation/Foundation.h>
 
-@interface DataEntry : NSObject
+@interface DataEntry : NSObject<NSCopying>
 
 @property (strong, readonly) NSNumber *number;
 @property (strong) NSDate *timestamp;
@@ -26,7 +26,8 @@
 - (void)setIntValue:(int)value;
 - (int)intValue;
 
-- (DataEntry *)copy;
+// Pr: NSCopying
+- (id)copyWithZone:(NSZone *)zone;
 
 - (void)invalidTimeException;
 @end

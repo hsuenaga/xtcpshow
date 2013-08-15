@@ -79,7 +79,7 @@
 	return [_number intValue];
 }
 
-- (DataEntry *)copy
+- (id)copyWithZone:(NSZone *)zone
 {
 	DataEntry *new = [[DataEntry alloc] init];
 
