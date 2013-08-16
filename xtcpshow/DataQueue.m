@@ -220,6 +220,26 @@
 	return entry.content;
 }
 
+- (void)seekToDate:(NSDate *)date
+{
+	if (!_head)
+		return;
+	_last_read = nil;
+
+	for (DataQueueEntry *entry = _head; entry;
+	     entry = entry.next)
+	{
+		NSDate *seek = entry.content.timestamp;
+
+		if ([date laterDate:seek] == date) {
+			_last_read = entry;
+			continue;
+		}
+		break;
+	}
+}
+
+
 - (void)rewind
 {
 	_last_read = nil;

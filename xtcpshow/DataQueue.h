@@ -49,6 +49,7 @@
 
 // read data
 - (SamplingData *)readNextData;
+- (void)seekToDate:(NSDate *)date;
 - (void)rewind;
 
 // enumerate all data

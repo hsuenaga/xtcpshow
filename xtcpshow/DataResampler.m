@@ -65,20 +65,16 @@
 		sma[1] = [[DataQueue alloc] init];
 		[sma[0] zeroFill:TMASamples];
 		[sma[1] zeroFill:TMASamples];
-		[input rewind];
 	}
 
 	// get range of time
 	dataLength = -(_outputTimeLength + _MATimeLength);
-	end = input.last_update;
+	end = [input.last_update dateByAddingTimeInterval:_outputTimeOffset];
 	start = [self roundDate:[end dateByAddingTimeInterval:dataLength] toTick:tick];
 
 	if (!_data.last_update) {
 		// 1st time. adjust input date.
-		while ([input nextDate] &&
-		       [start laterDate:[input nextDate]] == start) {
-			[input readNextData];
-		}
+		[input seekToDate:start];
 		_data.last_update = start;
 	}
 	else {

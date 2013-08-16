@@ -430,12 +430,12 @@ float const scroll_sensitivity = 10.0f;
 
 - (void)resampleData:(DataQueue *)data inRect:(NSRect)rect
 {
-	NSDate *start;
+	NSDate *end;
 
 	// fix up _viewTimeOffset
-	start = [data lastDate];
-	start = [start dateByAddingTimeInterval:_viewTimeOffset];
-	if ([start laterDate:[data firstDate]] != start) {
+	end = [data lastDate];
+	end = [end dateByAddingTimeInterval:_viewTimeOffset];
+	if ([end laterDate:[data firstDate]] != end) {
 		_viewTimeOffset = [[data firstDate] timeIntervalSinceDate:[data lastDate]];
 	}
 
