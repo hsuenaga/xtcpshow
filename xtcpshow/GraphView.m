@@ -21,7 +21,7 @@ NSString *const RANGE_PEAKHOLD = @"PeakHold";
 NSString *const RANGE_MANUAL = @"Manual";
 
 NSString *const CAP_MAX_SMPL = @" Max %lu [packets/sample]";
-NSString *const CAP_MAX_MBPS = @" Max %6.3f [mbps]";
+NSString *const CAP_MAX_MBPS = @" Max %6.3f [mbps], StdDev %6.3f [mbps]";
 NSString *const FMT_RANGE = @" Y-Range %6.3f [Mbps] / X-Range %6.1f [ms] / MA %6.1f [ms] / Avg %6.3f [Mbps] ";
 NSString *const FMT_DATE = @"yyyy-MM-dd HH:mm:ss.SSS zzz ";
 NSString *const FMT_NODATA = @"NO DATA RECORD ";
@@ -329,7 +329,7 @@ float const scroll_sensitivity = 10.0f;
 	else if (y > ((rect.size.height / 5) * 4))
 		y = (rect.size.height / 5) * 4;
 
-	marker = [NSString stringWithFormat:CAP_MAX_MBPS, _maxValue];
+	marker = [NSString stringWithFormat:CAP_MAX_MBPS, _maxValue, [resampler.data standardDeviation]];
 	[self drawText:marker inRect:rect atPoint:NSMakePoint(0.0, y)];
 
 	[NSGraphicsContext restoreGraphicsState];

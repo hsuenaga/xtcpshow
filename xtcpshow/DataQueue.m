@@ -318,6 +318,27 @@
 	return max;
 }
 
+- (float)averageFloatValue
+{
+	if (_count == 0)
+		return 0.0;
+
+	return ([self sum] / (float)_count);
+}
+
+- (float)standardDeviation
+{
+	float avg = [self averageFloatValue];
+	float variance = 0.0;
+
+	for (DataQueueEntry *entry = _head; entry;
+	     entry = entry.next)
+		variance += pow((avg - entry.content.floatValue), 2.0);
+	variance /= (_count - 1);
+
+	return sqrtf(variance);
+}
+
 - (NSDate *)lastDate
 {
 	if (!_tail)
@@ -344,14 +365,6 @@
 		return nil;
 
 	return _last_read.next.content.timestamp;
-}
-
-- (float)averageFloatValue
-{
-	if (_count == 0)
-		return 0.0;
-
-	return ([self sum] / (float)_count);
 }
 
 - (void)assertCounting

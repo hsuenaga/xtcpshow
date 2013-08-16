@@ -63,6 +63,8 @@
 - (float)maxFloatValue;
 - (NSUInteger)maxSamples;
 - (float)averageFloatValue;
+- (float)standardDeviation;
+
 - (NSDate *)lastDate;
 - (NSDate *)firstDate;
 - (NSDate *)nextDate;
