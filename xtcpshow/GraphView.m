@@ -21,8 +21,10 @@ NSString *const RANGE_PEAKHOLD = @"PeakHold";
 NSString *const RANGE_MANUAL = @"Manual";
 
 NSString *const CAP_MAX_SMPL = @" Max %lu [packets/sample]";
-NSString *const CAP_MAX_MBPS = @" Max %6.3f [mbps], StdDev %6.3f [mbps]";
-NSString *const FMT_RANGE = @" Y-Range %6.3f [Mbps] / X-Range %6.1f [ms] / MA %6.1f [ms] / Avg %6.3f [Mbps] ";
+NSString *const CAP_MAX_MBPS = @" Max %6.3f [mbps]";
+NSString *const CAP_AVG_MBPS = @" Avg %6.3f [mbps], StdDev %6.3f [mbps]";
+
+NSString *const FMT_RANGE = @" Y-Range %6.3f [Mbps] / X-Range %6.1f [ms] / MA %6.1f [ms]";
 NSString *const FMT_DATE = @"yyyy-MM-dd HH:mm:ss.SSS zzz ";
 NSString *const FMT_NODATA = @"NO DATA RECORD ";
 
@@ -300,7 +302,34 @@ float const scroll_sensitivity = 10.0f;
 	[atext drawAtPoint:point];
 }
 
-- (void)drawGuide:(NSRect)rect
+- (void)drawMaxGuide:(NSRect)rect
+{
+	NSBezierPath *path;
+	NSString *marker;
+	float y;
+
+	[NSGraphicsContext saveGraphicsState];
+
+	[[NSColor blueColor] set];
+	path = [NSBezierPath bezierPath];
+	y = rect.size.height * (_maxValue / y_range);
+	[path moveToPoint:NSMakePoint(0.0, y)];
+	[path lineToPoint:NSMakePoint(rect.size.width, y)];
+	[path stroke];
+
+	/* max text */
+	if (y < (rect.size.height / 5))
+		y = (rect.size.height / 5);
+	else if (y > ((rect.size.height / 5) * 4))
+		y = (rect.size.height / 5) * 4;
+
+	marker = [NSString stringWithFormat:CAP_MAX_MBPS, _maxValue];
+	[self drawText:marker inRect:rect atPoint:NSMakePoint(0.0, y)];
+
+	[NSGraphicsContext restoreGraphicsState];
+}
+
+- (void)drawAvgGuide:(NSRect)rect
 {
 	NSBezierPath *path;
 	NSString *marker;
@@ -316,21 +345,14 @@ float const scroll_sensitivity = 10.0f;
 	[path lineToPoint:NSMakePoint(rect.size.width, y)];
 	[path stroke];
 
-	[[NSColor blueColor] set];
-	path = [NSBezierPath bezierPath];
-	y = rect.size.height * (_maxValue / y_range);
-	[path moveToPoint:NSMakePoint(0.0, y)];
-	[path lineToPoint:NSMakePoint(rect.size.width, y)];
-	[path stroke];
-
 	/* max text */
 	if (y < (rect.size.height / 5))
 		y = (rect.size.height / 5);
 	else if (y > ((rect.size.height / 5) * 4))
 		y = (rect.size.height / 5) * 4;
 
-	marker = [NSString stringWithFormat:CAP_MAX_MBPS, _maxValue, [resampler.data standardDeviation]];
-	[self drawText:marker inRect:rect atPoint:NSMakePoint(0.0, y)];
+	marker = [NSString stringWithFormat:CAP_AVG_MBPS, _averageValue, [resampler.data standardDeviation]];
+	[self drawText:marker inRect:rect alignRight:y];
 
 	[NSGraphicsContext restoreGraphicsState];
 }
@@ -368,8 +390,7 @@ float const scroll_sensitivity = 10.0f;
 	[NSGraphicsContext saveGraphicsState];
 	text =
 	[NSString stringWithFormat:FMT_RANGE,
-	 y_range, x_range, ma_range,
-	 [[self data] averageFloatValue]];
+	 y_range, x_range, ma_range];
 	[self drawText:text inRect:rect atPoint:NSMakePoint(0.0, 0.0)];
 
 	[NSGraphicsContext restoreGraphicsState];
@@ -418,7 +439,8 @@ float const scroll_sensitivity = 10.0f;
 	[self drawGraph:rect];
 
 	/* plot guide line (max, average, ...) */
-	[self drawGuide:rect];
+	[self drawMaxGuide:rect];
+	[self drawAvgGuide:rect];
 
 	/* graph params */
 	[self drawRange:rect];
