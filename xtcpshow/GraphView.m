@@ -202,7 +202,7 @@ float const scroll_sensitivity = 10.0f;
 - (void)scrollWheel:(NSEvent *)event
 {
 	_MATimeLength -= (event.deltaY/_scrollSense);
-	_viewTimeOffset += event.deltaX/_scrollSense;
+	_viewTimeOffset -= event.deltaX/_scrollSense;
 	[self updateRange];
 	[resampler purgeData];
 
@@ -433,10 +433,10 @@ float const scroll_sensitivity = 10.0f;
 	NSDate *end;
 
 	// fix up _viewTimeOffset
-	end = [data lastDate];
+	end = [data last_update];
 	end = [end dateByAddingTimeInterval:_viewTimeOffset];
 	if ([end laterDate:[data firstDate]] != end) {
-		_viewTimeOffset = [[data firstDate] timeIntervalSinceDate:[data lastDate]];
+		_viewTimeOffset = [[data firstDate] timeIntervalSinceDate:[data last_update]];
 	}
 
 	resampler.outputTimeLength = _viewTimeLength;
