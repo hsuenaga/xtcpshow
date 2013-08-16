@@ -1,5 +1,5 @@
 //
-//  DataEntry.m
+//  SamplingData.m
 //  xtcpshow
 //
 //  Created by SUENAGA Hiroki on 2013/08/09.
@@ -9,57 +9,72 @@
 #import "SamplingData.h"
 
 @implementation SamplingData
-+ (SamplingData *)dataWithFloat:(float)data
++ (id)dataWithoutSample
 {
-	SamplingData *new = [[SamplingData alloc] init];
+	SamplingData *new = [[[self class] alloc] init];
+	new->_timestamp = [NSDate date];
+
+	return new;
+}
+
++ (id)dataWithSingleFloat:(float)data
+{
+	SamplingData *new = [[[self class] alloc] init];
 
 	new->_number = [NSNumber numberWithFloat:data];
+	new->_timestamp = [NSDate date];
+	new->_numberOfSamples = 1;
 
 	return new;
 }
 
-+ (SamplingData *)dataWithInt:(int)data
++ (id)dataWithSingleInt:(int)data
 {
-	SamplingData *new = [[SamplingData alloc] init];
+	SamplingData *new = [[[self class] alloc] init];
 
 	new->_number = [NSNumber numberWithInt:data];
+	new->_timestamp = [NSDate date];
+	new->_numberOfSamples = 1;
 
 	return new;
 }
 
-+ (SamplingData *)dataWithFloat:(float)data atDate:(NSDate *)date
++ (id)dataWithFloat:(float)data atDate:(NSDate *)date fromSamples:(NSUInteger)samples;
 {
-	SamplingData *new = [[SamplingData alloc] init];
+	SamplingData *new = [[[self class] alloc] init];
 
 	new->_number = [NSNumber numberWithFloat:data];
-	new->_timestamp = date;
+	new->_timestamp = [date copy];
+	new->_numberOfSamples = samples;
 
 	return new;
 }
 
-+ (SamplingData *)dataWithInt:(int)data atDate:(NSDate *)date
++ (id)dataWithInt:(int)data atDate:(NSDate *)date fromSamples:(NSUInteger)samples
 {
-	SamplingData *new = [[SamplingData alloc] init];
+	SamplingData *new = [[[self class] alloc] init];
 
 	new->_number = [NSNumber numberWithInt:data];
 	new->_timestamp = date;
+	new->_numberOfSamples = samples;
 
 	return new;
 }
 
-- (void)setFloatValue:(float)value
++ (id)dataWithNumber:(NSNumber *)number atDate:(NSDate *)date fromSamples:(NSUInteger)samples
 {
-	_number = [NSNumber numberWithFloat:value];
+	SamplingData *new = [[[self class] alloc] init];
+
+	new->_number = number;
+	new->_timestamp = date;
+	new->_numberOfSamples = samples;
+
+	return new;
 }
 
 - (float)floatValue
 {
 	return [_number floatValue];
-}
-
-- (void)setIntValue:(int)value
-{
-	_number = [NSNumber numberWithInt:value];
 }
 
 - (int)intValue
@@ -74,7 +89,6 @@
 	new->_number = [_number copy];
 	new->_timestamp = [_timestamp copy];
 	new->_numberOfSamples = _numberOfSamples;
-	new->_next = nil;
 
 	return new;
 }

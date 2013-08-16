@@ -8,6 +8,7 @@
 #include <sys/queue.h>
 
 #import "DataQueue.h"
+#import "DataQueueEntry.h"
 #import "SamplingData.h"
 
 #undef DEBUG_COUNTER
@@ -25,12 +26,7 @@
 {
 	self = [super init];
 
-	_head = nil;
-	_tail = nil;
-	_count = 0;
 	refresh_count = REFRESH_THR;
-	last_read = nil;
-	[self clearSumState];
 
 	return self;
 }
@@ -102,13 +98,13 @@
 
 - (void)refreshSumState
 {
-	SamplingData *entry;
+	DataQueueEntry *entry;
 
 	[self clearSumState];
 	for (entry = _head; entry; entry = entry.next) {
 		float value, new_value;
 
-		value = [entry floatValue];
+		value = [entry.content floatValue];
 		if (isnan(value) || isinf(value))
 			[self invalidValueException];
 
@@ -138,15 +134,18 @@
 	_head = _tail = nil;
 	_count = 0;
 	for (int i = 0; i < size; i++)
-		[self addDataEntry:[SamplingData dataWithFloat:0.0f]];
+		[self addDataEntry:[SamplingData dataWithSingleFloat:0.0f]];
 	[self refreshSumState];
 	CHECK_COUNTER(self);
 }
 
-- (void)addDataEntry:(SamplingData *)entry
+- (void)addDataEntry:(SamplingData *)data
 {
-	if (!entry)
+	DataQueueEntry *entry;
+
+	if (!data)
 		return;
+	entry = [DataQueueEntry entryWithData:data];
 
 	if (_tail) {
 		_tail.next = entry;
@@ -155,7 +154,7 @@
 	else {
 		_head = _tail = entry;
 	}
-	[self addSumState:[entry floatValue]];
+	[self addSumState:[data floatValue]];
 	_count++;
 	CHECK_COUNTER(self);
 }
@@ -172,7 +171,7 @@
 
 - (SamplingData *)dequeueDataEntry
 {
-	SamplingData *entry;
+	DataQueueEntry *entry;
 
 	if (!_head)
 		return nil;
@@ -182,13 +181,13 @@
 	entry.next = nil;
 	if (!_head)
 		_tail = nil;
-	if (last_read == entry)
-		last_read = nil;
-	[self subSumState:[entry floatValue]];
+	if (_last_read == entry)
+		_last_read = nil;
+	[self subSumState:[entry.content floatValue]];
 	_count--;
 
 	CHECK_COUNTER(self);
-	return entry;
+	return entry.content;
 }
 
 - (SamplingData *)shiftDataWithNewData:(SamplingData *)entry
@@ -199,37 +198,37 @@
 
 - (SamplingData *)readNextData
 {
-	SamplingData *entry;
+	DataQueueEntry *entry;
 
 	if (!_head)
 		return nil;
 
-	if (last_read && last_read.next == nil)
+	if (_last_read && _last_read.next == nil)
 		return nil; // no new data arrived.
 
-	if (!last_read) {
+	if (!_last_read) {
 		entry = [_head copy];
 		entry.next = nil;
-		last_read = _head;
+		_last_read = _head;
 	}
 	else {
-		entry = [last_read.next copy];
+		entry = [_last_read.next copy];
 		entry.next = nil;
-		last_read = last_read.next;
+		_last_read = _last_read.next;
 	}
 
-	return entry;
+	return entry.content;
 }
 
 - (void)rewind
 {
-	last_read = nil;
+	_last_read = nil;
 }
 
 - (void)enumerateDataUsingBlock:(void (^)(SamplingData *data, NSUInteger, BOOL *))block
 {
+	DataQueueEntry *entry;
 	BOOL stop = FALSE;
-	SamplingData *entry;
 	NSUInteger idx = 0;
 
 	add = sub = add_remain = sub_remain = 0.0f;
@@ -237,9 +236,9 @@
 		float v, new_add;
 
 		if (!stop)
-			block(entry, idx, &stop);
+			block(entry.content, idx, &stop);
 		
-		v = [entry floatValue] + add_remain;
+		v = [entry.content floatValue] + add_remain;
 		new_add = add + v;
 		add_remain = (new_add - add) - v;
 		add = new_add;
@@ -251,7 +250,7 @@
 
 - (DataQueue *)copy
 {
-	SamplingData *entry;
+	DataQueueEntry *entry;
 	DataQueue *new = [[DataQueue alloc] init];
 
 	for (entry = _head; entry; entry = entry.next)
@@ -272,23 +271,23 @@
 
 - (NSUInteger)maxSamples
 {
-	SamplingData *entry;
+	DataQueueEntry *entry;
 	NSUInteger max = 0;
 
 	for (entry = _head; entry; entry = entry.next) {
-		if (max < entry.numberOfSamples)
-			max = entry.numberOfSamples;
+		if (max < entry.content.numberOfSamples)
+			max = entry.content.numberOfSamples;
 	}
 	return max;
 }
 
 - (float)maxFloatValue
 {
-	SamplingData *entry;
+	DataQueueEntry *entry;
 	float max = 0.0;
 
 	for (entry = _head; entry; entry = entry.next) {
-		float value = [entry floatValue];
+		float value = [entry.content floatValue];
 
 		if (isnan(value))
 			[self invalidValueException];
@@ -303,14 +302,14 @@
 {
 	if (!_tail)
 		return nil;
-	return _tail.timestamp;
+	return _tail.content.timestamp;
 }
 
 - (NSDate *)firstDate
 {
 	if (!_head)
 		return nil;
-	return _head.timestamp;
+	return _head.content.timestamp;
 }
 
 - (NSDate *)nextDate
@@ -318,13 +317,13 @@
 	if (!_head)
 		return nil;
 
-	if (!last_read)
-		return _head.timestamp;
+	if (!_last_read)
+		return _head.content.timestamp;
 
-	if (!last_read.next)
+	if (!_last_read.next)
 		return nil;
 
-	return last_read.next.timestamp;
+	return _last_read.next.content.timestamp;
 }
 
 - (float)averageFloatValue
@@ -337,7 +336,7 @@
 
 - (void)assertCounting
 {
-	SamplingData *entry;
+	DataQueueEntry *entry;
 	NSUInteger idx = 0;
 
 	for (entry = _head; entry; entry = entry.next)

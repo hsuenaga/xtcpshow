@@ -1,5 +1,5 @@
 //
-//  DataEntry.h
+//  SamplingData.h
 //  xtcpshow
 //
 //  Created by SUENAGA Hiroki on 2013/08/09.
@@ -8,22 +8,20 @@
 #include <sys/queue.h>
 #import <Foundation/Foundation.h>
 
-@interface SamplingData : NSObject<NSCopying>
+@interface SamplingData : NSObject<NSCopying> {
+	NSNumber *_number;
+}
+@property (strong, readonly) NSDate *timestamp;
+@property (assign, readonly) NSUInteger numberOfSamples;
 
-@property (strong, readonly) NSNumber *number;
-@property (strong) NSDate *timestamp;
-@property (assign) NSUInteger numberOfSamples;
-@property (strong) SamplingData *next;
++ (id)dataWithoutSample;
++ (id)dataWithSingleFloat:(float)data;
++ (id)dataWithSingleInt:(int)data;
++ (id)dataWithFloat:(float)data atDate:(NSDate *)date fromSamples:(NSUInteger)samples;
++ (id)dataWithInt:(int)data atDate:(NSDate *)date fromSamples:(NSUInteger)samples;
++ (id)dataWithNumber:(NSNumber *)number atDate:(NSDate *)date fromSamples:(NSUInteger)samples;
 
-+ (SamplingData *)dataWithFloat:(float)data;
-+ (SamplingData *)dataWithInt:(int)data;
-+ (SamplingData *)dataWithFloat:(float)data atDate:(NSDate *)date;
-+ (SamplingData *)dataWithInt:(int)data atDate:(NSDate *)date;
-
-- (void)setFloatValue:(float)value;
 - (float)floatValue;
-
-- (void)setIntValue:(int)value;
 - (int)intValue;
 
 // Pr: NSCopying

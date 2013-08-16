@@ -21,6 +21,7 @@
 		466E550717AB2AA500C978C9 /* DataQueue.m in Sources */ = {isa = PBXBuildFile; fileRef = 466E550617AB2AA500C978C9 /* DataQueue.m */; };
 		466E550A17AB491800C978C9 /* DataResampler.m in Sources */ = {isa = PBXBuildFile; fileRef = 466E550917AB491800C978C9 /* DataResampler.m */; };
 		4682948417B4634D008AC9D4 /* SamplingData.m in Sources */ = {isa = PBXBuildFile; fileRef = 4682948317B4634D008AC9D4 /* SamplingData.m */; };
+		46D8CD0117BC7D060028F793 /* DataQueueEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = 46D8CD0017BC7D060028F793 /* DataQueueEntry.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -51,6 +52,8 @@
 		466E550917AB491800C978C9 /* DataResampler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DataResampler.m; sourceTree = "<group>"; };
 		4682948217B4634D008AC9D4 /* SamplingData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SamplingData.h; sourceTree = "<group>"; };
 		4682948317B4634D008AC9D4 /* SamplingData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SamplingData.m; sourceTree = "<group>"; };
+		46D8CCFF17BC7D060028F793 /* DataQueueEntry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DataQueueEntry.h; sourceTree = "<group>"; };
+		46D8CD0017BC7D060028F793 /* DataQueueEntry.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DataQueueEntry.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -118,6 +121,8 @@
 				466E550617AB2AA500C978C9 /* DataQueue.m */,
 				4682948217B4634D008AC9D4 /* SamplingData.h */,
 				4682948317B4634D008AC9D4 /* SamplingData.m */,
+				46D8CCFF17BC7D060028F793 /* DataQueueEntry.h */,
+				46D8CD0017BC7D060028F793 /* DataQueueEntry.m */,
 				46583CB917A0D192007B6572 /* CaptureOperation.m */,
 				46583CB717A0CA4D007B6572 /* GraphView.h */,
 				46583CB517A0CA41007B6572 /* GraphView.m */,
@@ -212,6 +217,7 @@
 				466E550717AB2AA500C978C9 /* DataQueue.m in Sources */,
 				466E550A17AB491800C978C9 /* DataResampler.m in Sources */,
 				4682948417B4634D008AC9D4 /* SamplingData.m in Sources */,
+				46D8CD0117BC7D060028F793 /* DataQueueEntry.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

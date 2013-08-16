@@ -8,7 +8,7 @@
 #include <sys/queue.h>
 #import <Foundation/Foundation.h>
 
-@class SamplingData;
+@class DataQueueEntry, SamplingData;
 
 @interface DataQueue : NSObject {
 	NSUInteger refresh_count;
@@ -17,10 +17,10 @@
 	float sub;
 	float sub_remain;
 
-	SamplingData *last_read;
+	DataQueueEntry *_head;
+	DataQueueEntry *_tail;
+	DataQueueEntry *_last_read;
 }
-@property (readonly, strong) SamplingData *head;
-@property (readonly, strong) SamplingData *tail;
 @property (strong) NSDate *last_update;
 @property (readonly) NSUInteger count;
 

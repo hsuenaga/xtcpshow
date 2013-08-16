@@ -93,7 +93,6 @@
 		SamplingData *sample;
 		NSUInteger sample_count = 0;
 		float slot_value = 0.0f, remain = 0.0f;
-
 		// Step1: folding(sum) source data before slot
 		while ([input nextDate] &&
 		       [slot laterDate:[input nextDate]] == slot) {
@@ -109,22 +108,20 @@
 			sample_count += source.numberOfSamples;
 			_data.last_update = source.timestamp;
 		}
-		sample = [SamplingData dataWithFloat:slot_value];
+		sample = [SamplingData dataWithSingleFloat:slot_value];
 
 		// Step2: TMA filter
 		if (MASamples > 2) {
-			sample = [sma[0] shiftDataWithNewData:sample];
-			[sample setFloatValue:[sma[0] averageFloatValue]];
-			sample = [sma[1] shiftDataWithNewData:sample];
-			[sample setFloatValue:[sma[1] averageFloatValue]];
+			[sma[0] shiftDataWithNewData:sample];
+			sample = [SamplingData dataWithSingleFloat:[sma[0] averageFloatValue]];
+			[sma[1] shiftDataWithNewData:sample];
+			sample = [SamplingData dataWithSingleFloat:[sma[1] averageFloatValue]];
 		}
 
 		// Step3: convert unit of sample
-		[sample setFloatValue:([sample floatValue] * bytes2mbps)];
+		sample = [SamplingData dataWithFloat:([sample floatValue] * bytes2mbps) atDate:slot fromSamples:sample_count];
 
 		// finalize and output sample
-		[sample setNumberOfSamples:sample_count];
-		[sample setTimestamp:slot];
 		[_data addDataEntry:sample withLimit:maxSamples];
 	}
 

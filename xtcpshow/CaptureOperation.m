@@ -13,6 +13,7 @@
 #import "CaptureOperation.h"
 #import "CaptureModel.h"
 #import "DataQueue.h"
+#import "DataQueueEntry.h"
 #import "SamplingData.h"
 
 /*
@@ -117,7 +118,7 @@
 		mbps = mbps / (1000.0f * 1000.0f); // [mbps]
 		if (max_mbps < mbps)
 			max_mbps = mbps;
-		[max_buffer shiftDataWithNewData:[SamplingData dataWithFloat:mbps]];
+		[max_buffer shiftDataWithNewData:[SamplingData dataWithSingleFloat:mbps]];
 		peak_mbps = [max_buffer maxFloatValue];
 
 		// update model
@@ -225,13 +226,11 @@
 		unix_time = tv->tv_sec;
 		unix_time += ((double)tv->tv_usec / 1000000.0);
 		date = [NSDate dateWithTimeIntervalSince1970:unix_time];
-		sample = [SamplingData dataWithInt:size atDate:date];
-		[sample setNumberOfSamples:1];
+		sample = [SamplingData dataWithInt:size atDate:date fromSamples:1];
 	}
 	else {
 		// psuedo clock frame
-		sample = [SamplingData dataWithInt:0 atDate:[NSDate date]];
-		[sample setNumberOfSamples:0];
+		sample = [SamplingData dataWithoutSample];
 	}
 
 	[_model
