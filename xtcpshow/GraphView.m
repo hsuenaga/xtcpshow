@@ -310,7 +310,7 @@ float const scroll_sensitivity = 10.0f;
 
 	[NSGraphicsContext saveGraphicsState];
 
-	[[NSColor blueColor] set];
+	[[NSColor redColor] set];
 	path = [NSBezierPath bezierPath];
 	y = rect.size.height * (_maxValue / y_range);
 	[path moveToPoint:NSMakePoint(0.0, y)];
@@ -341,7 +341,7 @@ float const scroll_sensitivity = 10.0f;
 
 	[NSGraphicsContext saveGraphicsState];
 
-	[[NSColor redColor] set];
+	[[NSColor colorWithDeviceRed:0.0 green:1.0 blue:0.0 alpha:1.0] set];
 	path = [NSBezierPath bezierPath];
 	y =
 	rect.size.height * (_averageValue / y_range);
@@ -351,7 +351,7 @@ float const scroll_sensitivity = 10.0f;
 
 	if (_showDeviationBand == TRUE) {
 		float dy, upper, lower;
-		[[NSColor colorWithDeviceRed:1.0 green:0.0 blue:0.0 alpha:0.5] set];
+		[[NSColor colorWithDeviceRed:0.0 green:1.0 blue:0.0 alpha:0.4] set];
 		path = [NSBezierPath bezierPath];
 		y = rect.size.height * (_averageValue / y_range);
 		dy = rect.size.height * (deviation / y_range);
