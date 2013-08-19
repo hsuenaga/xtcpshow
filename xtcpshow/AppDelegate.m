@@ -204,6 +204,15 @@ static void setup_interface(NSPopUpButton *);
 	[_graphView setNeedsDisplay:YES];
 }
 
+- (IBAction)toggleDeviation:(id)sender {
+	if ([sender state] == NSOnState)
+		[_graphView setShowDeviationBand:YES];
+	else
+		[_graphView setShowDeviationBand:NO];
+
+	[_graphView setNeedsDisplay:YES];
+}
+
 - (IBAction)copyGraphView:(id)sender {
 	[_graphView saveFile:[_model data]];
 }

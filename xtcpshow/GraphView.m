@@ -333,7 +333,11 @@ float const scroll_sensitivity = 10.0f;
 {
 	NSBezierPath *path;
 	NSString *marker;
-	float y;
+	float w, y, deviation;
+
+
+	w = rect.size.width;
+	deviation = [resampler.data standardDeviation];
 
 	[NSGraphicsContext saveGraphicsState];
 
@@ -342,8 +346,29 @@ float const scroll_sensitivity = 10.0f;
 	y =
 	rect.size.height * (_averageValue / y_range);
 	[path moveToPoint:NSMakePoint(0.0, y)];
-	[path lineToPoint:NSMakePoint(rect.size.width, y)];
+	[path lineToPoint:NSMakePoint(w, y)];
 	[path stroke];
+
+	if (_showDeviationBand == TRUE) {
+		float dy, upper, lower;
+		[[NSColor colorWithDeviceRed:1.0 green:0.0 blue:0.0 alpha:0.5] set];
+		path = [NSBezierPath bezierPath];
+		y = rect.size.height * (_averageValue / y_range);
+		dy = rect.size.height * (deviation / y_range);
+		upper = y + dy;
+		if (upper > rect.size.height)
+			upper = rect.size.height;
+		lower = y - dy;
+		if (lower < 0.0)
+			lower = 0.0;
+
+		[path moveToPoint:NSMakePoint(0.0, upper)];
+		[path lineToPoint:NSMakePoint(0.0, lower)];
+		[path lineToPoint:NSMakePoint(w, lower)];
+		[path lineToPoint:NSMakePoint(w, upper)];
+		[path closePath];
+		[path fill];
+	}
 
 	/* max text */
 	if (y < (rect.size.height / 5))
@@ -351,7 +376,7 @@ float const scroll_sensitivity = 10.0f;
 	else if (y > ((rect.size.height / 5) * 4))
 		y = (rect.size.height / 5) * 4;
 
-	marker = [NSString stringWithFormat:CAP_AVG_MBPS, _averageValue, [resampler.data standardDeviation]];
+	marker = [NSString stringWithFormat:CAP_AVG_MBPS, _averageValue, deviation];
 	[self drawText:marker inRect:rect alignRight:y];
 
 	[NSGraphicsContext restoreGraphicsState];

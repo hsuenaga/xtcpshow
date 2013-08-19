@@ -61,6 +61,7 @@ extern NSString *const RANGE_MANUAL;
 @property (assign) NSTimeInterval viewTimeOffset;
 
 @property (assign) BOOL showPacketMarker;
+@property (assign) BOOL showDeviationBand;
 
 - (void)updateRange;
 
