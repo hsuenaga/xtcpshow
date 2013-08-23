@@ -67,4 +67,5 @@
 
 /* initialize environment */
 - (void) setupInterfaceButton:(NSPopUpButton *)btn;
+- (BOOL) blessHelperWithLabel:(NSString *)label error:(NSError **)error;
 @end

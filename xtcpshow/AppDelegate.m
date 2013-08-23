@@ -10,11 +10,15 @@
 #include <net/if.h>
 #include <ifaddrs.h>
 
+#import <ServiceManagement/ServiceManagement.h>
+#import <Security/Authorization.h>
+
 #import "AppDelegate.h"
 #import "CaptureModel.h"
 #import "GraphView.h"
 #import "DataResampler.h"
 
+static NSString *const BPFIX_NAME=@"Internet-Initiative-Japan-Inc.BPFix";
 static NSString *const LBL_START=@"START";
 static NSString *const LBL_STOP=@"STOP";
 static NSString *const LBL_OK=@"OK";
@@ -58,6 +62,13 @@ static void setup_interface(NSPopUpButton *);
 
 	// notification center
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(closeNofity:) name:NSWindowWillCloseNotification object:nil];
+
+#if 0
+//	NSError *error;
+	// bless the helper
+	if (![self blessHelperWithLabel:BPFIX_NAME error:&error])
+		NSLog(@"Cannot install helper: %@", [error description]);
+#endif
 
 	[self updateUserInterface];
 }
@@ -310,5 +321,36 @@ static void setup_interface(NSPopUpButton *);
 	}
 
 	freeifaddrs(ifap0);
+}
+
+- (BOOL)blessHelperWithLabel:(NSString *)label error:(NSError *__autoreleasing *)error
+{
+
+	BOOL result = NO;
+
+	AuthorizationItem authItem ={kSMRightBlessPrivilegedHelper, 0, NULL, 0 };
+	AuthorizationRights authRights = { 1, &authItem };
+	AuthorizationFlags flags = kAuthorizationFlagDefaults |	kAuthorizationFlagInteractionAllowed | kAuthorizationFlagPreAuthorize | kAuthorizationFlagExtendRights;
+	AuthorizationRef authRef = NULL;
+	CFErrorRef cfError;
+
+	/* Obtain the right to install privileged helper tools (kSMRightBlessPrivilegedHelper). */
+	OSStatus status = AuthorizationCreate(&authRights, kAuthorizationEmptyEnvironment, flags, &authRef);
+	if (status != errAuthorizationSuccess) {
+		NSLog(@"Failed to create AuthorizationRef. Error code: %d", status);
+
+	} else {
+		/* This does all the work of verifying the helper tool against the application
+		 * and vice-versa. Once verification has passed, the embedded launchd.plist
+		 * is extracted and placed in /Library/LaunchDaemons and then loaded. The
+		 * executable is placed in /Library/PrivilegedHelperTools.
+		 */
+		result = SMJobBless(kSMDomainSystemLaunchd, (__bridge CFStringRef)label, authRef, &cfError);
+		if (error)
+			*error = CFBridgingRelease(cfError);
+	}
+
+	return result;
+
 }
 @end

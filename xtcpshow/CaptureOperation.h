@@ -15,13 +15,14 @@
 #define HOLDSLOT (1.0f)  // [sec]
 
 #define CAP_TICK 100      // 50 [ms]
-#define CAP_SNAPLEN 64
+#define CAP_SNAPLEN 128
 #define CAP_BUFSIZ (CAP_SNAPLEN * 128)
 
 @class CaptureModel;
 @class DataQueue;
 
 @interface CaptureOperation : NSOperation {
+	NSHashTable *hash;
 	NSString *last_error;
 	DataQueue *max_buffer;
 
@@ -48,6 +49,8 @@
 - (void)main;
 - (void)setSource:(const char *)source;
 - (void)setFilter:(const char *)filter;
+
+- (void)classify:(const u_char *)data captureSize:(size_t)size;
 
 - (float)elapsed:(struct timeval *)last;
 - (BOOL)tick_expired;
