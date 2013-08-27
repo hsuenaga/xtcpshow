@@ -20,9 +20,10 @@
 
 @class CaptureModel;
 @class DataQueue;
+@class FlowData;
 
 @interface CaptureOperation : NSOperation {
-	NSHashTable *hash;
+	FlowData *Flow;
 	NSString *last_error;
 	DataQueue *max_buffer;
 
@@ -50,11 +51,9 @@
 - (void)setSource:(const char *)source;
 - (void)setFilter:(const char *)filter;
 
-- (void)classify:(const u_char *)data captureSize:(size_t)size;
-
 - (float)elapsed:(struct timeval *)last;
 - (BOOL)tick_expired;
-- (void)sendNotify:(int)size withTime:(struct timeval *)tv;
+- (void)sendNotify:(int)size withTime:(struct timeval *)tv withClass:(int)classID;
 - (void)sendError:(NSString *)message;
 - (void)sendFinish;
 

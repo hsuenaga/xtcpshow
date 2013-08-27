@@ -22,6 +22,7 @@
 #import "DataQueue.h"
 #import "DataQueueEntry.h"
 #import "SamplingData.h"
+#import "FlowData.h"
 
 /*
  * Capture thread
@@ -32,6 +33,7 @@
 	self = [super init];
 	source_interface = NULL;
 	filter_program = NULL;
+	Flow = [[FlowData alloc] init];
 
 	return self;
 }
@@ -87,6 +89,7 @@
 	while (!terminate) {
 		struct pcap_pkthdr *hdr;
 		const u_char *data;
+		int classID;
 		float mbps;
 		int code;
 
@@ -102,13 +105,14 @@
 				// got packet
 				pkts++;
 				bytes += hdr->len;
-				[self classify:data captureSize:hdr->caplen];
+				classID = [Flow clasifyPacket:data size:hdr->caplen linkType:pcap_datalink(pcap)];
 				[self sendNotify:hdr->len
-					withTime:&hdr->ts];
+					withTime:&hdr->ts
+				       withClass:classID];
 				break;
 			case 0:
 				// timeout
-				[self sendNotify:0 withTime:NULL];
+				[self sendNotify:0 withTime:NULL withClass:0];
 				break;
 			default:
 				NSLog(@"pcap error: %s",
@@ -170,102 +174,6 @@
 		filter_program = strdup(filter);
 }
 
-- (void)classify:(const u_char *)data captureSize:(size_t)size
-{
-	const struct ip *ip;
-	const struct tcphdr *tcp;
-	struct sockaddr_in src, dst;
-	char shost[NI_MAXHOST], dhost[NI_MAXHOST];
-	char sserv[NI_MAXSERV], dserv[NI_MAXSERV];
-	const u_char *p;
-	int hlen, plen;
-	int create = NO;
-
-	// link layer
-	switch (pcap_datalink(pcap)) {
-		case DLT_NULL:
-			hlen = 4;
-			break;
-		case DLT_EN10MB:
-			hlen = 14; // XXX: LLC support
-			break;
-		case DLT_PPP:
-			hlen = 2;
-			if (data[0] == 0xff && data[1] == 0x03)
-				hlen += 2; // HDLC
-			break;
-		case DLT_RAW:
-			hlen = 0;
-			break;
-		default:
-			return;
-	}
-	size -= hlen;
-	p = data + hlen;
-
-	if (size < sizeof(*ip)) {
-		NSLog(@"No IP Header");
-		return;
-	}
-	ip = (struct ip *)p;
-	hlen = ip->ip_hl << 2;
-	plen = ntohs(ip->ip_len);
-	size -= hlen;
-	p += hlen;
-
-	if (size < sizeof(*tcp)) {
-		NSLog(@"No TCP Header");
-		return;
-	}
-	tcp = (struct tcphdr *)p;
-	hlen = tcp->th_off << 2;
-	if (size < hlen) {
-		NSLog(@"TCP Header Shortage: %zu < %d", size, hlen);
-		return;
-	}
-	size -= hlen;
-	p += hlen;
-	if (tcp->th_flags & TH_SYN) {
-		if (tcp->th_flags & TH_ACK) {
-			NSLog(@"new connection: syn+ack");
-		}
-		else {
-			NSLog(@"new connection: syn");
-		}
-	}
-	else if (tcp->th_flags & TH_FIN) {
-		NSLog(@"close connection: fin");
-	}
-	else if (tcp->th_flags & TH_RST) {
-		NSLog(@"reset connection: rst");
-	}
-	else {
-		return;
-	}
-
-	if (ip->ip_v != 4) {
-		NSLog(@"Unknown IP version %d", ip->ip_v);
-		return;
-	}
-	src.sin_family = AF_INET;
-	src.sin_len = sizeof(src);
-	src.sin_port = ntohs(tcp->th_sport);
-	memcpy(&src.sin_addr, &ip->ip_src, sizeof(src.sin_addr));
-	dst.sin_family = AF_INET;
-	dst.sin_len = sizeof(dst);
-	dst.sin_port = ntohs(tcp->th_dport);
-	memcpy(&dst.sin_addr, &ip->ip_src, sizeof(dst.sin_addr));
-
-	getnameinfo((struct sockaddr *)&src, src.sin_len,
-	    shost, sizeof(shost), sserv, sizeof(sserv),
-	    NI_NUMERICHOST|NI_NUMERICSERV);
-	getnameinfo((struct sockaddr *)&dst, dst.sin_len,
-	    dhost, sizeof(dhost), dserv, sizeof(dserv),
-	    NI_NUMERICHOST|NI_NUMERICSERV);
-	NSLog(@"Flowkey: %s:%s =TCP=> %s:%s",
-	      shost, sserv, dhost, dserv);
-}
-
 - (float)elapsed:(struct timeval *)last
 {
 	struct timeval now, delta;
@@ -320,7 +228,7 @@
 	return TRUE;
 }
 
-- (void)sendNotify:(int)size withTime:(struct timeval *)tv
+- (void)sendNotify:(int)size withTime:(struct timeval *)tv withClass:(int)classID
 {
 	SamplingData *sample;
 	NSTimeInterval unix_time;
