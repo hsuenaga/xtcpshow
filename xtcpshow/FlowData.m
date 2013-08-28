@@ -169,6 +169,26 @@ NSString const * flowStateClosed = @"Closed";
 	return YES;
 }
 
+- (NSUInteger)numberOfClassID
+{
+	return [FlowIDToRec count];
+}
+
+- (NSArray *)arrayOfClassID
+{
+	NSMutableArray *array = [NSMutableArray arrayWithCapacity:[self numberOfClassID]];
+	NSEnumerator *enumID;
+	NSNumber *classID;
+
+	enumID = [FlowIDToRec keyEnumerator];
+
+	while ( (classID = [enumID nextObject])) {
+		[array addObject:classID];
+	}
+
+	return array;
+}
+
 - (NSString *)descriptionForClassID:(int)classID
 {
 	struct flowRecord4 rec4;
@@ -184,7 +204,7 @@ NSString const * flowStateClosed = @"Closed";
 	getnameinfo((struct sockaddr *)&rec4.node2, sizeof(rec4.node2),
 		    dhost, sizeof(dhost), dserv, sizeof(dserv),
 		    NI_NUMERICHOST|NI_NUMERICSERV);
-	return [NSString stringWithFormat:@"%s:%s <=proto %d=> %s:%s",
-		shost, sserv, rec4.proto, dhost, dserv];
+	return [NSString stringWithFormat:@"%s:%s <=> %s:%s",
+		shost, sserv, dhost, dserv];
 }
 @end

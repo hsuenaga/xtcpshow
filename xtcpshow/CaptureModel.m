@@ -11,6 +11,7 @@
 #import "CaptureOperation.h"
 #import "DataQueue.h"
 #import "SamplingData.h"
+#import "FlowData.h"
 
 /*
  * Model object: almost values are updated by operation thread.
@@ -35,6 +36,9 @@
 	// traffic data
 	[self resetCounter];
 
+	// flow info
+	_flow = [[FlowData alloc] init];
+
 	// outlets
 	_controller = nil;
 
@@ -50,6 +54,7 @@
 	[op setModel:self];
 	[op setSource:_device];
 	[op setFilter:_filter];
+	[op setFlow:_flow];
 	[op setQueuePriority:NSOperationQueuePriorityHigh];
 	[capture_cue addOperation:op];
 	running = TRUE;

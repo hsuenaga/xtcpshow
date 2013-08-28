@@ -23,7 +23,6 @@
 @class FlowData;
 
 @interface CaptureOperation : NSOperation {
-	FlowData *Flow;
 	NSString *last_error;
 	DataQueue *max_buffer;
 
@@ -44,6 +43,7 @@
 	int bytes;
 }
 @property (weak) CaptureModel *model;
+@property (strong) FlowData *Flow;
 
 - (CaptureOperation *)init;
 - (void)dealloc;

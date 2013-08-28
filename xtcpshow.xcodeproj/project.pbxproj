@@ -24,6 +24,7 @@
 		4693D01D17C73DA9007B85E2 /* ServiceManagement.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4693D01C17C73DA9007B85E2 /* ServiceManagement.framework */; };
 		4693D02117C73E27007B85E2 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4693D02017C73E26007B85E2 /* Security.framework */; };
 		469604F317CAD5CF00798814 /* FlowData.m in Sources */ = {isa = PBXBuildFile; fileRef = 469604F217CAD5CF00798814 /* FlowData.m */; };
+		469604F617CDA7CB00798814 /* FlowTableDataSource.m in Sources */ = {isa = PBXBuildFile; fileRef = 469604F517CDA7CB00798814 /* FlowTableDataSource.m */; };
 		46D8CD0117BC7D060028F793 /* DataQueueEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = 46D8CD0017BC7D060028F793 /* DataQueueEntry.m */; };
 /* End PBXBuildFile section */
 
@@ -60,6 +61,8 @@
 		4693D02017C73E26007B85E2 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		469604F117CAD5CF00798814 /* FlowData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FlowData.h; sourceTree = "<group>"; };
 		469604F217CAD5CF00798814 /* FlowData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FlowData.m; sourceTree = "<group>"; };
+		469604F417CDA7CB00798814 /* FlowTableDataSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FlowTableDataSource.h; sourceTree = "<group>"; };
+		469604F517CDA7CB00798814 /* FlowTableDataSource.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FlowTableDataSource.m; sourceTree = "<group>"; };
 		46D8CCFF17BC7D060028F793 /* DataQueueEntry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DataQueueEntry.h; sourceTree = "<group>"; };
 		46D8CD0017BC7D060028F793 /* DataQueueEntry.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DataQueueEntry.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -130,6 +133,8 @@
 				46583CB917A0D192007B6572 /* CaptureOperation.m */,
 				469604F117CAD5CF00798814 /* FlowData.h */,
 				469604F217CAD5CF00798814 /* FlowData.m */,
+				469604F417CDA7CB00798814 /* FlowTableDataSource.h */,
+				469604F517CDA7CB00798814 /* FlowTableDataSource.m */,
 				466E550817AB491800C978C9 /* DataResampler.h */,
 				466E550917AB491800C978C9 /* DataResampler.m */,
 				466E550517AB2AA500C978C9 /* DataQueue.h */,
@@ -234,6 +239,7 @@
 				4682948417B4634D008AC9D4 /* SamplingData.m in Sources */,
 				46D8CD0117BC7D060028F793 /* DataQueueEntry.m in Sources */,
 				469604F317CAD5CF00798814 /* FlowData.m in Sources */,
+				469604F617CDA7CB00798814 /* FlowTableDataSource.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -33,7 +33,6 @@
 	self = [super init];
 	source_interface = NULL;
 	filter_program = NULL;
-	Flow = [[FlowData alloc] init];
 
 	return self;
 }
@@ -105,7 +104,7 @@
 				// got packet
 				pkts++;
 				bytes += hdr->len;
-				classID = [Flow clasifyPacket:data size:hdr->caplen linkType:pcap_datalink(pcap)];
+				classID = [_Flow clasifyPacket:data size:hdr->caplen linkType:pcap_datalink(pcap)];
 				[self sendNotify:hdr->len
 					withTime:&hdr->ts
 				       withClass:classID];

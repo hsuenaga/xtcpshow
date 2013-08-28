@@ -17,6 +17,8 @@
 #import "CaptureModel.h"
 #import "GraphView.h"
 #import "DataResampler.h"
+#import "FlowData.h"
+#import "FlowTableDataSource.h"
 
 static NSString *const LBL_START=@"START";
 static NSString *const LBL_STOP=@"STOP";
@@ -48,6 +50,7 @@ static void setup_interface(NSPopUpButton *);
 	[_graphView setMATimeLength:[_smoothBar floatValue]];
 	[_graphView setNeedsDisplay:YES];
 	[_startButton setEnabled:TRUE];
+	[_FlowDataSource setFlowData:[_model flow]];
 
 	// setup intrface labels
 	[self setupInterfaceButton:_deviceSelector];
@@ -264,6 +267,7 @@ static void setup_interface(NSPopUpButton *);
 	 setFloatValue:_model.samplingIntervalMS];
 	[_samplingField
 	 setFloatValue:_model.samplingIntervalLastMS];
+	[_FlowTable reloadData];
 }
 
 - (void)setupInterfaceButton:(NSPopUpButton *)btn

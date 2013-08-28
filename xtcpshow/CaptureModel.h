@@ -6,8 +6,9 @@
 //  Copyright (c) 2013年 SUENAGA Hiroki. All rights reserved.
 //
 #import <Foundation/Foundation.h>
-#import "DataQueue.h"
-#import "AppDelegate.h"
+@class AppDelegate;
+@class DataQueue;
+@class FlowData;
 
 #define DEF_HISTORY 50000 // packets
 
@@ -31,10 +32,10 @@
 @property (atomic, assign) float peek_hold_mbps;
 @property (atomic, assign) float samplingIntervalLast; // [sec]
 @property (atomic, assign) float samplingInterval; // [sec]
+@property (atomic, strong) FlowData *flow;
 
 // data processing (don't acccess from other thread)
 @property (strong) DataQueue *data;
-
 @property (weak) AppDelegate *controller;
 
 - (CaptureModel *)init;

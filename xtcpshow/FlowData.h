@@ -16,5 +16,8 @@
 	int lastClassID;
 }
 - (int)clasifyPacket:(const void *)byte size:(size_t)size linkType:(int)dlt;
+
+- (NSUInteger)numberOfClassID;
+- (NSArray *)arrayOfClassID;
 - (NSString *)descriptionForClassID:(int)classID;
 @end

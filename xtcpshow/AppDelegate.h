@@ -12,6 +12,7 @@
 
 @class CaptureModel;
 @class GraphView;
+@class FlowTableDataSource;
 
 @interface AppDelegate : NSObject <NSApplicationDelegate>
 
@@ -39,6 +40,10 @@
 @property (weak) IBOutlet NSSlider *zoomBar;
 @property (weak) IBOutlet NSSlider *smoothBar;
 @property (weak) IBOutlet GraphView *graphView;
+
+/* Flow Table */
+@property (weak) IBOutlet NSTableView *FlowTable;
+@property (weak) IBOutlet FlowTableDataSource *FlowDataSource;
 
 /* Action from view */
 - (IBAction)startCapture:(id)sender;
