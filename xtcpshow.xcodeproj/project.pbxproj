@@ -26,8 +26,8 @@
 		4696054B17CDFC9200798814 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 469604FC17CDD02300798814 /* Foundation.framework */; };
 		4696054E17CDFC9200798814 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 4696054D17CDFC9200798814 /* main.m */; };
 		4696055817CDFD8000798814 /* com.mac.hiroki.suenaga.OpenBPF in CopyFiles */ = {isa = PBXBuildFile; fileRef = 4696054A17CDFC9100798814 /* com.mac.hiroki.suenaga.OpenBPF */; };
-		46B418AC17CE0FB1001E5669 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 46B418AA17CE0FB1001E5669 /* Info.plist */; };
-		46B418AD17CE0FB1001E5669 /* Launchd.plist in Resources */ = {isa = PBXBuildFile; fileRef = 46B418AB17CE0FB1001E5669 /* Launchd.plist */; };
+		46D1634217CE117C009418DF /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 46D1634017CE117C009418DF /* Info.plist */; };
+		46D1634317CE117C009418DF /* Launchd.plist in Resources */ = {isa = PBXBuildFile; fileRef = 46D1634117CE117C009418DF /* Launchd.plist */; };
 		46D8CD0117BC7D060028F793 /* DataQueueEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = 46D8CD0017BC7D060028F793 /* DataQueueEntry.m */; };
 /* End PBXBuildFile section */
 
@@ -97,8 +97,8 @@
 		4696054A17CDFC9100798814 /* com.mac.hiroki.suenaga.OpenBPF */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = com.mac.hiroki.suenaga.OpenBPF; sourceTree = BUILT_PRODUCTS_DIR; };
 		4696054D17CDFC9200798814 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		4696055017CDFC9200798814 /* OpenBPF-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "OpenBPF-Prefix.pch"; sourceTree = "<group>"; };
-		46B418AA17CE0FB1001E5669 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = ../Info.plist; sourceTree = "<group>"; };
-		46B418AB17CE0FB1001E5669 /* Launchd.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Launchd.plist; path = ../Launchd.plist; sourceTree = "<group>"; };
+		46D1634017CE117C009418DF /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		46D1634117CE117C009418DF /* Launchd.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Launchd.plist; sourceTree = "<group>"; };
 		46D8CCFF17BC7D060028F793 /* DataQueueEntry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DataQueueEntry.h; sourceTree = "<group>"; };
 		46D8CD0017BC7D060028F793 /* DataQueueEntry.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DataQueueEntry.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -209,8 +209,8 @@
 		4696054C17CDFC9200798814 /* OpenBPF */ = {
 			isa = PBXGroup;
 			children = (
-				46B418AA17CE0FB1001E5669 /* Info.plist */,
-				46B418AB17CE0FB1001E5669 /* Launchd.plist */,
+				46D1634017CE117C009418DF /* Info.plist */,
+				46D1634117CE117C009418DF /* Launchd.plist */,
 				4696054D17CDFC9200798814 /* main.m */,
 				4696054F17CDFC9200798814 /* Supporting Files */,
 			);
@@ -300,8 +300,8 @@
 				4639F8351798BA9700E59491 /* Credits.rtf in Resources */,
 				4639F83B1798BA9700E59491 /* MainMenu.xib in Resources */,
 				46219ABB17B1C6EC00740A80 /* xtcpshow.iconset in Resources */,
-				46B418AC17CE0FB1001E5669 /* Info.plist in Resources */,
-				46B418AD17CE0FB1001E5669 /* Launchd.plist in Resources */,
+				46D1634217CE117C009418DF /* Info.plist in Resources */,
+				46D1634317CE117C009418DF /* Launchd.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
