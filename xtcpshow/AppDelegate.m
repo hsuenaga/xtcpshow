@@ -18,7 +18,6 @@
 #import "GraphView.h"
 #import "DataResampler.h"
 
-static NSString *const BPFIX_NAME=@"Internet-Initiative-Japan-Inc.BPFix";
 static NSString *const LBL_START=@"START";
 static NSString *const LBL_STOP=@"STOP";
 static NSString *const LBL_OK=@"OK";
