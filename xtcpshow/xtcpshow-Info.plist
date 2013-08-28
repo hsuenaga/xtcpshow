@@ -9,7 +9,7 @@
 	<key>CFBundleIconFile</key>
 	<string>xtcpshow</string>
 	<key>CFBundleIdentifier</key>
-	<string>Internet-Initiative-Japan-Inc.${PRODUCT_NAME:rfc1034identifier}</string>
+	<string>com.mac.hiroki.suenaga.xtcpshow</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -32,5 +32,10 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>SMPrivilegedExecutables</key>
+	<dict>
+		<key>com.mac.hiroki.suenaga.OpenBPF</key>
+		<string>identifier "com.mac.hiroki.suenaga.OpenBPF" and anchor apple generic and certificate leaf[subject.CN] = "Mac Developer: Hiroki SUENAGA (478DWQ4RTP)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
+	</dict>
 </dict>
 </plist>

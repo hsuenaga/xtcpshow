@@ -13,7 +13,10 @@
 @class CaptureModel;
 @class GraphView;
 
-@interface AppDelegate : NSObject <NSApplicationDelegate>
+@interface AppDelegate : NSObject <NSApplicationDelegate> {
+	/* Authorization */
+	AuthorizationRef _authRef;
+}
 
 /* Main window */
 @property (assign) IBOutlet NSWindow *window;
@@ -67,4 +70,5 @@
 
 /* initialize environment */
 - (void) setupInterfaceButton:(NSPopUpButton *)btn;
+- (BOOL)blessHelperWithLabel:(NSString *)label error:(NSError **)errorPtr;
 @end

@@ -4,6 +4,21 @@
 <dict>
 	<key>SchemeUserState</key>
 	<dict>
+		<key>BPFix.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>1</integer>
+		</dict>
+		<key>OpenBPF 2.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>3</integer>
+		</dict>
+		<key>OpenBPF.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>2</integer>
+		</dict>
 		<key>xtcpshow.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
@@ -13,6 +28,31 @@
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
 		<key>4639F8201798BA9700E59491</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>469604FA17CDD02300798814</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>4696051617CDDEEC00798814</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>4696052317CDDF4300798814</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>4696053417CDE07200798814</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>4696054917CDFC9100798814</key>
 		<dict>
 			<key>primary</key>
 			<true/>
