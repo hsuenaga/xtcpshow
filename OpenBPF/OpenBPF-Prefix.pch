@@ -1,0 +1,7 @@
+//
+// Prefix header for all source files of the 'OpenBPF' target in the 'OpenBPF' project
+//
+
+#ifdef __OBJC__
+	#import <Foundation/Foundation.h>
+#endif
