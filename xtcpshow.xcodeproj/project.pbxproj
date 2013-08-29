@@ -26,6 +26,7 @@
 		4696054B17CDFC9200798814 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 469604FC17CDD02300798814 /* Foundation.framework */; };
 		4696054E17CDFC9200798814 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 4696054D17CDFC9200798814 /* main.m */; };
 		4696055817CDFD8000798814 /* com.mac.hiroki.suenaga.OpenBPF in CopyFiles */ = {isa = PBXBuildFile; fileRef = 4696054A17CDFC9100798814 /* com.mac.hiroki.suenaga.OpenBPF */; };
+		46A10AD117CEF4A50011A9E8 /* BPFControl.m in Sources */ = {isa = PBXBuildFile; fileRef = 46A10AD017CEF4A50011A9E8 /* BPFControl.m */; };
 		46D1634217CE117C009418DF /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 46D1634017CE117C009418DF /* Info.plist */; };
 		46D1634317CE117C009418DF /* Launchd.plist in Resources */ = {isa = PBXBuildFile; fileRef = 46D1634117CE117C009418DF /* Launchd.plist */; };
 		46D8CD0117BC7D060028F793 /* DataQueueEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = 46D8CD0017BC7D060028F793 /* DataQueueEntry.m */; };
@@ -97,6 +98,9 @@
 		4696054A17CDFC9100798814 /* com.mac.hiroki.suenaga.OpenBPF */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = com.mac.hiroki.suenaga.OpenBPF; sourceTree = BUILT_PRODUCTS_DIR; };
 		4696054D17CDFC9200798814 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		4696055017CDFC9200798814 /* OpenBPF-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "OpenBPF-Prefix.pch"; sourceTree = "<group>"; };
+		46A10ACF17CEF4A50011A9E8 /* BPFControl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BPFControl.h; sourceTree = "<group>"; };
+		46A10AD017CEF4A50011A9E8 /* BPFControl.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BPFControl.m; sourceTree = "<group>"; };
+		46A10AD217CEF8DA0011A9E8 /* OpenBPFXPC.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OpenBPFXPC.h; sourceTree = "<group>"; };
 		46D1634017CE117C009418DF /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		46D1634117CE117C009418DF /* Launchd.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Launchd.plist; sourceTree = "<group>"; };
 		46D8CCFF17BC7D060028F793 /* DataQueueEntry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DataQueueEntry.h; sourceTree = "<group>"; };
@@ -174,8 +178,11 @@
 			children = (
 				4639F8361798BA9700E59491 /* AppDelegate.h */,
 				4639F8371798BA9700E59491 /* AppDelegate.m */,
+				46A10ACF17CEF4A50011A9E8 /* BPFControl.h */,
+				46A10AD017CEF4A50011A9E8 /* BPFControl.m */,
 				4639F8411799095A00E59491 /* CaptureModel.h */,
 				46583CB817A0D187007B6572 /* CaptureOperation.h */,
+				46583CB917A0D192007B6572 /* CaptureOperation.m */,
 				4639F8421799095A00E59491 /* CaptureModel.m */,
 				466E550817AB491800C978C9 /* DataResampler.h */,
 				466E550917AB491800C978C9 /* DataResampler.m */,
@@ -185,7 +192,6 @@
 				4682948317B4634D008AC9D4 /* SamplingData.m */,
 				46D8CCFF17BC7D060028F793 /* DataQueueEntry.h */,
 				46D8CD0017BC7D060028F793 /* DataQueueEntry.m */,
-				46583CB917A0D192007B6572 /* CaptureOperation.m */,
 				46583CB717A0CA4D007B6572 /* GraphView.h */,
 				46583CB517A0CA41007B6572 /* GraphView.m */,
 				4639F8391798BA9700E59491 /* MainMenu.xib */,
@@ -212,6 +218,7 @@
 				46D1634017CE117C009418DF /* Info.plist */,
 				46D1634117CE117C009418DF /* Launchd.plist */,
 				4696054D17CDFC9200798814 /* main.m */,
+				46A10AD217CEF8DA0011A9E8 /* OpenBPFXPC.h */,
 				4696054F17CDFC9200798814 /* Supporting Files */,
 			);
 			path = OpenBPF;
@@ -321,6 +328,7 @@
 				466E550A17AB491800C978C9 /* DataResampler.m in Sources */,
 				4682948417B4634D008AC9D4 /* SamplingData.m in Sources */,
 				46D8CD0117BC7D060028F793 /* DataQueueEntry.m in Sources */,
+				46A10AD117CEF4A50011A9E8 /* BPFControl.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -383,7 +391,7 @@
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "Developer ID Application: Hiroki SUENAGA (BSVYLYB6S2)";
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				COPY_PHASE_STRIP = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -419,7 +427,7 @@
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "Developer ID Application: Hiroki SUENAGA (BSVYLYB6S2)";
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
@@ -482,6 +490,7 @@
 				);
 				PRODUCT_NAME = com.mac.hiroki.suenaga.OpenBPF;
 				PROVISIONING_PROFILE = "";
+				SKIP_INSTALL = YES;
 			};
 			name = Debug;
 		};
@@ -504,6 +513,7 @@
 				);
 				PRODUCT_NAME = com.mac.hiroki.suenaga.OpenBPF;
 				PROVISIONING_PROFILE = "";
+				SKIP_INSTALL = YES;
 			};
 			name = Release;
 		};

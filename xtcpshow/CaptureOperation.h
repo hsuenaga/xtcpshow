@@ -20,10 +20,13 @@
 
 @class CaptureModel;
 @class DataQueue;
+@class BPFControl;
 
 @interface CaptureOperation : NSOperation {
 	NSString *last_error;
 	DataQueue *max_buffer;
+
+	BPFControl *bpfControl;
 
 	char errbuf[PCAP_ERRBUF_SIZE];
 	char *source_interface;

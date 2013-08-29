@@ -12,11 +12,9 @@
 
 @class CaptureModel;
 @class GraphView;
+@class BPFControl;
 
-@interface AppDelegate : NSObject <NSApplicationDelegate> {
-	/* Authorization */
-	AuthorizationRef _authRef;
-}
+@interface AppDelegate : NSObject <NSApplicationDelegate>
 
 /* Main window */
 @property (assign) IBOutlet NSWindow *window;
@@ -70,5 +68,4 @@
 
 /* initialize environment */
 - (void) setupInterfaceButton:(NSPopUpButton *)btn;
-- (BOOL)blessHelperWithLabel:(NSString *)label error:(NSError **)errorPtr;
 @end

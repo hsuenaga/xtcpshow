@@ -17,6 +17,7 @@
 #import "CaptureModel.h"
 #import "GraphView.h"
 #import "DataResampler.h"
+#import "BPFControl.h"
 
 static NSString *const LBL_START=@"START";
 static NSString *const LBL_STOP=@"STOP";
@@ -26,31 +27,12 @@ static NSString *const LBL_CAP_ERROR=@"CAPTURE ERROR";
 static NSString *const DEF_DEVICE=@"en0";
 static NSString *const PREFER_DEVICE=@"en";
 
-static NSString *const HELPER=@"com.mac.hiroki.suenaga.OpenBPF";
-
 static void setup_interface(NSPopUpButton *);
 
 @implementation AppDelegate
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
-	NSError *error;
-	OSStatus status;
-
-	// Setup Helper
-	status = AuthorizationCreate(NULL, kAuthorizationEmptyEnvironment, kAuthorizationFlagDefaults, &self->_authRef);
-	if (status != errAuthorizationSuccess) {
-		/* AuthorizationCreate really shouldn't fail. */
-		assert(NO);
-		self->_authRef = NULL;
-		NSLog(@"AuthorizationCreate failed.");
-	}
-
-	if (![self blessHelperWithLabel:(NSString *)HELPER
-				  error:(NSError **)&error]) {
-		NSLog(@"JobBless failed:%@", [error description]);
-	}
-	
 	// Setup Model object
 	[self setModel:[[CaptureModel alloc] init]];
 	[_model setController:self]; // weak
@@ -332,45 +314,5 @@ static void setup_interface(NSPopUpButton *);
 	}
 
 	freeifaddrs(ifap0);
-}
-
-- (BOOL)blessHelperWithLabel:(NSString *)label error:(NSError **)errorPtr
-{
-	BOOL result = NO;
-	NSError * error = nil;
-
-	AuthorizationItem authItem		= { kSMRightBlessPrivilegedHelper, 0, NULL, 0 };
-	AuthorizationRights authRights	= { 1, &authItem };
-	AuthorizationFlags flags		=	kAuthorizationFlagDefaults				|
-	kAuthorizationFlagInteractionAllowed	|
-	kAuthorizationFlagPreAuthorize			|
-	kAuthorizationFlagExtendRights;
-
-	NSLog(@"open helper");
-
-	/* Obtain the right to install our privileged helper tool (kSMRightBlessPrivilegedHelper). */
-	OSStatus status = AuthorizationCopyRights(self->_authRef, &authRights, kAuthorizationEmptyEnvironment, flags, NULL);
-	if (status != errAuthorizationSuccess) {
-		error = [NSError errorWithDomain:NSOSStatusErrorDomain code:status userInfo:nil];
-	} else {
-		CFErrorRef  cfError;
-
-		/* This does all the work of verifying the helper tool against the application
-		 * and vice-versa. Once verification has passed, the embedded launchd.plist
-		 * is extracted and placed in /Library/LaunchDaemons and then loaded. The
-		 * executable is placed in /Library/PrivilegedHelperTools.
-		 */
-		result = (BOOL) SMJobBless(kSMDomainSystemLaunchd, (CFStringRef)CFBridgingRetain(label), self->_authRef, &cfError);
-		if (!result) {
-			NSLog(@"SMJobBless failed.");
-			error = CFBridgingRelease(cfError);
-		}
-	}
-	if ( ! result && (errorPtr != NULL) ) {
-		assert(error != nil);
-		*errorPtr = error;
-	}
-
-	return result;
 }
 @end

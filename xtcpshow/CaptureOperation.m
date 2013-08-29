@@ -15,6 +15,7 @@
 #import "DataQueue.h"
 #import "DataQueueEntry.h"
 #import "SamplingData.h"
+#import "BPFControl.h"
 
 /*
  * Capture thread
@@ -23,6 +24,8 @@
 - (CaptureOperation *)init
 {
 	self = [super init];
+
+	bpfControl = [[BPFControl alloc] init];
 	source_interface = NULL;
 	filter_program = NULL;
 
@@ -47,6 +50,7 @@
 	[_model setSamplingInterval:TIMESLOT];
 
 	// initialize libpcap
+	[bpfControl insecure];
 	if (![self allocPcap]) {
 		NSString *message;
 		NSLog(@"cannot initialize libpcap");
@@ -78,56 +82,59 @@
 
 	terminate = FALSE;
 	while (!terminate) {
-		struct pcap_pkthdr *hdr;
-		const u_char *data;
-		float mbps;
-		int code;
+		@autoreleasepool {
+			struct pcap_pkthdr *hdr;
+			const u_char *data;
+			float mbps;
+			int code;
 
-		if ([self isCancelled] == YES)
-			break;
 
-		if (_model == nil)
-			break;
+			if ([self isCancelled] == YES)
+				break;
 
-		code = pcap_next_ex(pcap, &hdr, &data);
-		switch (code) {
-			case 1:
-				// got packet
-				pkts++;
-				bytes += hdr->len;
-				[self sendNotify:hdr->len
-					withTime:&hdr->ts];
+			if (_model == nil)
 				break;
-			case 0:
-				// timeout
-				[self sendNotify:0 withTime:NULL];
-				break;
-			default:
-				NSLog(@"pcap error: %s",
-				      pcap_geterr(pcap));
-				terminate = TRUE;
-				break;
+
+			code = pcap_next_ex(pcap, &hdr, &data);
+			switch (code) {
+				case 1:
+					// got packet
+					pkts++;
+					bytes += hdr->len;
+					[self sendNotify:hdr->len
+						withTime:&hdr->ts];
+					break;
+				case 0:
+					// timeout
+					[self sendNotify:0 withTime:NULL];
+					break;
+				default:
+					NSLog(@"pcap error: %s",
+					      pcap_geterr(pcap));
+					terminate = TRUE;
+					break;
+			}
+
+			// timer update
+			if ([self tick_expired] == FALSE)
+				continue;
+
+			// update max
+			mbps = (float)(bytes * 8) / last_interval; // [bps]
+			mbps = mbps / (1000.0f * 1000.0f); // [mbps]
+			if (max_mbps < mbps)
+				max_mbps = mbps;
+			[max_buffer shiftDataWithNewData:[SamplingData dataWithSingleFloat:mbps]];
+			peak_mbps = [max_buffer maxFloatValue];
+
+			// update model
+			[_model setTotal_pkts:pkts];
+			[_model setMbps:mbps];
+			[_model setPeek_hold_mbps:peak_mbps];
+			[_model setMax_mbps:max_mbps];
+			[_model setSamplingIntervalLast:last_interval];
+			bytes = 0;
 		}
-
-		// timer update
-		if ([self tick_expired] == FALSE)
-			continue;
-
-		// update max
-		mbps = (float)(bytes * 8) / last_interval; // [bps]
-		mbps = mbps / (1000.0f * 1000.0f); // [mbps]
-		if (max_mbps < mbps)
-			max_mbps = mbps;
-		[max_buffer shiftDataWithNewData:[SamplingData dataWithSingleFloat:mbps]];
-		peak_mbps = [max_buffer maxFloatValue];
-
-		// update model
-		[_model setTotal_pkts:pkts];
-		[_model setMbps:mbps];
-		[_model setPeek_hold_mbps:peak_mbps];
-		[_model setMax_mbps:max_mbps];
-		[_model setSamplingIntervalLast:last_interval];
-		bytes = 0;
 	}
 
 	// finalize
