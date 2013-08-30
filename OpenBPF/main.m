@@ -22,7 +22,7 @@ static const char *const BPF_DEV="/dev/bpf*";
 @end
 
 @implementation OpenBPFService
-- (void)groupReadable:(BOOL)readable reply:(void (^)(BOOL, NSString *))block
+- (void)groupReadable:(int)uid reply:(void (^)(BOOL, NSString *))block
 {
 	glob_t gl;
 
@@ -35,7 +35,7 @@ static const char *const BPF_DEV="/dev/bpf*";
 		return;
 	}
 
-	syslog(LOG_NOTICE, "change permissions");
+	syslog(LOG_NOTICE, "change permissions: uid%d, gid:%d", getuid(), getgid());
 	for (int i = 0; i < gl.gl_pathc; i++) {
 		struct stat st;
 		const char *path = gl.gl_pathv[i];
@@ -49,13 +49,12 @@ static const char *const BPF_DEV="/dev/bpf*";
 			continue;
 		if ((st.st_mode & S_IFCHR) == 0)
 			continue;
-		if (readable)
-			chmod(path, st.st_mode | S_IROTH);
-		else
-			chmod(path, st.st_mode & ~S_IROTH);
+
+		chown(path, uid, st.st_gid);
+		chmod(path, st.st_mode | (S_IRUSR | S_IWUSR));
 		syslog(LOG_NOTICE, "mode changed: %s", path);
 	}
-	syslog(LOG_NOTICE, "secure the permission");
+	syslog(LOG_NOTICE, "/dev/bpf owned by UID:%d", uid);
 	block(YES, @"success");
 
 	return;

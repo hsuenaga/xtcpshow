@@ -16,8 +16,9 @@
 NSString *const BPFControlServiceID=@"com.mac.hiroki.suenaga.OpenBPF";
 
 static const NSTimeInterval XPC_TIMEOUT = 60;
-static BOOL xpcRunning;
-static BOOL xpcResult;
+static BOOL xpcInvalid = NO;
+static BOOL xpcRunning = NO;
+static BOOL xpcResult = NO;
 
 @implementation BPFControl
 - (id)init
@@ -55,8 +56,12 @@ static BOOL xpcResult;
 static void waitReply(void)
 {
 	// XXX: use NSLock and condition variable
-	while (xpcRunning)
-		;
+	while (xpcInvalid == NO && xpcRunning == YES) {
+		[[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.5]];
+//		sleep(1);
+		NSLog(@"wait: invalid=>%d running=>%d",
+		      xpcInvalid, xpcRunning);
+	}
 	NSLog(@"xpc reponse found: %d", xpcResult);
 }
 
@@ -66,6 +71,8 @@ static void waitReply(void)
 		return NO;
 
 	xpcResult = NO;
+	xpcInvalid = NO;
+	xpcRunning = NO;
 
 	xpc.remoteObjectInterface = [NSXPCInterface interfaceWithProtocol:@protocol(OpenBPFXPC)];
 	xpc.exportedInterface = nil;
@@ -73,13 +80,16 @@ static void waitReply(void)
 	xpc.interruptionHandler = ^(void) {
 		NSLog(@"connection interrupted.");
 		xpcRunning = NO;
+		xpcInvalid = YES;
 	};
 	xpc.invalidationHandler = ^(void) {
 		NSLog(@"connection invalidated.");
 		xpcRunning = NO;
+		xpcInvalid = YES;
 	};
 	proxy = [xpc remoteObjectProxyWithErrorHandler:^(NSError *e) {
 		NSLog(@"proxy error:%@", [e description]);
+		xpcRunning = NO;
 	}];
 	if (proxy == nil) {
 		NSLog(@"cannot get proxy");
@@ -103,6 +113,8 @@ static void waitReply(void)
 - (BOOL)checkXPC
 {
 	xpc = [[NSXPCConnection alloc] initWithMachServiceName:BPFControlServiceID options:NSXPCConnectionPrivileged];
+	if (!xpc)
+		return NO;
 	if (![self openXPC]) {
 		NSLog(@"No valid helper found. install.");
 		if (![self installHelper]) {
@@ -136,7 +148,7 @@ static void waitReply(void)
 		return;
 	}
 	xpcRunning = YES;
-	[proxy groupReadable:NO reply:^(BOOL reply, NSString *m){
+	[proxy groupReadable:0 reply:^(BOOL reply, NSString *m){
 		xpcResult = reply;
 		NSLog(@"secure BPF => %d (%@)", xpcResult, m);
 		xpcRunning = NO;
@@ -149,13 +161,13 @@ static void waitReply(void)
 
 - (void)insecure
 {
+	xpcRunning = YES;
 	NSLog(@"Insecure the BPF device");
 	if (![self checkXPC]) {
 		NSLog(@"cannot open XPC");
 		return;
 	}
-	xpcRunning = YES;
-	[proxy groupReadable:YES reply:^(BOOL reply, NSString *m) {
+	[proxy groupReadable:getuid() reply:^(BOOL reply, NSString *m) {
 		xpcResult = reply;
 		NSLog(@"insecure BPF => %d (%@)", xpcResult, m);
 		xpcRunning = NO;
