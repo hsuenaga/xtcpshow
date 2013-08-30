@@ -15,6 +15,10 @@
 
 NSString *const BPFControlServiceID=@"com.mac.hiroki.suenaga.OpenBPF";
 
+static const NSTimeInterval XPC_TIMEOUT = 60;
+static BOOL xpcRunning;
+static BOOL xpcResult;
+
 @implementation BPFControl
 - (id)init
 {
@@ -36,44 +40,79 @@ NSString *const BPFControlServiceID=@"com.mac.hiroki.suenaga.OpenBPF";
 {
 	NSError *error;
 
+	[xpc invalidate];
+
 	if (![self blessHelperWithLabel:(NSString *)BPFControlServiceID
 				  error:(NSError **)&error]) {
 		NSLog(@"JobBless failed:%@", [error description]);
 		return NO;
 	}
+	xpc = [[NSXPCConnection alloc] initWithMachServiceName:BPFControlServiceID options:NSXPCConnectionPrivileged];
+
 	return YES;
+}
+
+static void waitReply(void)
+{
+	// XXX: use NSLock and condition variable
+	while (xpcRunning)
+		;
+	NSLog(@"xpc reponse found: %d", xpcResult);
 }
 
 - (BOOL)openXPC
 {
-	[self installHelper];
-	xpc = [[NSXPCConnection alloc] initWithMachServiceName:BPFControlServiceID options:NSXPCConnectionPrivileged];
-	if (!xpc) {
-		[self installHelper];
-		xpc = [[NSXPCConnection alloc] initWithMachServiceName:BPFControlServiceID options:NSXPCConnectionPrivileged];
-	}
-	if (!xpc) {
-		NSLog(@"Cannot open XPC conncetion: %@",
-		      BPFControlServiceID);
+	if (!xpc)
 		return NO;
-	}
+
+	xpcResult = NO;
+
 	xpc.remoteObjectInterface = [NSXPCInterface interfaceWithProtocol:@protocol(OpenBPFXPC)];
-	xpc.exportedInterface = [NSXPCInterface interfaceWithProtocol:@protocol(NotifyOpenBPFXPC)];
-	xpc.exportedObject = self;
+	xpc.exportedInterface = nil;
+	xpc.exportedObject = nil;
 	xpc.interruptionHandler = ^(void) {
 		NSLog(@"connection interrupted.");
+		xpcRunning = NO;
 	};
 	xpc.invalidationHandler = ^(void) {
 		NSLog(@"connection invalidated.");
+		xpcRunning = NO;
 	};
-
-	[xpc resume];
 	proxy = [xpc remoteObjectProxyWithErrorHandler:^(NSError *e) {
 		NSLog(@"proxy error:%@", [e description]);
 	}];
 	if (proxy == nil) {
 		NSLog(@"cannot get proxy");
+		[xpc invalidate];
+		xpc = nil;
 		return NO;
+	}
+
+	[xpc resume];
+	xpcRunning = YES;
+	[proxy alive:^(BOOL reply, NSString *m) {
+		NSLog(@"Helper livness: %d (%@)", reply, m);
+		xpcResult = reply;
+		xpcRunning = NO;
+	}];
+	waitReply();
+
+	return xpcResult;
+}
+
+- (BOOL)checkXPC
+{
+	xpc = [[NSXPCConnection alloc] initWithMachServiceName:BPFControlServiceID options:NSXPCConnectionPrivileged];
+	if (![self openXPC]) {
+		NSLog(@"No valid helper found. install.");
+		if (![self installHelper]) {
+			NSLog(@"Helper installation failed.");
+			return NO;
+		}
+		if (![self openXPC]) {
+			NSLog(@"Installed helper is not running.");
+			return NO;
+		}
 	}
 
 	return YES;
@@ -85,37 +124,46 @@ NSString *const BPFControlServiceID=@"com.mac.hiroki.suenaga.OpenBPF";
 		return;
 
 	[xpc invalidate];
+	xpc = nil;
+	xpcRunning = NO;
 }
 
 - (void)secure
 {
-	if (![self openXPC])
+	NSLog(@"Secure the BPF device");
+	if (![self checkXPC]) {
+		NSLog(@"cannot open XPC");
 		return;
-	[proxy secure];
+	}
+	xpcRunning = YES;
+	[proxy groupReadable:NO reply:^(BOOL reply, NSString *m){
+		xpcResult = reply;
+		NSLog(@"secure BPF => %d (%@)", xpcResult, m);
+		xpcRunning = NO;
+	}];
+	waitReply();
+	NSLog(@"messaging done");
 
 	[self closeXPC];
-	return;
 }
 
 - (void)insecure
 {
 	NSLog(@"Insecure the BPF device");
-	if (![self openXPC]) {
+	if (![self checkXPC]) {
 		NSLog(@"cannot open XPC");
 		return;
 	}
-	[proxy insecure];
+	xpcRunning = YES;
+	[proxy groupReadable:YES reply:^(BOOL reply, NSString *m) {
+		xpcResult = reply;
+		NSLog(@"insecure BPF => %d (%@)", xpcResult, m);
+		xpcRunning = NO;
+	}];
+	waitReply();
 	NSLog(@"messaging done");
-//	[self closeXPC];
-	return;
-}
 
-- (void)XPCresult:(BOOL)result
-{
-	if (result == YES)
-		NSLog(@"XPC success");
-	else
-		NSLog(@"XPC failure");
+	[self closeXPC];
 }
 
 - (BOOL)blessHelperWithLabel:(NSString *)label error:(NSError **)errorPtr

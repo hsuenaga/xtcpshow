@@ -11,7 +11,7 @@
 
 extern NSString *const BPFControlServiceID;
 
-@interface BPFControl : NSObject <NotifyOpenBPFXPC> {
+@interface BPFControl : NSObject {
 	@protected
 	AuthorizationRef _authRef;
 	NSXPCConnection *xpc;

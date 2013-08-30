@@ -10,12 +10,8 @@
 #define xtcpshow_OpenBPFXPC_h
 
 @protocol OpenBPFXPC
-- (void)secure;
-- (void)insecure;
-@end
-
-@protocol NotifyOpenBPFXPC
-- (void)XPCresult:(BOOL)result;
+- (void)groupReadable:(BOOL)readable reply:(void(^)(BOOL, NSString *))block;
+- (void)alive:(void(^)(BOOL, NSString *))block;
 @end
 
 #endif

@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
 	<key>OnDemand</key>
-	<false/>
+	<true/>
 	<key>LaunchOnlyOnce</key>
-	<true/>
+	<false/>
 	<key>RunAtLoad</key>
-	<true/>
+	<false/>
 	<key>MachServices</key>
 	<dict>
 		<key>com.mac.hiroki.suenaga.OpenBPF</key>

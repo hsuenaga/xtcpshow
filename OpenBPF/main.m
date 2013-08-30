@@ -5,27 +5,65 @@
 //  Created by SUENAGA Hiroki on 2013/08/28.
 //  Copyright (c) 2013年 SUENAGA Hiroki. All rights reserved.
 //
+#include <sys/types.h>
+#include <sys/stat.h>
+
+#include <glob.h>
 #include <syslog.h>
 
 #import <Foundation/Foundation.h>
 #import "OpenBPFXPC.h"
+
+static NSString *const MachServiceName = @"com.mac.hiroki.suenaga.OpenBPF";
+static const char *const BPF_DEV="/dev/bpf*";
 
 @interface OpenBPFService : NSObject <OpenBPFXPC>
 @property (strong) NSXPCConnection *xpcConnection;
 @end
 
 @implementation OpenBPFService
-- (void)secure
+- (void)groupReadable:(BOOL)readable reply:(void (^)(BOOL, NSString *))block
 {
-	syslog(LOG_INFO, "secure the permission");
-	[[_xpcConnection remoteObjectProxy] XPCresult:YES];
+	glob_t gl;
+
+	syslog(LOG_NOTICE, "groupReadble:reply:");
+	
+	memset(&gl, 0, sizeof(gl));
+	glob(BPF_DEV, GLOB_NOCHECK, NULL, &gl);
+	if (gl.gl_matchc <= 0) {
+		block(NO, @"No bpf device found.");
+		return;
+	}
+
+	syslog(LOG_NOTICE, "change permissions");
+	for (int i = 0; i < gl.gl_pathc; i++) {
+		struct stat st;
+		const char *path = gl.gl_pathv[i];
+
+		if (path == NULL)
+			break;
+
+		syslog(LOG_NOTICE, "device: %s", path);
+		memset(&st, 0, sizeof(st));
+		if (stat(path, &st) < 0)
+			continue;
+		if ((st.st_mode & S_IFCHR) == 0)
+			continue;
+		if (readable)
+			chmod(path, st.st_mode | S_IROTH);
+		else
+			chmod(path, st.st_mode & ~S_IROTH);
+		syslog(LOG_NOTICE, "mode changed: %s", path);
+	}
+	syslog(LOG_NOTICE, "secure the permission");
+	block(YES, @"success");
+
 	return;
 }
-
-- (void)insecure
+- (void)alive:(void (^)(BOOL, NSString *))block
 {
-	syslog(LOG_INFO, "insecure the permission");
-	[[_xpcConnection remoteObjectProxy] XPCresult:YES];
+	syslog(LOG_NOTICE, "liveness check");
+	block(YES, @"I'm alive");
 	return;
 }
 @end
@@ -39,10 +77,10 @@ shouldAcceptNewConnection:(NSXPCConnection *)newConnection
 {
 	OpenBPFService *serviceObj = [[OpenBPFService alloc] init];
 
-	syslog(LOG_INFO, "connection requested");
+	syslog(LOG_NOTICE, "connection requested");
 	newConnection.exportedInterface = [NSXPCInterface interfaceWithProtocol:@protocol(OpenBPFXPC)];
 	newConnection.exportedObject = serviceObj;
-	newConnection.remoteObjectInterface = [NSXPCInterface interfaceWithProtocol:@protocol(NotifyOpenBPFXPC)];
+	newConnection.remoteObjectInterface = nil;
 	serviceObj.xpcConnection = newConnection;
 
 	[newConnection resume];
@@ -53,22 +91,21 @@ shouldAcceptNewConnection:(NSXPCConnection *)newConnection
 int main(int argc, const char * argv[])
 {
 	NSXPCListener *xpc;
+	OpenBPFDelete *handler = [[OpenBPFDelete alloc] init];
 
-	openlog("OpenBPF", LOG_NDELAY, LOG_DAEMON);
-	syslog(LOG_INFO, "launched");
-
-	@autoreleasepool {
-		OpenBPFDelete *handler;
-		
-		xpc = [NSXPCListener serviceListener];
-		if (xpc == nil) {
-			syslog(LOG_ERR, "cannot setup XPC");
-			return 0;
-		}
-		[xpc setDelegate:handler];
+	syslog(LOG_NOTICE, "OpenBPF launchd.");
+	xpc = [[NSXPCListener alloc] initWithMachServiceName:MachServiceName];
+	if (xpc == nil) {
+		syslog(LOG_NOTICE, "cannot setup XPC");
+		return 0;
 	}
-
+	
+	syslog(LOG_NOTICE, "resuming XPC");
+	[xpc setDelegate:handler];
 	[xpc resume];
+	[[NSRunLoop currentRunLoop] run];
+	syslog(LOG_NOTICE, "end XPC");
+
 	// not reached
 	return 0;
 }

@@ -40,6 +40,9 @@
 		free(filter_program);
 	source_interface = NULL;
 	filter_program = NULL;
+	[bpfControl secure];
+	bpfControl = nil;
+
 }
 
 - (void) main
@@ -67,6 +70,7 @@
 		[self sendError:@"Syntax erorr in filter statement"];
 		return;
 	}
+	[bpfControl secure];
 
 	// reset timer
 	gettimeofday(&tv_next_tick, NULL);
