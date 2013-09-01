@@ -454,7 +454,7 @@
 		4639F83F1798BA9700E59491 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_IDENTITY = "Developer ID Application: Hiroki SUENAGA (BSVYLYB6S2)";
 				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "xtcpshow/xtcpshow-Prefix.pch";
@@ -470,7 +470,7 @@
 		4639F8401798BA9700E59491 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_IDENTITY = "Developer ID Application: Hiroki SUENAGA (BSVYLYB6S2)";
 				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "xtcpshow/xtcpshow-Prefix.pch";
@@ -486,7 +486,7 @@
 		4696055417CDFC9200798814 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_IDENTITY = "Developer ID Application: Hiroki SUENAGA (BSVYLYB6S2)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "OpenBPF/OpenBPF-Prefix.pch";
 				INFOPLIST_FILE = OpenBPF/Info.plist;
@@ -509,7 +509,7 @@
 		4696055517CDFC9200798814 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_IDENTITY = "Developer ID Application: Hiroki SUENAGA (BSVYLYB6S2)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "OpenBPF/OpenBPF-Prefix.pch";
 				INFOPLIST_FILE = OpenBPF/Info.plist;
