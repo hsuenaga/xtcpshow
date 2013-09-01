@@ -115,6 +115,8 @@ static void waitReply(void)
 		xpcRunning = NO;
 	}];
 	waitReply();
+	if (!xpc || xpcInvalid)
+		return NO;
 	[xpc suspend];
 	
 	if (!xpcResult) {
@@ -167,7 +169,8 @@ static void waitReply(void)
 		xpcRunning = NO;
 	}];
 	waitReply();
-	[xpc suspend];
+	if (xpc)
+		[xpc suspend];
 	NSLog(@"messaging done");
 
 	return xpcResult;
@@ -188,7 +191,8 @@ static void waitReply(void)
 		xpcRunning = NO;
 	}];
 	waitReply();
-	[xpc suspend];
+	if (xpc)
+		[xpc suspend];
 	NSLog(@"messaging done");
 
 	return xpcResult;

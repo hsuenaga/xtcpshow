@@ -24,7 +24,7 @@ shouldAcceptNewConnection:(NSXPCConnection *)newConnection
 {
 	BPFService *serviceObj = [[BPFService alloc] init];
 
-	syslog(LOG_NOTICE, "connection requested");
+	syslog(LOG_NOTICE, "connection requested: %d", [newConnection processIdentifier]);
 	newConnection.exportedInterface = [NSXPCInterface interfaceWithProtocol:@protocol(OpenBPFXPC)];
 	newConnection.exportedObject = serviceObj;
 	newConnection.remoteObjectInterface = nil;
