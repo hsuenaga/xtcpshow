@@ -109,6 +109,7 @@
 		46D8CD0017BC7D060028F793 /* DataQueueEntry.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DataQueueEntry.m; sourceTree = "<group>"; };
 		46DE97A717D2D15B009E0A16 /* BPFService.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BPFService.h; sourceTree = "<group>"; };
 		46DE97A817D2D15B009E0A16 /* BPFService.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BPFService.m; sourceTree = "<group>"; };
+		46DE97AB17D3035E009E0A16 /* xtcpshow-uninstall.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "xtcpshow-uninstall.sh"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -138,6 +139,7 @@
 			isa = PBXGroup;
 			children = (
 				46219ABA17B1C6EC00740A80 /* xtcpshow.iconset */,
+				46DE97AB17D3035E009E0A16 /* xtcpshow-uninstall.sh */,
 				4639F846179D0D0900E59491 /* libpcap.dylib */,
 				4639F82A1798BA9700E59491 /* xtcpshow */,
 				4696054C17CDFC9200798814 /* OpenBPF */,
