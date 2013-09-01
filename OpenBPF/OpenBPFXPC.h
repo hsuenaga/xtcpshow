@@ -9,9 +9,12 @@
 #ifndef xtcpshow_OpenBPFXPC_h
 #define xtcpshow_OpenBPFXPC_h
 
+#define OpenBPF_VERSION 1
+#define BPFControlServiceID @"com.mac.hiroki.suenaga.OpenBPF"
+
 @protocol OpenBPFXPC
+- (void)alive:(void(^)(int, NSString *))block;
 - (void)groupReadable:(int)uid reply:(void(^)(BOOL, NSString *))block;
-- (void)alive:(void(^)(BOOL, NSString *))block;
 @end
 
 #endif

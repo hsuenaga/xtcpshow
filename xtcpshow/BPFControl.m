@@ -11,9 +11,7 @@
 #import <Security/Security.h>
 
 #import "BPFControl.h"
-#import "../OpenBPF/OpenBPFXPC.h"
-
-NSString *const BPFControlServiceID=@"com.mac.hiroki.suenaga.OpenBPF";
+#import "OpenBPFXPC.h"
 
 static const NSTimeInterval XPC_TIMEOUT = 60;
 static BOOL xpcInvalid = NO;
@@ -55,10 +53,9 @@ static BOOL xpcResult = NO;
 
 static void waitReply(void)
 {
-	// XXX: use NSLock and condition variable
+	// XXX: use NSLock and condition variable?
 	while (xpcInvalid == NO && xpcRunning == YES) {
 		[[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.5]];
-//		sleep(1);
 		NSLog(@"wait: invalid=>%d running=>%d",
 		      xpcInvalid, xpcRunning);
 	}
@@ -100,9 +97,12 @@ static void waitReply(void)
 
 	[xpc resume];
 	xpcRunning = YES;
-	[proxy alive:^(BOOL reply, NSString *m) {
-		NSLog(@"Helper livness: %d (%@)", reply, m);
-		xpcResult = reply;
+	[proxy alive:^(int version, NSString *m) {
+		NSLog(@"Helper livness: version %d (%@)", version, m);
+		if (version == OpenBPF_VERSION)
+			xpcResult = YES;
+		else
+			xpcResult = NO;
 		xpcRunning = NO;
 	}];
 	waitReply();

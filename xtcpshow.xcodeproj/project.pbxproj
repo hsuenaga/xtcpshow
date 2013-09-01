@@ -30,6 +30,8 @@
 		46D1634217CE117C009418DF /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 46D1634017CE117C009418DF /* Info.plist */; };
 		46D1634317CE117C009418DF /* Launchd.plist in Resources */ = {isa = PBXBuildFile; fileRef = 46D1634117CE117C009418DF /* Launchd.plist */; };
 		46D8CD0117BC7D060028F793 /* DataQueueEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = 46D8CD0017BC7D060028F793 /* DataQueueEntry.m */; };
+		46DE97A917D2D15B009E0A16 /* BPFService.m in Sources */ = {isa = PBXBuildFile; fileRef = 46DE97A817D2D15B009E0A16 /* BPFService.m */; };
+		46DE97AA17D2E1AC009E0A16 /* BPFService.m in Sources */ = {isa = PBXBuildFile; fileRef = 46DE97A817D2D15B009E0A16 /* BPFService.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -105,6 +107,8 @@
 		46D1634117CE117C009418DF /* Launchd.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Launchd.plist; sourceTree = "<group>"; };
 		46D8CCFF17BC7D060028F793 /* DataQueueEntry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DataQueueEntry.h; sourceTree = "<group>"; };
 		46D8CD0017BC7D060028F793 /* DataQueueEntry.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DataQueueEntry.m; sourceTree = "<group>"; };
+		46DE97A717D2D15B009E0A16 /* BPFService.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BPFService.h; sourceTree = "<group>"; };
+		46DE97A817D2D15B009E0A16 /* BPFService.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BPFService.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -218,6 +222,8 @@
 				46D1634017CE117C009418DF /* Info.plist */,
 				46D1634117CE117C009418DF /* Launchd.plist */,
 				4696054D17CDFC9200798814 /* main.m */,
+				46DE97A717D2D15B009E0A16 /* BPFService.h */,
+				46DE97A817D2D15B009E0A16 /* BPFService.m */,
 				46A10AD217CEF8DA0011A9E8 /* OpenBPFXPC.h */,
 				4696054F17CDFC9200798814 /* Supporting Files */,
 			);
@@ -329,6 +335,7 @@
 				4682948417B4634D008AC9D4 /* SamplingData.m in Sources */,
 				46D8CD0117BC7D060028F793 /* DataQueueEntry.m in Sources */,
 				46A10AD117CEF4A50011A9E8 /* BPFControl.m in Sources */,
+				46DE97A917D2D15B009E0A16 /* BPFService.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -336,6 +343,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				46DE97AA17D2E1AC009E0A16 /* BPFService.m in Sources */,
 				4696054E17CDFC9200798814 /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -450,9 +458,11 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "xtcpshow/xtcpshow-Prefix.pch";
+				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "xtcpshow/xtcpshow-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
+				USER_HEADER_SEARCH_PATHS = OpenBPF;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -464,9 +474,11 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "xtcpshow/xtcpshow-Prefix.pch";
+				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "xtcpshow/xtcpshow-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
+				USER_HEADER_SEARCH_PATHS = OpenBPF;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;

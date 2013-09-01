@@ -9,8 +9,6 @@
 #import <Foundation/Foundation.h>
 #import "OpenBPFXPC.h"
 
-extern NSString *const BPFControlServiceID;
-
 @interface BPFControl : NSObject {
 	@protected
 	AuthorizationRef _authRef;
