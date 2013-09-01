@@ -26,8 +26,10 @@
 	self = [super init];
 
 	bpfControl = [[BPFControl alloc] init];
+	bpfInsecure = NO;
 	source_interface = NULL;
 	filter_program = NULL;
+	pcap = NULL;
 
 	return self;
 }
@@ -40,9 +42,11 @@
 		free(filter_program);
 	source_interface = NULL;
 	filter_program = NULL;
-	[bpfControl secure];
+	if (bpfInsecure && bpfControl) {
+		[bpfControl secure];
+		bpfInsecure = NO;
+	}
 	bpfControl = nil;
-
 }
 
 - (void) main
@@ -53,13 +57,18 @@
 	[_model setSamplingInterval:TIMESLOT];
 
 	// initialize libpcap
-	[bpfControl insecure];
 	if (![self allocPcap]) {
+		NSLog(@"cannot initialize lipcap. try bpfControl.");
+		bpfInsecure = [bpfControl insecure];
+		[self allocPcap];
+	}
+	if (pcap == NULL) {
 		NSString *message;
 		NSLog(@"cannot initialize libpcap");
-
+		
 		message =
-		[NSString stringWithFormat:@"Caputer Error:%@", last_error];
+		[NSString stringWithFormat:@"Caputer Error:%@",
+		 last_error];
 		[self sendError:@"Cannot Initialize libpcap"];
 		return;
 	}
@@ -70,6 +79,13 @@
 		[self sendError:@"Syntax erorr in filter statement"];
 		return;
 	}
+	
+	// reset BPF permission
+	if (bpfInsecure && bpfControl) {
+		[bpfControl secure];
+		bpfInsecure = NO;
+	}
+	bpfControl = nil;
 
 	// reset timer
 	gettimeofday(&tv_next_tick, NULL);
@@ -262,7 +278,7 @@
 	[_model
 	 performSelectorOnMainThread:@selector(samplingFinish:)
 	 withObject:self
-	 waitUntilDone:YES];
+	 waitUntilDone:NO];
 }
 
 - (BOOL) allocPcap
@@ -322,6 +338,7 @@ error:
 		last_error =
 		[NSString stringWithFormat:@"Device error: %s", pcap_geterr(pcap)];
 		pcap_close(pcap);
+		pcap = NULL;
 	}
 	return FALSE;
 }

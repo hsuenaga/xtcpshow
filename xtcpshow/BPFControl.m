@@ -35,11 +35,22 @@ static BOOL xpcResult = NO;
 	return self;
 }
 
+- (void)dealloc
+{
+	if (xpc) {
+		[xpc invalidate];
+		xpc = nil;
+	}
+}
+
 - (BOOL)installHelper
 {
 	NSError *error;
 
-	[xpc invalidate];
+	if (xpc) {
+		[xpc invalidate];
+		xpc = nil;
+	}
 
 	if (![self blessHelperWithLabel:(NSString *)BPFControlServiceID
 				  error:(NSError **)&error]) {
@@ -56,14 +67,13 @@ static void waitReply(void)
 	// XXX: use NSLock and condition variable?
 	while (xpcInvalid == NO && xpcRunning == YES) {
 		[[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.5]];
-		NSLog(@"wait: invalid=>%d running=>%d",
-		      xpcInvalid, xpcRunning);
 	}
-	NSLog(@"xpc reponse found: %d", xpcResult);
 }
 
 - (BOOL)openXPC
 {
+	if (!xpc || xpcInvalid)
+		xpc = [[NSXPCConnection alloc] initWithMachServiceName:BPFControlServiceID options:NSXPCConnectionPrivileged];
 	if (!xpc)
 		return NO;
 
@@ -77,7 +87,6 @@ static void waitReply(void)
 	xpc.interruptionHandler = ^(void) {
 		NSLog(@"connection interrupted.");
 		xpcRunning = NO;
-		xpcInvalid = YES;
 	};
 	xpc.invalidationHandler = ^(void) {
 		NSLog(@"connection invalidated.");
@@ -106,15 +115,17 @@ static void waitReply(void)
 		xpcRunning = NO;
 	}];
 	waitReply();
-
+	[xpc suspend];
+	
+	if (!xpcResult) {
+		[xpc invalidate];
+		xpc = nil;
+	}
 	return xpcResult;
 }
 
 - (BOOL)checkXPC
 {
-	xpc = [[NSXPCConnection alloc] initWithMachServiceName:BPFControlServiceID options:NSXPCConnectionPrivileged];
-	if (!xpc)
-		return NO;
 	if (![self openXPC]) {
 		NSLog(@"No valid helper found. install.");
 		if (![self installHelper]) {
@@ -136,17 +147,19 @@ static void waitReply(void)
 		return;
 
 	[xpc invalidate];
+	[[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.5]];
 	xpc = nil;
 	xpcRunning = NO;
 }
 
-- (void)secure
+- (BOOL)secure
 {
 	NSLog(@"Secure the BPF device");
 	if (![self checkXPC]) {
 		NSLog(@"cannot open XPC");
-		return;
+		return NO;
 	}
+	[xpc resume];
 	xpcRunning = YES;
 	[proxy groupReadable:0 reply:^(BOOL reply, NSString *m){
 		xpcResult = reply;
@@ -154,28 +167,31 @@ static void waitReply(void)
 		xpcRunning = NO;
 	}];
 	waitReply();
+	[xpc suspend];
 	NSLog(@"messaging done");
 
-	[self closeXPC];
+	return xpcResult;
 }
 
-- (void)insecure
+- (BOOL)insecure
 {
-	xpcRunning = YES;
 	NSLog(@"Insecure the BPF device");
 	if (![self checkXPC]) {
 		NSLog(@"cannot open XPC");
-		return;
+		return NO;
 	}
+	[xpc resume];
+	xpcRunning = YES;
 	[proxy groupReadable:getuid() reply:^(BOOL reply, NSString *m) {
 		xpcResult = reply;
 		NSLog(@"insecure BPF => %d (%@)", xpcResult, m);
 		xpcRunning = NO;
 	}];
 	waitReply();
+	[xpc suspend];
 	NSLog(@"messaging done");
 
-	[self closeXPC];
+	return xpcResult;
 }
 
 - (BOOL)blessHelperWithLabel:(NSString *)label error:(NSError **)errorPtr

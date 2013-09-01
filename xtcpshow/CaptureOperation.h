@@ -27,6 +27,7 @@
 	DataQueue *max_buffer;
 
 	BPFControl *bpfControl;
+	BOOL bpfInsecure;
 
 	char errbuf[PCAP_ERRBUF_SIZE];
 	char *source_interface;

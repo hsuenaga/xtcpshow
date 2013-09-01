@@ -16,6 +16,6 @@
 	id proxy;
 }
 
-- (void)secure;
-- (void)insecure;
+- (BOOL)secure;
+- (BOOL)insecure;
 @end
