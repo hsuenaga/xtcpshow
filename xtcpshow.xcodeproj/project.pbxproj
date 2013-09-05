@@ -106,6 +106,7 @@
 		46A9207D17D835DC0083CC8D /* Readme.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = Readme.txt; sourceTree = "<group>"; };
 		46A9207E17D836050083CC8D /* README.md */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.md; sourceTree = "<group>"; };
 		46A9208117D837D40083CC8D /* xtcpshow_screen.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = xtcpshow_screen.png; sourceTree = "<group>"; };
+		46A9208217D87D880083CC8D /* License.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = License.txt; sourceTree = "<group>"; };
 		46D1634017CE117C009418DF /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		46D1634117CE117C009418DF /* Launchd.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Launchd.plist; sourceTree = "<group>"; };
 		46D8CCFF17BC7D060028F793 /* DataQueueEntry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DataQueueEntry.h; sourceTree = "<group>"; };
@@ -249,6 +250,7 @@
 			children = (
 				46A9207E17D836050083CC8D /* README.md */,
 				46A9208117D837D40083CC8D /* xtcpshow_screen.png */,
+				46A9208217D87D880083CC8D /* License.txt */,
 			);
 			name = GitHUB;
 			sourceTree = "<group>";
