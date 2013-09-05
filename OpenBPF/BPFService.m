@@ -25,7 +25,7 @@ static const char *const BPF_DEV="/dev/bpf*";
 	return;
 }
 
-- (void)groupReadable:(int)uid reply:(void (^)(BOOL, NSString *))block
+- (void)chown:(int)uid reply:(void (^)(BOOL, NSString *))block
 {
 	glob_t gl;
 	

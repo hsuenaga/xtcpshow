@@ -14,7 +14,7 @@
 
 @protocol OpenBPFXPC
 - (void)alive:(void(^)(int, NSString *))block;
-- (void)groupReadable:(int)uid reply:(void(^)(BOOL, NSString *))block;
+- (void)chown:(int)uid reply:(void(^)(BOOL, NSString *))block;
 @end
 
 #endif

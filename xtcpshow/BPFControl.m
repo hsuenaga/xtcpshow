@@ -163,7 +163,7 @@ static void waitReply(void)
 	}
 	[xpc resume];
 	xpcRunning = YES;
-	[proxy groupReadable:0 reply:^(BOOL reply, NSString *m){
+	[proxy chown:0 reply:^(BOOL reply, NSString *m){
 		xpcResult = reply;
 		NSLog(@"secure BPF => %d (%@)", xpcResult, m);
 		xpcRunning = NO;
@@ -185,7 +185,7 @@ static void waitReply(void)
 	}
 	[xpc resume];
 	xpcRunning = YES;
-	[proxy groupReadable:getuid() reply:^(BOOL reply, NSString *m) {
+	[proxy chown:getuid() reply:^(BOOL reply, NSString *m) {
 		xpcResult = reply;
 		NSLog(@"insecure BPF => %d (%@)", xpcResult, m);
 		xpcRunning = NO;
