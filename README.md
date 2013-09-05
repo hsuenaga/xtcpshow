@@ -13,17 +13,17 @@ HOW TO USE
 2. selelct your network interface
 2. press "START" button
 
-## launch the application
+### launch the application
 
 Simply launch the application from Dock, Finder, etc. The application doen't need administrator priviledge on starting.
 
-## select your network interface
+### select your network interface
 
 1. Select "Config" tab on the top of window
 2. Select your favorite network interface(en0, en1, ppp0, ...) from combo-box at the top-right
 3. If you want show the packet which doen't toward to your Mac, check "Promiscuous" check-button. If promiscuous mode was enabled on broadcast network interface(i.e. Ethernet), all packet on the wire are received by the interface. If not, only packets for your Mac are received. The promiscuous mode can cause a serious CPU load in your Mac. If your Mac seems not responding, try the interface to be disconnected.
 
-## press START button
+### press START button
 
 1. On START button cliked, the application try to open /dev/bpf, the Berkley Packet Filtering device.
 2. /dev/bpf has restrected premission to open. If your system configured to need administrator(root) privilege on /dev/bpf (this is factory default), the application prompt you to enter password to install priviledged helper tool into /Library/PrivilegedHelperTools. There are some applications that changes permission of /dev/bpf. For example, some version of wireshark create UNIX group 'access_bpf' and set /dev/bpf group readable/wriable. In such case, the application doen't prompt your password.
@@ -32,7 +32,7 @@ Simply launch the application from Dock, Finder, etc. The application doen't nee
 Configure the view
 ------------------
 
-## Mbps calculation
+### Mbps calculation
 
 Traffic sampling logic of the application is on the following.
 
@@ -61,11 +61,11 @@ You can show a standard deviation band by checking 'deviation' check-box. If the
 Uninstall The Application
 -------------------------
 
-## Remove Application bundle
+### Remove Application bundle
 
 Just drag&drop the application bundle to trash box.
 
-## Uninstall Privileged Helper Tool
+### Uninstall Privileged Helper Tool
 This application contains priviledge helper tool. To uninstall the tool, you need to run xtcpshow-uninstall.sh. Don't forget use sudo to get root priviledge.
 
     % sudo xtcpshow-uninstall.sh
