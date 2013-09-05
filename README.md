@@ -3,7 +3,7 @@ xtcpshow
 
 # A Network Traffic Grapher for Mac OS X
 
-![ScreenShot](GitHUB/xtcpshow_screen.png)
+![ScreenShot](./xtcpshow_screen.png)
 
 # HOW TO USE
 1. launch the application
