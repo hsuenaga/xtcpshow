@@ -21,10 +21,6 @@
 		466E550717AB2AA500C978C9 /* DataQueue.m in Sources */ = {isa = PBXBuildFile; fileRef = 466E550617AB2AA500C978C9 /* DataQueue.m */; };
 		466E550A17AB491800C978C9 /* DataResampler.m in Sources */ = {isa = PBXBuildFile; fileRef = 466E550917AB491800C978C9 /* DataResampler.m */; };
 		4682948417B4634D008AC9D4 /* SamplingData.m in Sources */ = {isa = PBXBuildFile; fileRef = 4682948317B4634D008AC9D4 /* SamplingData.m */; };
-		4693D01D17C73DA9007B85E2 /* ServiceManagement.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4693D01C17C73DA9007B85E2 /* ServiceManagement.framework */; };
-		4693D02117C73E27007B85E2 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4693D02017C73E26007B85E2 /* Security.framework */; };
-		469604F317CAD5CF00798814 /* FlowData.m in Sources */ = {isa = PBXBuildFile; fileRef = 469604F217CAD5CF00798814 /* FlowData.m */; };
-		469604F617CDA7CB00798814 /* FlowTableDataSource.m in Sources */ = {isa = PBXBuildFile; fileRef = 469604F517CDA7CB00798814 /* FlowTableDataSource.m */; };
 		4696050E17CDD2DB00798814 /* ServiceManagement.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4696050D17CDD2DB00798814 /* ServiceManagement.framework */; };
 		4696051017CDD2EC00798814 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4696050F17CDD2EC00798814 /* Security.framework */; };
 		4696054B17CDFC9200798814 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 469604FC17CDD02300798814 /* Foundation.framework */; };
@@ -98,13 +94,6 @@
 		466E550917AB491800C978C9 /* DataResampler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DataResampler.m; sourceTree = "<group>"; };
 		4682948217B4634D008AC9D4 /* SamplingData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SamplingData.h; sourceTree = "<group>"; };
 		4682948317B4634D008AC9D4 /* SamplingData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SamplingData.m; sourceTree = "<group>"; };
-		4693D00E17C72F8C007B85E2 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
-		4693D01C17C73DA9007B85E2 /* ServiceManagement.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ServiceManagement.framework; path = System/Library/Frameworks/ServiceManagement.framework; sourceTree = SDKROOT; };
-		4693D02017C73E26007B85E2 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
-		469604F117CAD5CF00798814 /* FlowData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FlowData.h; sourceTree = "<group>"; };
-		469604F217CAD5CF00798814 /* FlowData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FlowData.m; sourceTree = "<group>"; };
-		469604F417CDA7CB00798814 /* FlowTableDataSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FlowTableDataSource.h; sourceTree = "<group>"; };
-		469604F517CDA7CB00798814 /* FlowTableDataSource.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FlowTableDataSource.m; sourceTree = "<group>"; };
 		469604FC17CDD02300798814 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		4696050D17CDD2DB00798814 /* ServiceManagement.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ServiceManagement.framework; path = System/Library/Frameworks/ServiceManagement.framework; sourceTree = SDKROOT; };
 		4696050F17CDD2EC00798814 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
@@ -119,6 +108,13 @@
 		46A9208117D837D40083CC8D /* xtcpshow_screen.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = xtcpshow_screen.png; sourceTree = "<group>"; };
 		46D1634017CE117C009418DF /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		46D1634117CE117C009418DF /* Launchd.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Launchd.plist; sourceTree = "<group>"; };
+		4693D00E17C72F8C007B85E2 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		4693D01C17C73DA9007B85E2 /* ServiceManagement.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ServiceManagement.framework; path = System/Library/Frameworks/ServiceManagement.framework; sourceTree = SDKROOT; };
+		4693D02017C73E26007B85E2 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		469604F117CAD5CF00798814 /* FlowData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FlowData.h; sourceTree = "<group>"; };
+		469604F217CAD5CF00798814 /* FlowData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FlowData.m; sourceTree = "<group>"; };
+		469604F417CDA7CB00798814 /* FlowTableDataSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FlowTableDataSource.h; sourceTree = "<group>"; };
+		469604F517CDA7CB00798814 /* FlowTableDataSource.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FlowTableDataSource.m; sourceTree = "<group>"; };
 		46D8CCFF17BC7D060028F793 /* DataQueueEntry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DataQueueEntry.h; sourceTree = "<group>"; };
 		46D8CD0017BC7D060028F793 /* DataQueueEntry.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DataQueueEntry.m; sourceTree = "<group>"; };
 		46DE97A717D2D15B009E0A16 /* BPFService.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BPFService.h; sourceTree = "<group>"; };
@@ -131,12 +127,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4693D02117C73E27007B85E2 /* Security.framework in Frameworks */,
-				4693D01D17C73DA9007B85E2 /* ServiceManagement.framework in Frameworks */,
 				4696051017CDD2EC00798814 /* Security.framework in Frameworks */,
 				4696050E17CDD2DB00798814 /* ServiceManagement.framework in Frameworks */,
-				4639F847179D0D0900E59491 /* libpcap.dylib in Frameworks */,
-				4639F8251798BA9700E59491 /* Cocoa.framework in Frameworks */,
 				4639F847179D0D0900E59491 /* libpcap.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -177,10 +169,6 @@
 			isa = PBXGroup;
 			children = (
 				4639F846179D0D0900E59491 /* libpcap.dylib */,
-				4693D01C17C73DA9007B85E2 /* ServiceManagement.framework */,
-				4693D02017C73E26007B85E2 /* Security.framework */,
-				4639F8241798BA9700E59491 /* Cocoa.framework */,
-				4693D00E17C72F8C007B85E2 /* Foundation.framework */,
 				4696050F17CDD2EC00798814 /* Security.framework */,
 				4696050D17CDD2DB00798814 /* ServiceManagement.framework */,
 				4639F8241798BA9700E59491 /* Cocoa.framework */,
@@ -208,11 +196,10 @@
 				46A10ACF17CEF4A50011A9E8 /* BPFControl.h */,
 				46A10AD017CEF4A50011A9E8 /* BPFControl.m */,
 				4639F8411799095A00E59491 /* CaptureModel.h */,
-				46583CB817A0D187007B6572 /* CaptureOperation.h */,
-				46583CB917A0D192007B6572 /* CaptureOperation.m */,
 				4639F8421799095A00E59491 /* CaptureModel.m */,
 				46583CB817A0D187007B6572 /* CaptureOperation.h */,
 				46583CB917A0D192007B6572 /* CaptureOperation.m */,
+				4639F8421799095A00E59491 /* CaptureModel.m */,
 				469604F117CAD5CF00798814 /* FlowData.h */,
 				469604F217CAD5CF00798814 /* FlowData.m */,
 				469604F417CDA7CB00798814 /* FlowTableDataSource.h */,
@@ -383,10 +370,10 @@
 				466E550A17AB491800C978C9 /* DataResampler.m in Sources */,
 				4682948417B4634D008AC9D4 /* SamplingData.m in Sources */,
 				46D8CD0117BC7D060028F793 /* DataQueueEntry.m in Sources */,
-				469604F317CAD5CF00798814 /* FlowData.m in Sources */,
-				469604F617CDA7CB00798814 /* FlowTableDataSource.m in Sources */,
 				46A10AD117CEF4A50011A9E8 /* BPFControl.m in Sources */,
 				46DE97A917D2D15B009E0A16 /* BPFService.m in Sources */,
+				469604F317CAD5CF00798814 /* FlowData.m in Sources */,
+				469604F617CDA7CB00798814 /* FlowTableDataSource.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

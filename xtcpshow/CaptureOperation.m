@@ -22,6 +22,7 @@
 #import "DataQueue.h"
 #import "DataQueueEntry.h"
 #import "SamplingData.h"
+#import "BPFControl.h"
 #import "FlowData.h"
 
 /*
@@ -108,32 +109,14 @@
 
 	terminate = FALSE;
 	while (!terminate) {
-		struct pcap_pkthdr *hdr;
-		const u_char *data;
-		int classID;
-		float mbps;
-		int code;
+		@autoreleasepool {
+			struct pcap_pkthdr *hdr;
+			const u_char *data;
+			float mbps;
+			int code;
 
-		if ([self isCancelled] == YES)
-			break;
 
-		if (_model == nil)
-			break;
-
-		code = pcap_next_ex(pcap, &hdr, &data);
-		switch (code) {
-			case 1:
-				// got packet
-				pkts++;
-				bytes += hdr->len;
-				classID = [_Flow clasifyPacket:data size:hdr->caplen linkType:pcap_datalink(pcap)];
-				[self sendNotify:hdr->len
-					withTime:&hdr->ts
-				       withClass:classID];
-				break;
-			case 0:
-				// timeout
-				[self sendNotify:0 withTime:NULL withClass:0];
+			if ([self isCancelled] == YES)
 				break;
 
 			if (_model == nil)

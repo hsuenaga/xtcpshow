@@ -20,6 +20,7 @@
 
 @class CaptureModel;
 @class DataQueue;
+@class BPFControl;
 @class FlowData;
 
 @interface CaptureOperation : NSOperation {

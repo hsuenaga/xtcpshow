@@ -12,6 +12,7 @@
 
 @class CaptureModel;
 @class GraphView;
+@class BPFControl;
 @class FlowTableDataSource;
 
 @interface AppDelegate : NSObject <NSApplicationDelegate>
