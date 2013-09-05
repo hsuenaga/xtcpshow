@@ -42,7 +42,7 @@ Traffic sampling logic of the application is on the following.
 
 ### Range of the View
 
-The X-axis(time[msec]) range can be controlled by horizontal scroll bar. Y-axis([Mbps]) is controlled automatically by default. You can change this behavior by 'Rnage Select' combo-box in Config tab. 'Auto' mode controlls the Y-axis automatically. 'Peak-Hold' mode also controlls the Y-axis automatically, but it only increase the range. 'Manual' mode was controlled by the input of text box. The Y-axis are always rounded by times of 5.
+The X-axis(time[msec]) range can be controlled by horizontal scroll bar. Y-axis([Mbps]) is controlled automatically by default. You can change this behavior by 'Range Select' combo-box in Config tab. 'Auto' mode controlls the Y-axis automatically. 'Peak-Hold' mode also controlls the Y-axis automatically, but it only increase the range. On 'Manual' mode, the range is controlled by the user input of text box. The range value is always rounded by times of 5.
 
 ### Triangle Moving Average
 
