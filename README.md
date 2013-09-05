@@ -42,7 +42,7 @@ The X-axis range can be controlled by horizontal scroll bar.
 
 ### Triangle Moving Average
 
-The application calculate the viewing bytes received at time t (vbytes[t]) as average of captured bytes(cbytes) for last MA[sec]. For exapmle, bytes[t0] = Avg(cbytes[t0] .. cbytes[t0 - MA]). you can configure the value of MA by vertical slider.
+The application calculate the viewing bytes received at time t (vbytes[t]) as average of captured bytes(cbytes[t]) for last MA[sec]. For exapmle, vbytes[t0] = Avg(cbytes[t0] .. cbytes[t0 - MA]). you can configure the value of MA by vertical slider.
 
 The lesser MA shows accurate timing of the packet. And the lesser MA will have been resemling the differentials of the traffic. If MA was 0, the mbps become infinity. The more MA shows integral of the traffic(on the other words, the more MA is worked as same as low pass filter).
 
