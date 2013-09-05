@@ -64,6 +64,7 @@
 {
 	NSLog(@"Stop capture thread");
 	[capture_cue cancelAllOperations];
+	[capture_cue waitUntilAllOperationsAreFinished];
 }
 
 - (BOOL) captureEnabled

@@ -31,8 +31,12 @@
 - (CaptureOperation *)init
 {
 	self = [super init];
+
+	bpfControl = [[BPFControl alloc] init];
+	bpfInsecure = NO;
 	source_interface = NULL;
 	filter_program = NULL;
+	pcap = NULL;
 
 	return self;
 }
@@ -45,6 +49,11 @@
 		free(filter_program);
 	source_interface = NULL;
 	filter_program = NULL;
+	if (bpfInsecure && bpfControl) {
+		[bpfControl secure];
+		bpfInsecure = NO;
+	}
+	bpfControl = nil;
 }
 
 - (void) main
@@ -56,11 +65,17 @@
 
 	// initialize libpcap
 	if (![self allocPcap]) {
+		NSLog(@"cannot initialize lipcap. try bpfControl.");
+		bpfInsecure = [bpfControl insecure];
+		[self allocPcap];
+	}
+	if (pcap == NULL) {
 		NSString *message;
 		NSLog(@"cannot initialize libpcap");
-
+		
 		message =
-		[NSString stringWithFormat:@"Caputer Error:%@", last_error];
+		[NSString stringWithFormat:@"Caputer Error:%@",
+		 last_error];
 		[self sendError:@"Cannot Initialize libpcap"];
 		return;
 	}
@@ -71,6 +86,13 @@
 		[self sendError:@"Syntax erorr in filter statement"];
 		return;
 	}
+	
+	// reset BPF permission
+	if (bpfInsecure && bpfControl) {
+		[bpfControl secure];
+		bpfInsecure = NO;
+	}
+	bpfControl = nil;
 
 	// reset timer
 	gettimeofday(&tv_next_tick, NULL);
@@ -113,32 +135,50 @@
 				// timeout
 				[self sendNotify:0 withTime:NULL withClass:0];
 				break;
-			default:
-				NSLog(@"pcap error: %s",
-				      pcap_geterr(pcap));
-				terminate = TRUE;
+
+			if (_model == nil)
 				break;
+
+			code = pcap_next_ex(pcap, &hdr, &data);
+			switch (code) {
+				case 1:
+					// got packet
+					pkts++;
+					bytes += hdr->len;
+					[self sendNotify:hdr->len
+						withTime:&hdr->ts];
+					break;
+				case 0:
+					// timeout
+					[self sendNotify:0 withTime:NULL];
+					break;
+				default:
+					NSLog(@"pcap error: %s",
+					      pcap_geterr(pcap));
+					terminate = TRUE;
+					break;
+			}
+
+			// timer update
+			if ([self tick_expired] == FALSE)
+				continue;
+
+			// update max
+			mbps = (float)(bytes * 8) / last_interval; // [bps]
+			mbps = mbps / (1000.0f * 1000.0f); // [mbps]
+			if (max_mbps < mbps)
+				max_mbps = mbps;
+			[max_buffer shiftDataWithNewData:[SamplingData dataWithSingleFloat:mbps]];
+			peak_mbps = [max_buffer maxFloatValue];
+
+			// update model
+			[_model setTotal_pkts:pkts];
+			[_model setMbps:mbps];
+			[_model setPeek_hold_mbps:peak_mbps];
+			[_model setMax_mbps:max_mbps];
+			[_model setSamplingIntervalLast:last_interval];
+			bytes = 0;
 		}
-
-		// timer update
-		if ([self tick_expired] == FALSE)
-			continue;
-
-		// update max
-		mbps = (float)(bytes * 8) / last_interval; // [bps]
-		mbps = mbps / (1000.0f * 1000.0f); // [mbps]
-		if (max_mbps < mbps)
-			max_mbps = mbps;
-		[max_buffer shiftDataWithNewData:[SamplingData dataWithSingleFloat:mbps]];
-		peak_mbps = [max_buffer maxFloatValue];
-
-		// update model
-		[_model setTotal_pkts:pkts];
-		[_model setMbps:mbps];
-		[_model setPeek_hold_mbps:peak_mbps];
-		[_model setMax_mbps:max_mbps];
-		[_model setSamplingIntervalLast:last_interval];
-		bytes = 0;
 	}
 
 	// finalize
@@ -263,7 +303,7 @@
 	[_model
 	 performSelectorOnMainThread:@selector(samplingFinish:)
 	 withObject:self
-	 waitUntilDone:YES];
+	 waitUntilDone:NO];
 }
 
 - (BOOL) allocPcap
@@ -323,6 +363,7 @@ error:
 		last_error =
 		[NSString stringWithFormat:@"Device error: %s", pcap_geterr(pcap)];
 		pcap_close(pcap);
+		pcap = NULL;
 	}
 	return FALSE;
 }
