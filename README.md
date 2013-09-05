@@ -1,11 +1,14 @@
 xtcpshow
 ========
 
-# A Network Traffic Grapher for Mac OS X
+A Network Traffic Grapher for Mac OS X
+--------------------------------------
 
 ![ScreenShot](./xtcpshow_screen.png)
 
-# HOW TO USE
+HOW TO USE
+----------
+
 1. launch the application
 2. selelct your network interface
 2. press "START" button
@@ -26,7 +29,8 @@ Simply launch the application from Dock, Finder, etc. The application doen't nee
 2. /dev/bpf has restrected premission to open. If your system configured to need administrator(root) privilege on /dev/bpf (this is factory default), the application prompt you to enter password to install priviledged helper tool into /Library/PrivilegedHelperTools. There are some applications that changes permission of /dev/bpf. For example, some version of wireshark create UNIX group 'access_bpf' and set /dev/bpf group readable/wriable. In such case, the application doen't prompt your password.
 3. If everythings OK, the application shows traffic graph.
 
-# Configure the view
+Configure the view
+------------------
 
 ## Mbps calculation
 
@@ -53,3 +57,21 @@ You can show a histgram of the number of packets received by checking 'packets/s
 ### Mbps distribution(deviation)
 
 You can show a standard deviation band by checking 'deviation' check-box. If the distrubition of traffic seems to a normal distribution, this band may become a some help you. The distribution of enough multiplexed traffic may be a normal distribution, but I think most of traffics are not.
+
+Uninstall The Application
+-------------------------
+
+## Remove Application bundle
+
+Just drag&drop the application bundle to trash box.
+
+## Uninstall Privileged Helper Tool
+This application contains priviledge helper tool. To uninstall the tool, you need to run xtcpshow-uninstall.sh. Don't forget use sudo to get root priviledge.
+
+    % sudo xtcpshow-uninstall.sh
+
+The script does:
+
+1. unload the helper service from launchd
+2. delete executable binary of the helper (/Library/PrivilegedHelperTools/com.mac.hiroki.suenaga.OpenBPF)
+3. delete info.plist of the helper (/Library/LaunchDaemons/com.mac.hiroki.suenaga.OpenBPF.plist)
