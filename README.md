@@ -81,7 +81,7 @@ License
 
 Copyright (c) 2013
 
-SUENAGA Hiroki <hiroki_suenaga@mac.com>. All rights reserved.
+SUENAGA Hiroki ¥<hiroki_suenaga@mac.com¥>. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 
