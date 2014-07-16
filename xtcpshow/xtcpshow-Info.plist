@@ -9,7 +9,7 @@
 	<key>CFBundleIconFile</key>
 	<string>xtcpshow</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.mac.hiroki.suenaga.xtcpshow</string>
+	<string>com.mac.hiroki.suenaga.xtcpshow-snowleopard</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -35,7 +35,7 @@
 	<key>SMPrivilegedExecutables</key>
 	<dict>
 		<key>com.mac.hiroki.suenaga.OpenBPF</key>
-		<string>anchor apple generic and identifier "com.mac.hiroki.suenaga.OpenBPF" and (certificate leaf[field.1.2.840.113635.100.6.1.9] /* exists */ or certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = BSVYLYB6S2)</string>
+		<string>anchor apple generic and identifier &quot;com.mac.hiroki.suenaga.OpenBPF-snowleopard&quot; and (certificate leaf[field.1.2.840.113635.100.6.1.9] /* exists */ or certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = BSVYLYB6S2)</string>
 	</dict>
 </dict>
 </plist>
