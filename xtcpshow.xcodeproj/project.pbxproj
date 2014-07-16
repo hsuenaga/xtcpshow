@@ -32,6 +32,7 @@
 		46D8CD0117BC7D060028F793 /* DataQueueEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = 46D8CD0017BC7D060028F793 /* DataQueueEntry.m */; };
 		46DE97A917D2D15B009E0A16 /* BPFService.m in Sources */ = {isa = PBXBuildFile; fileRef = 46DE97A817D2D15B009E0A16 /* BPFService.m */; };
 		46DE97AA17D2E1AC009E0A16 /* BPFService.m in Sources */ = {isa = PBXBuildFile; fileRef = 46DE97A817D2D15B009E0A16 /* BPFService.m */; };
+		46F5CB96197634B700B84945 /* PLWeakCompatibilityStubs.m in Sources */ = {isa = PBXBuildFile; fileRef = 46F5CB95197634B700B84945 /* PLWeakCompatibilityStubs.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -113,6 +114,8 @@
 		46DE97A717D2D15B009E0A16 /* BPFService.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BPFService.h; sourceTree = "<group>"; };
 		46DE97A817D2D15B009E0A16 /* BPFService.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BPFService.m; sourceTree = "<group>"; };
 		46DE97AB17D3035E009E0A16 /* xtcpshow-uninstall.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "xtcpshow-uninstall.sh"; sourceTree = "<group>"; };
+		46F5CB95197634B700B84945 /* PLWeakCompatibilityStubs.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PLWeakCompatibilityStubs.m; sourceTree = "<group>"; };
+		46F5CB97197634DD00B84945 /* PLWeakCompatibilityStubs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PLWeakCompatibilityStubs.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -192,6 +195,8 @@
 				4639F8411799095A00E59491 /* CaptureModel.h */,
 				46583CB817A0D187007B6572 /* CaptureOperation.h */,
 				46583CB917A0D192007B6572 /* CaptureOperation.m */,
+				46F5CB97197634DD00B84945 /* PLWeakCompatibilityStubs.h */,
+				46F5CB95197634B700B84945 /* PLWeakCompatibilityStubs.m */,
 				4639F8421799095A00E59491 /* CaptureModel.m */,
 				466E550817AB491800C978C9 /* DataResampler.h */,
 				466E550917AB491800C978C9 /* DataResampler.m */,
@@ -349,6 +354,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				46F5CB96197634B700B84945 /* PLWeakCompatibilityStubs.m in Sources */,
 				4639F8311798BA9700E59491 /* main.m in Sources */,
 				4639F8381798BA9700E59491 /* AppDelegate.m in Sources */,
 				4639F8431799095A00E59491 /* CaptureModel.m in Sources */,
@@ -437,8 +443,12 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = (
+					"-Xclang",
+					"-fobjc-runtime-has-weak",
+				);
 				PROVISIONING_PROFILE = "";
 				SDKROOT = macosx;
 				STRIP_INSTALLED_PRODUCT = NO;
@@ -466,7 +476,11 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				OTHER_CFLAGS = (
+					"-Xclang",
+					"-fobjc-runtime-has-weak",
+				);
 				PROVISIONING_PROFILE = "";
 				SDKROOT = macosx;
 				STRIP_INSTALLED_PRODUCT = NO;
