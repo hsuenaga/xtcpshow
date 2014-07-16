@@ -39,10 +39,10 @@
 #import "OpenBPFXPC.h"
 #import "BPFService.h"
 
-@interface OpenBPFDelete : NSObject <NSXPCListenerDelegate>
+@interface OpenBPFDelegate : NSObject <NSXPCListenerDelegate>
 @end
 
-@implementation OpenBPFDelete
+@implementation OpenBPFDelegate
 - (BOOL)listener:(NSXPCListener *)listener
 shouldAcceptNewConnection:(NSXPCConnection *)newConnection
 {
@@ -62,7 +62,7 @@ shouldAcceptNewConnection:(NSXPCConnection *)newConnection
 int main(int argc, const char * argv[])
 {
 	NSXPCListener *xpc;
-	OpenBPFDelete *handler = [[OpenBPFDelete alloc] init];
+	OpenBPFDelegate *handler = [[OpenBPFDelegate alloc] init];
 
 	syslog(LOG_NOTICE, "OpenBPF launchd.");
 	xpc = [[NSXPCListener alloc] initWithMachServiceName:BPFControlServiceID];
