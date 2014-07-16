@@ -6,6 +6,11 @@ A Network Traffic Grapher for Mac OS X
 
 ![ScreenShot](./xtcpshow_screen.png)
 
+Supported Version
+-----------------
+
+Mac OS X 10.8 or later
+
 HOW TO USE
 ----------
 
