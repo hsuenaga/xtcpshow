@@ -37,7 +37,6 @@
 #import "BPFControl.h"
 #import "OpenBPFXPC.h"
 
-static const NSTimeInterval XPC_TIMEOUT = 60;
 static BOOL xpcInvalid = NO;
 static BOOL xpcRunning = NO;
 static BOOL xpcResult = NO;
