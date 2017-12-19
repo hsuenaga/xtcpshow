@@ -31,6 +31,7 @@
 //
 #include "math.h"
 
+#import "BPFControl.h"
 #import "CaptureModel.h"
 #import "CaptureOperation.h"
 #import "DataQueue.h"
@@ -51,6 +52,7 @@
 	// pcap
 	_device = NULL;
 	_filter = "tcp";
+    _bpfc = [[BPFControl alloc] init];
 
 	// data size
 	_history_size = DEF_HISTORY;
@@ -70,8 +72,13 @@
 	CaptureOperation *op = [[CaptureOperation alloc] init];
 
 	NSLog(@"Start capture thread");
+    if (!_bpfc) {
+        NSLog(@"No capture device.");
+//        return;
+    }
 	[self resetCounter];
 	[op setModel:self];
+    [op setBPFControl:_bpfc];
 	[op setSource:_device];
 	[op setFilter:_filter];
 	[op setQueuePriority:NSOperationQueuePriorityHigh];

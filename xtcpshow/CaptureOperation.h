@@ -51,12 +51,8 @@
 	DataQueue *max_buffer;
 
 	BPFControl *bpfControl;
-	BOOL bpfInsecure;
-
-	char errbuf[PCAP_ERRBUF_SIZE];
 	char *source_interface;
 	char *filter_program;
-	pcap_t *pcap;
 
 	struct timeval tv_next_tick;
 	struct timeval tv_last_tick;
@@ -74,15 +70,14 @@
 - (CaptureOperation *)init;
 - (void)dealloc;
 - (void)main;
+- (void)setBPFControl:(BPFControl *)bpfc;
 - (void)setSource:(const char *)source;
 - (void)setFilter:(const char *)filter;
 
 - (float)elapsed:(struct timeval *)last;
 - (BOOL)tick_expired;
-- (void)sendNotify:(int)size withTime:(struct timeval *)tv;
+- (void)sendNotify:(int)size withTime:(const struct timeval *)tv;
 - (void)sendError:(NSString *)message;
 - (void)sendFinish;
-
-- (BOOL)allocPcap;
 - (BOOL)attachFilter;
 @end

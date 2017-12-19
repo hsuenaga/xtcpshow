@@ -51,8 +51,6 @@ static NSString *const LBL_CAP_ERROR=@"CAPTURE ERROR";
 static NSString *const DEF_DEVICE=@"en0";
 static NSString *const PREFER_DEVICE=@"en";
 
-static void setup_interface(NSPopUpButton *);
-
 @implementation AppDelegate
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
@@ -269,11 +267,11 @@ static void setup_interface(NSPopUpButton *);
 	[_deviceSelector setEnabled:YES];
 	[_filterField setEnabled:YES];
 
-	alert = [NSAlert alertWithMessageText:LBL_CAP_ERROR
-				defaultButton:LBL_OK
-			      alternateButton:nil
-				  otherButton:nil
-		    informativeTextWithFormat:@"%@", message];
+    alert = [[NSAlert alloc] init];
+    [alert setAlertStyle:NSAlertStyleWarning];
+    [alert setMessageText:LBL_CAP_ERROR];
+    if (message)
+        [alert setInformativeText:message];
 	[alert runModal];
 
 	[self updateUserInterface];

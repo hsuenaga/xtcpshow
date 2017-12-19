@@ -29,17 +29,51 @@
 //  Created by SUENAGA Hiroki on 2013/08/29.
 //  Copyright (c) 2013 SUENAGA Hiroki. All rights reserved.
 //
-
+#import <sys/time.h>
+#import <sys/socket.h>
+#import <net/if.h>
+#import <pcap/pcap.h>
 #import <Foundation/Foundation.h>
+#import <SecurityFoundation/SecurityFoundation.h>
 #import "OpenBPFXPC.h"
+
+@interface BPFPacket : NSObject
+@property (readonly) BOOL timeout;
+@property (readonly) struct timeval ts;
+@property (readonly) uint32_t caplen;
+@property (readonly) uint32_t pktlen;
+- (id)initWithData:(const struct timeval *)tstamp capLen:(uint32_t)clen pktLen:(uint32_t)plen;
+- (id)initWithoutData;
+- (const struct timeval *)ts_ref;
+@end
 
 @interface BPFControl : NSObject {
 	@protected
+    SFAuthorization *_authObj;
 	AuthorizationRef _authRef;
-	NSXPCConnection *xpc;
-	id proxy;
+    AuthorizationExternalForm _authRefExt;
+    
+    pcap_t *pcap;
+    NSString *filter_source;
+    struct bpf_program filter;
+    
+    // packet buffer
+    char *recv_buf;
+    ssize_t recv_maxlen;
+    char *recv_ptr;
+    ssize_t recv_len;
 }
+@property (assign) int fd;
+@property (assign) uint32_t bs_recv;
+@property (assign) uint32_t bs_drop;
+@property (assign) uint32_t bs_ifdrop;
 
-- (BOOL)secure;
-- (BOOL)insecure;
+- (id)initWithDevice: (NSString *)device;
+- (BOOL)promiscus:(BOOL)flag;
+- (BOOL)timeout:(const struct timeval *)interval;
+- (BOOL)start:(const char *)source_interface;
+- (BOOL)stop;
+- (BOOL)setFilter:(NSString *)filter;
+- (BOOL)next: (struct timeval *)tv withCaplen:(uint32_t *)caplen withPktlen:(uint32_t *)pktlen;
+- (BPFPacket *)nextPacket;
 @end

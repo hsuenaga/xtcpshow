@@ -45,8 +45,8 @@ NSString *const RANGE_PEAKHOLD = @"PeakHold";
 NSString *const RANGE_MANUAL = @"Manual";
 
 NSString *const CAP_MAX_SMPL = @" Max %lu [packets/sample]";
-NSString *const CAP_MAX_MBPS = @" Max %6.3f [mbps]";
-NSString *const CAP_AVG_MBPS = @" Avg %6.3f [mbps], StdDev %6.3f [mbps]";
+NSString *const CAP_MAX_MBPS = @" Max %6.3f [Mbps]";
+NSString *const CAP_AVG_MBPS = @" Avg %6.3f [Mbps], StdDev %6.3f [Mbps]";
 
 NSString *const FMT_RANGE = @" Y-Range %6.3f [Mbps] / X-Range %6.1f [ms] / MA %6.1f [ms]";
 NSString *const FMT_DATE = @"yyyy-MM-dd HH:mm:ss.SSS zzz ";
@@ -564,8 +564,9 @@ float const scroll_sensitivity = 10.0f;
 	NSLog(@"save to %@%@",
 	      [panel directoryURL],
 	      [panel nameFieldStringValue]);
-	
-	png = [buffer representationUsingType:NSPNGFileType properties:nil];
+    NSDictionary *prop = [[NSDictionary alloc] init];
+    
+	png = [buffer representationUsingType:NSPNGFileType properties:prop];
 	[png writeToURL:[[panel directoryURL] URLByAppendingPathComponent:[panel nameFieldStringValue]]
 	      atomically:NO];
 

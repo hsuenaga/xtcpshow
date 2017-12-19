@@ -32,14 +32,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <pcap/pcap.h>
 
+#import "BPFControl.h"
 #import "CaptureOperation.h"
 #import "CaptureModel.h"
 #import "DataQueue.h"
 #import "DataQueueEntry.h"
 #import "SamplingData.h"
-#import "BPFControl.h"
 
 /*
  * Capture thread
@@ -49,11 +48,9 @@
 {
 	self = [super init];
 
-	bpfControl = [[BPFControl alloc] init];
-	bpfInsecure = NO;
 	source_interface = NULL;
 	filter_program = NULL;
-	pcap = NULL;
+	bpfControl = NULL;
 
 	return self;
 }
@@ -66,34 +63,18 @@
 		free(filter_program);
 	source_interface = NULL;
 	filter_program = NULL;
-	if (bpfInsecure && bpfControl) {
-		[bpfControl secure];
-		bpfInsecure = NO;
-	}
 	bpfControl = nil;
 }
 
 - (void) main
 {
-	struct pcap_stat ps;
-
 	NSLog(@"caputer thread: interval %f [sec]", TIMESLOT);
 	[_model setSamplingInterval:TIMESLOT];
 
 	// initialize libpcap
-	if (![self allocPcap]) {
-		NSLog(@"cannot initialize lipcap. try bpfControl.");
-		bpfInsecure = [bpfControl insecure];
-		[self allocPcap];
-	}
-	if (pcap == NULL) {
-		NSString *message;
-		NSLog(@"cannot initialize libpcap");
-		
-		message =
-		[NSString stringWithFormat:@"Caputer Error:%@",
-		 last_error];
-		[self sendError:@"Cannot Initialize libpcap"];
+	if (!bpfControl) {
+		NSLog(@"cannot initialize bpfControl module.");
+		[self sendError:@"bpfControl is not found."];
 		return;
 	}
 
@@ -104,16 +85,14 @@
 		return;
 	}
 	
-	// reset BPF permission
-	if (bpfInsecure && bpfControl) {
-		[bpfControl secure];
-		bpfInsecure = NO;
-	}
-	bpfControl = nil;
-
 	// reset timer
 	gettimeofday(&tv_next_tick, NULL);
 	gettimeofday(&tv_last_tick, NULL);
+    struct timeval tick = {
+        .tv_sec = 0,
+        .tv_usec = CAP_TICK * 1000, // [msec]
+    };
+    [bpfControl timeout:&tick];
 
 	// init peak hold buffer for 1[sec]
 	max_buffer = [[DataQueue alloc] init];
@@ -124,38 +103,29 @@
 	bytes = pkts = 0;
 
 	terminate = FALSE;
-	while (!terminate) {
+    [bpfControl start:source_interface];
+    while (!terminate) {
 		@autoreleasepool {
-			struct pcap_pkthdr *hdr;
-			const u_char *data;
+            struct timeval tv;
+            uint32_t pktlen;
 			float mbps;
-			int code;
-
 
 			if ([self isCancelled] == YES)
 				break;
 
 			if (_model == nil)
 				break;
-
-			code = pcap_next_ex(pcap, &hdr, &data);
-			switch (code) {
-				case 1:
-					// got packet
-					pkts++;
-					bytes += hdr->len;
-					[self sendNotify:hdr->len
-						withTime:&hdr->ts];
-					break;
-				case 0:
-					// timeout
-					[self sendNotify:0 withTime:NULL];
-					break;
-				default:
-					NSLog(@"pcap error: %s",
-					      pcap_geterr(pcap));
-					terminate = TRUE;
-					break;
+            if (![bpfControl next:&tv withCaplen:NULL withPktlen:&pktlen]) {
+                NSLog(@"bpfControl error.");
+                terminate = true;
+            }
+            else if (tv.tv_sec == 0 && tv.tv_usec == 0) {
+                [self sendNotify:0 withTime:NULL];
+            }
+            else {
+                pkts++;
+                bytes += pktlen;
+                [self sendNotify:pktlen withTime:&tv];
 			}
 
 			// timer update
@@ -181,15 +151,18 @@
 	}
 
 	// finalize
-	if (pcap_stats(pcap, &ps) == 0) {
-		NSLog(@"%d packets recieved by pcap", ps.ps_recv);
-		NSLog(@"%d packets dropped by pcap", ps.ps_drop);
-		NSLog(@"%d packets dropped by device", ps.ps_ifdrop);
-	}
-	pcap_close(pcap);
+    [bpfControl stop];
+	NSLog(@"%d packets recieved by pcap", [bpfControl bs_recv]);
+	NSLog(@"%d packets dropped by pcap", [bpfControl bs_drop]);
+	NSLog(@"%d packets dropped by device", [bpfControl bs_ifdrop]);
 	NSLog(@"%d packets proccessed.", pkts);
 	NSLog(@"done thread");
 	[self sendFinish];
+}
+
+- (void)setBPFControl:(BPFControl *)bpfc
+{
+    bpfControl = bpfc;
 }
 
 - (void)setSource:(const char *)source
@@ -266,7 +239,7 @@
 	return TRUE;
 }
 
-- (void)sendNotify:(int)size withTime:(struct timeval *)tv
+- (void)sendNotify:(int)size withTime:(const struct timeval *)tv
 {
 	SamplingData *sample;
 	NSTimeInterval unix_time;
@@ -291,9 +264,16 @@
 
 - (void)sendError:(NSString *)message
 {
+    if (message && last_error) {
+        message = [message stringByAppendingString:@"\n"];
+        message = [message stringByAppendingString:last_error];
+    }
+    else if (last_error) {
+        message = last_error;
+    }
 	[_model
 	 performSelectorOnMainThread:@selector(samplingError:)
-	 withObject:last_error
+	 withObject:message
 	 waitUntilDone:NO];
 }
 
@@ -305,98 +285,14 @@
 	 waitUntilDone:NO];
 }
 
-- (BOOL) allocPcap
-{
-	int r;
-
-	if (source_interface == NULL) {
-		NSLog(@"No source interface");
-		return FALSE;
-	}
-
-	NSLog(@"initializing libpcap...");
-	pcap = pcap_create(source_interface, errbuf);
-	if (pcap == NULL) {
-		last_error = @"pcap_create() failed";
-		goto error;
-	}
-
-	if (pcap_set_snaplen(pcap, CAP_SNAPLEN) != 0) {
-		last_error = @"pcap_set_snaplen() failed";
-		goto error;
-	}
-	if (pcap_set_timeout(pcap, CAP_TICK) != 0) {
-		last_error = @"pcap_set_timeout() failed";
-		goto error;
-	}
-
-	if (pcap_set_buffer_size(pcap, CAP_BUFSIZ) != 0) {
-		last_error = @"pcap_set_buffer_size() failed";
-		goto error;
-	}
-
-	if (_model.promisc == YES) {
-		NSLog(@"Enable promiscuous mode");
-		pcap_set_promisc(pcap, 1);
-	}
-	else {
-		NSLog(@"Disable promiscuous mode");
-		pcap_set_promisc(pcap, 0);
-	}
-
-	r = pcap_activate(pcap);
-	if (r == PCAP_WARNING) {
-		NSLog(@"WARNING: %s", pcap_geterr(pcap));
-	}
-	else if (r != 0) {
-		last_error = @"pcap_activate() failed";
-		goto error;
-	}
-	NSLog(@"libpcap initialized.");
-
-	return TRUE;
-
-error:
-	if (pcap) {
-		NSLog(@"%@: %s", last_error, pcap_geterr(pcap));
-		last_error =
-		[NSString stringWithFormat:@"Device error: %s", pcap_geterr(pcap)];
-		pcap_close(pcap);
-		pcap = NULL;
-	}
-	return FALSE;
-}
-
 - (BOOL)attachFilter
 {
-	struct bpf_program filter;
-
 	if (filter_program == NULL) {
 		NSLog(@"No filter program");
 		return FALSE;
 	}
-	if (pcap_compile(pcap, &filter, filter_program,
-			 0, PCAP_NETMASK_UNKNOWN) != 0) {
-		last_error = [NSString  stringWithFormat:@"Filter error: %s",
-		      pcap_geterr(pcap)];
-		NSLog(@"pcap_compile() failed");
-		NSLog(@"program: %s", filter_program);
-		return FALSE;
-	}
+    [bpfControl setFilter:[[NSString alloc] initWithUTF8String:filter_program]];
 
-	if (pcap_setfilter(pcap, &filter) < 0) {
-		last_error = [NSString stringWithFormat:@"Filter error: %s",
-		      pcap_geterr(pcap)];
-		NSLog(@"pcap_setfilter() failed");
-		pcap_freecode(&filter);
-		return FALSE;
-	}
-
-	if (pcap_setdirection(pcap, PCAP_D_IN) != 0) {
-		NSLog(@"pcap_setdirection() is not supported.");
-	}
-
-	pcap_freecode(&filter);
 	return TRUE;
 }
 @end
