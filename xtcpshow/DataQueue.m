@@ -355,7 +355,7 @@
 	float avg = [self averageFloatValue];
 	float variance = 0.0;
 
-	for (DataQueueEntry *entry = _head; entry;
+    for (DataQueueEntry *entry = _head; entry;
 	     entry = entry.next)
 		variance += pow((avg - entry.content.floatValue), 2.0);
 	variance /= (_count - 1);

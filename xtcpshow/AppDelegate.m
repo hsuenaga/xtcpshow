@@ -231,10 +231,14 @@ static NSString *const PREFER_DEVICE=@"en";
 }
 
 - (IBAction)toggleDeviation:(id)sender {
-	if ([sender state] == NSOnState)
+    if ([sender state] == NSOnState) {
 		[_graphView setShowDeviationBand:YES];
-	else
+        NSLog(@"deviation enabled.");
+    }
+    else {
 		[_graphView setShowDeviationBand:NO];
+        NSLog(@"deviation disabled.");
+    }
 
 	[_graphView setNeedsDisplay:YES];
 }

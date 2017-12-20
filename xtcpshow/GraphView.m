@@ -48,7 +48,7 @@ NSString *const CAP_MAX_SMPL = @" Max %lu [packets/sample]";
 NSString *const CAP_MAX_MBPS = @" Max %6.3f [Mbps]";
 NSString *const CAP_AVG_MBPS = @" Avg %6.3f [Mbps], StdDev %6.3f [Mbps]";
 
-NSString *const FMT_RANGE = @" Y-Range %6.3f [Mbps] / X-Range %6.1f [ms] / MA %6.1f [ms]";
+NSString *const FMT_RANGE = @" VERT %6.3f [Mbps/div] / HORIZ %6.1f [ms/div] / FIR %6.1f [ms]";
 NSString *const FMT_DATE = @"yyyy-MM-dd HH:mm:ss.SSS zzz ";
 NSString *const FMT_NODATA = @"NO DATA RECORD ";
 
@@ -359,16 +359,14 @@ float const scroll_sensitivity = 10.0f;
 	NSString *marker;
 	float w, y, deviation;
 
-
 	w = rect.size.width;
-	deviation = [resampler.data standardDeviation];
+	deviation = [_data standardDeviation];
 
 	[NSGraphicsContext saveGraphicsState];
 
 	[[NSColor colorWithDeviceRed:0.0 green:1.0 blue:0.0 alpha:1.0] set];
 	path = [NSBezierPath bezierPath];
-	y =
-	rect.size.height * (_averageValue / y_range);
+	y =	rect.size.height * (_averageValue / y_range);
 	[path moveToPoint:NSMakePoint(0.0, y)];
 	[path lineToPoint:NSMakePoint(w, y)];
 	[path stroke];
@@ -439,7 +437,7 @@ float const scroll_sensitivity = 10.0f;
 	[NSGraphicsContext saveGraphicsState];
 	text =
 	[NSString stringWithFormat:FMT_RANGE,
-	 y_range, x_range, ma_range];
+	 y_range / 5, x_range / 5, ma_range];
 	[self drawText:text inRect:rect atPoint:NSMakePoint(0.0, 0.0)];
 
 	[NSGraphicsContext restoreGraphicsState];
