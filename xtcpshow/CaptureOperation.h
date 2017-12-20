@@ -48,9 +48,7 @@
 
 @interface CaptureOperation : NSOperation {
 	NSString *last_error;
-	DataQueue *max_buffer;
 
-	BPFControl *bpfControl;
 	char *source_interface;
 	char *filter_program;
 
@@ -66,6 +64,8 @@
 	int bytes;
 }
 @property (weak) CaptureModel *model;
+@property (weak) BPFControl *bpfControl;
+@property (strong) DataQueue *peak_hold_queue;
 
 - (CaptureOperation *)init;
 - (void)dealloc;

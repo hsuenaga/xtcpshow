@@ -44,6 +44,9 @@
  * Capture thread
  */
 @implementation CaptureOperation
+@synthesize bpfControl;
+@synthesize peak_hold_queue;
+
 - (CaptureOperation *)init
 {
 	self = [super init];
@@ -95,14 +98,14 @@
     [bpfControl timeout:&tick];
 
 	// init peak hold buffer for 1[sec]
-	max_buffer = [[DataQueue alloc] init];
-	[max_buffer zeroFill:(int)(ceil(1.0f/TIMESLOT))];
+    peak_hold_queue = [[DataQueue alloc] initWithZeroFill:(int)(ceil(1.0f/TIMESLOT))];
 
 	// reset counter
 	max_mbps = peak_mbps = 0.0;
 	bytes = pkts = 0;
 
 	terminate = FALSE;
+    [bpfControl promiscus:[_model promisc]];
     [bpfControl start:source_interface];
     while (!terminate) {
 		@autoreleasepool {
@@ -137,8 +140,8 @@
 			mbps = mbps / (1000.0f * 1000.0f); // [mbps]
 			if (max_mbps < mbps)
 				max_mbps = mbps;
-			[max_buffer shiftDataWithNewData:[SamplingData dataWithSingleFloat:mbps]];
-			peak_mbps = [max_buffer maxFloatValue];
+			[peak_hold_queue shiftDataWithNewData:[SamplingData dataWithSingleFloat:mbps]];
+			peak_mbps = [peak_hold_queue maxFloatValue];
 
 			// update model
 			[_model setTotal_pkts:pkts];

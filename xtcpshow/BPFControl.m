@@ -322,11 +322,12 @@ err:
 
 - (BOOL)promiscus:(BOOL)flag
 {
-    int on = 1;
-    
-    if (ioctl(fd, BIOCPROMISC, &on) < 0) {
-        NSLog(@"ioctl(BIOCPROMISC) failed: %s", strerror(errno));
-        return false;
+    if (flag == true) {
+        NSLog(@"Entering Promiscus mode");
+        if (ioctl(fd, BIOCPROMISC, NULL) < 0) {
+            NSLog(@"ioctl(BIOCPROMISC) failed: %s", strerror(errno));
+            return false;
+        }
     }
     return true;
 }
@@ -342,7 +343,10 @@ err:
 
 - (BOOL)setSnapLen:(uint32_t) len
 {
-    // ignore
+    // snaplen is a part of filter program.
+    if (pcap)
+        pcap_set_snaplen(pcap, len);
+    
     return true;
 }
 

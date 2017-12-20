@@ -35,11 +35,8 @@
 
 @interface DataResampler : NSObject {
 	BOOL write_protect;
-
-	// MA filter states
-	DataQueue *sma[2];
 }
-
+@property (strong) NSArray *FIR_KZ;
 @property (strong, readonly) DataQueue *data;
 @property (weak, readonly) DataQueue *lastInput;
 @property (assign) NSUInteger outputSamples;

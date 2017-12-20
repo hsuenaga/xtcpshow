@@ -34,10 +34,27 @@
 #import "DataResampler.h"
 #import "SamplingData.h"
 
+// Gaussian filter.
+// larger value is more better and more slow.
+#define KZ_STAGE 3
+
 @implementation DataResampler
-//
-// protected:
-//
+@synthesize FIR_KZ;
+
+- (id)init
+{
+    self = [super init];
+
+    NSMutableArray *FIR_Factory = [[NSMutableArray alloc] init];
+    for (int i = 0; i < KZ_STAGE; i++) {
+        DataQueue *stage = [[DataQueue alloc] init];
+        [FIR_Factory addObject:stage];
+    }
+    FIR_KZ = [NSArray arrayWithArray:FIR_Factory];
+    
+    return self;
+}
+
 - (void)invalidValueException
 {
 	NSException *ex;
@@ -48,9 +65,6 @@
 	@throw ex;
 }
 
-//
-// public:
-//
 - (void)purgeData
 {
 	_data = nil;
@@ -69,26 +83,28 @@
 {
 	NSTimeInterval dataLength;
 	NSDate *start, *end;
-	NSUInteger MASamples, maxSamples;
+	NSUInteger FIR_Samples, maxSamples;
 	float bytes2mbps, tick;
 
 	// convert units
 	tick = _outputTimeLength / _outputSamples; // [sec/sample]
-	MASamples = ceil(_MATimeLength / tick);
-	maxSamples = _outputSamples + MASamples;
+	FIR_Samples = ceil(_MATimeLength / tick);
+	maxSamples = _outputSamples + FIR_Samples;
 	bytes2mbps = 8.0f / tick; // [bps]
 	bytes2mbps = bytes2mbps / 1000.0f / 1000.0f; // [Mbps]
 
 	// allocate data if need
 	if (_data == nil) {
-		NSUInteger TMASamples = MASamples / 2;
-
 		_data = [[DataQueue alloc] init];
 		_data.last_update = nil;
-		sma[0] = [[DataQueue alloc] init];
-		sma[1] = [[DataQueue alloc] init];
-		[sma[0] zeroFill:TMASamples];
-		[sma[1] zeroFill:TMASamples];
+
+        NSUInteger FIR_tap = FIR_Samples / [FIR_KZ count];
+        if (FIR_tap <= 0) {
+            FIR_Samples = [FIR_KZ count];
+            FIR_tap = 1;
+        }
+        for (int i = 0; i < [FIR_KZ count]; i++)
+            [[FIR_KZ objectAtIndex:i] zeroFill:FIR_tap];
 	}
 
 	// get range of time
@@ -128,14 +144,14 @@
 			sample_count += source.numberOfSamples;
 			_data.last_update = source.timestamp;
 		}
-		sample = [SamplingData dataWithSingleFloat:slot_value];
+		sample = [SamplingData dataWithSingleFloat:(slot_value + remain)];
 
-		// Step2: TMA filter
-		if (MASamples > 2) {
-			[sma[0] shiftDataWithNewData:sample];
-			sample = [SamplingData dataWithSingleFloat:[sma[0] averageFloatValue]];
-			[sma[1] shiftDataWithNewData:sample];
-			sample = [SamplingData dataWithSingleFloat:[sma[1] averageFloatValue]];
+		// Step2: FIR
+		if (FIR_Samples > [FIR_KZ count]) {
+            for (int i = 0; i < [FIR_KZ count]; i++) {
+                [[FIR_KZ objectAtIndex:i] shiftDataWithNewData:sample];
+                sample = [SamplingData dataWithSingleFloat:[[FIR_KZ objectAtIndex:i] averageFloatValue]];
+            }
 		}
 
 		// Step3: convert unit of sample

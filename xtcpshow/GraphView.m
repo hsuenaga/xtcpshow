@@ -557,12 +557,13 @@ float const scroll_sensitivity = 10.0f;
 	// get filename
 	panel = [NSSavePanel savePanel];
 	[panel setAllowedFileTypes:@[@"png"]];
-	[panel setNameFieldStringValue:@"xtcpshow.png"];
+	[panel setNameFieldStringValue:@"xtcpshow_hardcopy.png"];
 	[panel runModal];
 	NSLog(@"save to %@%@",
 	      [panel directoryURL],
 	      [panel nameFieldStringValue]);
-    NSDictionary *prop = [[NSDictionary alloc] init];
+    NSDictionary *prop = [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithBool:false],
+                          NSImageInterlaced, nil];
     
 	png = [buffer representationUsingType:NSPNGFileType properties:prop];
 	[png writeToURL:[[panel directoryURL] URLByAppendingPathComponent:[panel nameFieldStringValue]]

@@ -46,15 +46,20 @@
 #endif
 
 @implementation DataQueue
-- (DataQueue *)init
+- (DataQueue *)initWithZeroFill:(int)size
 {
-	self = [super init];
-
-	refresh_count = REFRESH_THR;
-
-	return self;
+    self = [super init];
+    if (size)
+        [self zeroFill:size];
+    refresh_count = REFRESH_THR;
+    
+    return self;
 }
 
+- (DataQueue *)init
+{
+    return [self initWithZeroFill:0];
+}
 
 //
 // protected

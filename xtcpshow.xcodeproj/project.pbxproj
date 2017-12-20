@@ -111,6 +111,7 @@
 		4639F8181798BA9600E59491 = {
 			isa = PBXGroup;
 			children = (
+				46CE1B651FEA1A1E00AEFDC7 /* Internal Documents */,
 				46A9208017D8372D0083CC8D /* DiskImage */,
 				46A9207F17D8371E0083CC8D /* GitHUB */,
 				4639F82A1798BA9700E59491 /* xtcpshow */,
@@ -230,6 +231,13 @@
 				46DE97AB17D3035E009E0A16 /* xtcpshow-uninstall.sh */,
 			);
 			name = DiskImage;
+			sourceTree = "<group>";
+		};
+		46CE1B651FEA1A1E00AEFDC7 /* Internal Documents */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = "Internal Documents";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

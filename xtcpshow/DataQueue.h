@@ -40,17 +40,17 @@
 	float add_remain;
 	float sub;
 	float sub_remain;
-
-	DataQueueEntry *_head;
-	DataQueueEntry *_tail;
-	DataQueueEntry *_last_read;
 }
 @property (strong) NSDate *last_update;
 @property (readonly) NSUInteger count;
+@property (strong) DataQueueEntry *head;
+@property (strong) DataQueueEntry *tail;
+@property (strong) DataQueueEntry *last_read;
 
 //
 // protected
 //
+- (DataQueue *)initWithZeroFill:(int)size;
 - (DataQueue *)init;
 - (void)addSumState:(float)value;
 - (void)subSumState:(float)sub;
