@@ -351,8 +351,11 @@
 {
 	if (_count == 0)
 		return 0.0;
-
-	return ([self sum] / (float)_count);
+    float avg = [self sum] / (float)_count;
+    if (avg < 0.001f) {
+        avg = 0.0f;
+    }
+    return avg;
 }
 
 - (float)standardDeviation
@@ -365,6 +368,10 @@
 		variance += pow((avg - entry.content.floatValue), 2.0);
 	variance /= (_count - 1);
 
+    float deviation = sqrtf(variance);
+    if (deviation < 0.001f) {
+        deviation = 0.0f;
+    }
 	return sqrtf(variance);
 }
 
