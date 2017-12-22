@@ -40,6 +40,8 @@
 #import "DataQueueEntry.h"
 #import "SamplingData.h"
 
+#import "TrafficData.h"
+
 /*
  * Capture thread
  */
@@ -107,6 +109,11 @@
 	terminate = FALSE;
     [bpfControl promiscus:[_model promisc]];
     [bpfControl start:source_interface];
+    TrafficData *storage = [TrafficData unixDataOf:self
+                                    withMsResolution:(1000 * 1000) // 1000 [sec]
+                                           startAt:NULL
+                                             endAt:NULL];
+    NSMutableArray *samples = [[NSMutableArray alloc] init];
     while (!terminate) {
 		@autoreleasepool {
             struct timeval tv;
@@ -129,6 +136,8 @@
                 pkts++;
                 bytes += pktlen;
                 [self sendNotify:pktlen withTime:&tv];
+                id obj = [storage addSampleAtTimevalExtend:&tv withBytes:pktlen];
+                [samples addObject:obj];
 			}
 
 			// timer update
@@ -161,6 +170,19 @@
 	NSLog(@"%d packets proccessed.", pkts);
 	NSLog(@"done thread");
 	[self sendFinish];
+    
+    // debug
+    NSFileHandle *file;
+    file = [NSFileHandle fileHandleForWritingAtPath:@"/tmp/xtcpdump_tree.dot"];
+    if (file == nil)
+        NSLog(@"Cannot open file.");
+    NSString *msg;
+    msg = [NSString stringWithFormat:@"digraph xtcpdump {\n"];
+    [file writeData:[msg dataUsingEncoding:NSUTF8StringEncoding]];
+    [storage dumpTree:file];
+    msg = [NSString stringWithFormat:@"}\n"];
+    [file writeData:[msg dataUsingEncoding:NSUTF8StringEncoding]];
+    [file closeFile];
 }
 
 - (void)setBPFControl:(BPFControl *)bpfc
