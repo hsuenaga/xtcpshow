@@ -52,7 +52,7 @@
 #pragma mark - basic acessor
 - (NSUInteger)bitsFromDate:(NSDate *)from toDate:(NSDate *)to;
 - (NSUInteger)bytesFromDate:(NSDate *)from toDate:(NSDate *)to;
-- (NSArray *)samplesFromDate:(NSDate *)from toDate:(NSDate *)to;
+- (NSUInteger)samplesFromDate:(NSDate *)from toDate:(NSDate *)to;
 
 #pragma mark - simple scaled acsessor
 - (NSUInteger)bytes;

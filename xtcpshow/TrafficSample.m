@@ -127,11 +127,11 @@ static NSFileHandle *debugHandle;
     return 0;
 }
 
--(NSArray *)samplesFromDate:(NSDate *)from toDate:(NSDate *)to
+-(NSUInteger)samplesFromDate:(NSDate *)from toDate:(NSDate *)to
 {
     if ((from && [from laterDate:End]) || (to && [to earlierDate:Start]))
-        return nil; // out of range
-    return [NSArray arrayWithObject:self];
+        return 0; // out of range
+    return self.numberOfSamples;
 }
 
 //

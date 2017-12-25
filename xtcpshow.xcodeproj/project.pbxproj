@@ -27,7 +27,6 @@
 		4696050E17CDD2DB00798814 /* ServiceManagement.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4696050D17CDD2DB00798814 /* ServiceManagement.framework */; };
 		4696051017CDD2EC00798814 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4696050F17CDD2EC00798814 /* Security.framework */; };
 		46A10AD117CEF4A50011A9E8 /* BPFControl.m in Sources */ = {isa = PBXBuildFile; fileRef = 46A10AD017CEF4A50011A9E8 /* BPFControl.m */; };
-		46CE1B671FEA76A100AEFDC7 /* Class.graffle in Resources */ = {isa = PBXBuildFile; fileRef = 46CE1B661FEA76A100AEFDC7 /* Class.graffle */; };
 		46D1634217CE117C009418DF /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 46D1634017CE117C009418DF /* Info.plist */; };
 		46D1634317CE117C009418DF /* Launchd.plist in Resources */ = {isa = PBXBuildFile; fileRef = 46D1634117CE117C009418DF /* Launchd.plist */; };
 		46D8CD0117BC7D060028F793 /* DataQueueEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = 46D8CD0017BC7D060028F793 /* DataQueueEntry.m */; };
@@ -319,7 +318,6 @@
 				46219ABB17B1C6EC00740A80 /* xtcpshow.iconset in Resources */,
 				46D1634217CE117C009418DF /* Info.plist in Resources */,
 				46D1634317CE117C009418DF /* Launchd.plist in Resources */,
-				46CE1B671FEA76A100AEFDC7 /* Class.graffle in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

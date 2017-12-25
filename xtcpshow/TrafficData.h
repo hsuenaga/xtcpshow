@@ -67,5 +67,7 @@
 
 #pragma mark - utility
 - (NSUInteger)msResolution;
+- (NSUInteger)slotFromTimeval:(struct timeval *)tv;
+- (void)updateResolution:(NSTimeInterval)resolution;
 - (NSTimeInterval)durationOverwrapFromDate:(NSDate *)from toDate:(NSDate *)to;
 @end

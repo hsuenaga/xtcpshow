@@ -57,51 +57,19 @@
 - (id)initWithResolution:(NSTimeInterval)resolution startAt:(NSDate *)start endAt:(NSDate *)end
 {
     self = [super init];
-    
-    self.Start = start;
-    self.End = end;
+
     self.numberOfSamples = 0;
     self.packetLength = 0;
-    
-    if (resolution) {
-        NSUInteger msResolution = (NSUInteger)floor(resolution * 1000.0);
-        NSUInteger nextResolution = 0;
-        if (msResolution > 1) {
-            double pf = log(msResolution)/log(NBRANCH);
-            NSUInteger ipf = (NSUInteger)round(pf);
-            nextResolution = NBRANCH;
-            for (int i = 1; i < ipf; i++)
-                nextResolution = nextResolution * NBRANCH;
-            if (nextResolution == msResolution)
-                nextResolution = nextResolution / NBRANCH;
-            if (nextResolution >= 1) {
-                NSUInteger nslot = msResolution / nextResolution;
-                if (msResolution % nextResolution)
-                    nslot++;
-                msResolution = nslot * nextResolution;
-                self.Resolution = msec2interval(msResolution);
-                self.nextResolution = msec2interval(nextResolution);
-            }
-            else {
-                self.Resolution = msec2interval((msResolution));
-                self.nextResolution = NAN;
-            }
-        }
-        else {
-            self.Resolution = msec2interval(1);
-            self.nextResolution = NAN;
-        }
-    }
-    else {
-        self.Resolution = NAN;
-        self.nextResolution = NAN;
-    }
+
+    self.Start = start;
+    self.End = end;
+    [self alignDate];
+    [self updateResolution:resolution];
     dataRef = [NSPointerArray weakObjectsPointerArray];
-    if (self.Resolution && interval2msec(self.Resolution) > 1) {
+    if (!isnan(self.nextResolution)) {
         for (int i = 0; i < NBRANCH; i++)
             [dataRef addPointer:nil];
     }
-    [self alignDate];
     
     return self;
 }
@@ -152,10 +120,6 @@
 //
 - (NSUInteger)bitsFromDate:(NSDate *)from toDate:(NSDate *)to
 {
-    NSUInteger bits = 0;
-    NSArray *allData = [dataRef allObjects];
-    BOOL overflow;
-    
     if (from == nil || to == nil)
         return 0;
     if (self.packetLength == 0)
@@ -174,6 +138,9 @@
     //
     // correct individual samples.
     //
+    NSArray *allData = [dataRef allObjects];
+    NSUInteger bits = 0;
+    BOOL overflow;
     for (int idx = 0; idx < [allData count]; idx++) {
         if (allData[idx] == nil) {
             // sampling data was lost due to buffer limitation.
@@ -220,43 +187,57 @@
     return [self bitsPerSecFromDate:from toDate:to] / 8.0;
 }
 
-- (NSArray *)samplesFromDate:(NSDate *)from toDate:(NSDate *)to
+- (NSUInteger)samplesFromDate:(NSDate *)from toDate:(NSDate *)to
 {
-    NSArray *children = [dataRef allObjects];
-    BOOL incomplete = false;
-    
-    if ((from && [from laterDate:self.End]) || (to && [to earlierDate:self.Start]))
-        return nil; // out of range
-    
-    if ([children count] == 0)
-        return [NSArray arrayWithObject:self]; // no detail.
-    
-    NSMutableArray *array = [[NSMutableArray alloc] init];
-    for (int idx = 0; idx < [children count]; idx++) {
-        TrafficSample *child = [children objectAtIndex:idx];
-        
-        if (child == nil) {
-            // incomplete collection.
-            incomplete = true;
-            continue;
-        }
-        if (incomplete && from && to) {
-            if ([to earlierDate:child.Start]) {
-                // old data was lost, but we have ecnough new data.
-                incomplete = false;
-                continue;
-            }
-            if ([to laterDate:child.Start]) {
-                // lost data. giveup.
-                return [NSArray arrayWithObject:self];
-            }
-        }
-        NSArray *particle = [child samplesFromDate:from toDate:to];
-        if (particle)
-            [array addObjectsFromArray:particle];
+    if (from == nil || to == nil)
+        return 0;
+    if (self.numberOfSamples == 0)
+        return 0;
+    if (self.Start && self.End) {
+        // we have data window.
+        if ([from laterDate:self.End])
+            return 0; // out of range
+        if ([to earlierDate:self.Start] || [to isEqual:self.Start])
+            return 0; // out of range. merginal entry must specified by "from".
+        if (([from isEqual:self.Start] || [from earlierDate:self.Start])
+            && [to laterDate:self.End])
+            return self.numberOfSamples; // just report entire data.
     }
+    
+    //
+    // correct individual samples.
+    //
+    NSArray *allData = [dataRef allObjects];
+    NSUInteger samples = 0;
+    BOOL overflow;
 
-    return array;
+    for (int idx = 0; idx < [allData count]; idx++) {
+        if (allData[idx] == nil) {
+            // sampling data was lost due to buffer limitation.
+            overflow = true;
+            break;
+        }
+        
+        TrafficSample *sample = (TrafficSample *)allData[idx];
+        if ([sample.Start earlierDate:from])
+            continue;
+        if ([sample.Start isEqual:to] || [sample.Start laterDate:to])
+            break;
+        // valid sample.
+        samples += sample.numberOfSamples;
+    }
+    if ([allData count] > 0 && !overflow)
+        return samples; // return accurate data.
+    
+    //
+    // accurate data was lost.
+    //
+    if (!self.Resolution || !self.Start || !self.End)
+        return self.numberOfSamples;
+    
+    NSTimeInterval duration = [self durationOverwrapFromDate:from toDate:to];
+    double ratio = duration / self.Resolution;
+    return (NSUInteger)floor(((double)(self.numberOfSamples)) * ratio);
 }
 
 - (double)bps
@@ -338,21 +319,9 @@
     }
 
     //
-    // indirect reference via another TrafficData.
+    // aggregate
     //
-    //  Start                                End
-    //  |<---------resolution[msec]--------->|
-    //  |<-slot 1->|<-slot 2->|...|<-slot n->| ... n => NBRNACH
-    //                ^
-    //                offset(timestamp - start) [ms]
-    //  slot = offset / (resolution / nbranch) = offset * nbrach / resolution
-    //
-    NSUInteger slot = (tv2msec(tv) - [self msStart]) * NBRANCH / [self msResolution];
-    if (slot >= [dataRef count]) {
-        NSLog(@"slot %lu is out of range", slot);
-        slot = [dataRef count] - 1;
-    }
-    
+    NSUInteger slot = [self slotFromTimeval:tv];
     TrafficData *child = [dataRef pointerAtIndex:slot];
     if (!child) {
         // create new node.
@@ -363,7 +332,6 @@
         [dataRef replacePointerAtIndex:slot
                            withPointer:(__bridge void * _Nullable)child];
     }
-
     return [child addSampleAtTimeval:tv withBytes:bytes];
 }
 
@@ -453,6 +421,72 @@
         return 0;
     
     return interval2msec(self.Resolution);
+}
+
+- (NSUInteger)slotFromTimeval:(struct timeval *)tv
+{
+    //
+    // indirect reference via another TrafficData.
+    //
+    //  Start                                End
+    //  |<---------resolution[msec]--------->|
+    //  |<-slot 1->|<-slot 2->|...|<-slot n->| ... n => NBRNACH
+    //                ^
+    //                offset(timestamp - start) [ms]
+    //  slot = offset / (resolution / nbranch) = offset * nbrach / resolution
+    //
+    NSUInteger slot = (tv2msec(tv) - [self msStart]) * NBRANCH / [self msResolution];
+    if (slot >= [dataRef count]) {
+        NSLog(@"slot %lu is out of range", slot);
+        slot = [dataRef count] - 1;
+    }
+    
+    return slot;
+}
+
+- (void)updateResolution:(NSTimeInterval)resolusion
+{
+    if (isnan(resolusion)) {
+        self.Resolution = NAN;
+        self.nextResolution = NAN;
+        return;
+    }
+    
+    NSUInteger msResolution = interval2msec(resolusion);
+    if (msResolution <= 1) {
+        // minimum resolusion.
+        self.Resolution = msec2interval(1);
+        self.nextResolution= NAN;
+    }
+
+    // ensure nextResolution to power of NBRANCH.
+    NSUInteger pf = (NSUInteger)round(log(msResolution)/log(NBRANCH));
+    NSUInteger msNext = NBRANCH;
+    msNext = NBRANCH;
+    for (int i = 1; i < pf; i++) {
+        msNext *= NBRANCH;
+    }
+    if (msNext == msResolution) {
+        // for example)
+        // log(9999)/log(10) = 4 = log(10000)/log(10)
+        // we need power of 3 for 9999.
+        msNext /= NBRANCH;
+    }
+    if (msNext < 1) {
+        self.Resolution = resolusion;
+        self.nextResolution = NAN;
+        return;
+    }
+
+    // adjust msResolution to multiple of nextResolution
+    NSUInteger nslot = msResolution / msNext;
+    if (msResolution % msNext) {
+        nslot += 1;
+    }
+    msResolution = nslot * msNext;
+    
+    self.Resolution = msec2interval(msResolution);
+    self.nextResolution = msec2interval(msNext);
 }
 
 - (NSTimeInterval)durationOverwrapFromDate:(NSDate *)from toDate:(NSDate *)to
