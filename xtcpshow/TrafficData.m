@@ -42,14 +42,14 @@
 - (id)init;
 - (id)initWithResolution:(NSTimeInterval)resolusion startAt:(NSDate *)start endAt:(NSDate *)end;
 - (id)initWithResolutionUnix:(NSUInteger)msResolution startAt:(struct timeval *)tvStart endAt:(struct timeval *)tvEnd;
-
-- (void)insertChild:(TrafficSample *)child;
 - (TrafficSample *)addToChildNode:(struct timeval *)tv withBytes:(NSUInteger)bytes;
 @end
 
 @implementation TrafficData {
     NSPointerArray *dataRef; // child nodes
 };
+@synthesize Resolution;
+@synthesize nextResolution;
 
 //
 // initializer
@@ -58,14 +58,50 @@
 {
     self = [super init];
     
-    self.packetLength = 0;
-    self.numberOfSamples = 0;
     self.Start = start;
     self.End = end;
-    self.Resolution = resolution;
+    self.numberOfSamples = 0;
+    self.packetLength = 0;
+    
+    if (resolution) {
+        NSUInteger msResolution = (NSUInteger)floor(resolution * 1000.0);
+        NSUInteger nextResolution = 0;
+        if (msResolution > 1) {
+            double pf = log(msResolution)/log(NBRANCH);
+            NSUInteger ipf = (NSUInteger)round(pf);
+            nextResolution = NBRANCH;
+            for (int i = 1; i < ipf; i++)
+                nextResolution = nextResolution * NBRANCH;
+            if (nextResolution == msResolution)
+                nextResolution = nextResolution / NBRANCH;
+            if (nextResolution >= 1) {
+                NSUInteger nslot = msResolution / nextResolution;
+                if (msResolution % nextResolution)
+                    nslot++;
+                msResolution = nslot * nextResolution;
+                self.Resolution = msec2interval(msResolution);
+                self.nextResolution = msec2interval(nextResolution);
+            }
+            else {
+                self.Resolution = msec2interval((msResolution));
+                self.nextResolution = NAN;
+            }
+        }
+        else {
+            self.Resolution = msec2interval(1);
+            self.nextResolution = NAN;
+        }
+    }
+    else {
+        self.Resolution = NAN;
+        self.nextResolution = NAN;
+    }
     dataRef = [NSPointerArray weakObjectsPointerArray];
+    if (self.Resolution && interval2msec(self.Resolution) > 1) {
+        for (int i = 0; i < NBRANCH; i++)
+            [dataRef addPointer:nil];
+    }
     [self alignDate];
-    self.uniq_id = global_id++;
     
     return self;
 }
@@ -287,87 +323,62 @@
 // insert child container(TrraficData) or sigle data(TrafficSample).
 // we use TrafficSample as abstructed base class.
 //
-- (void)insertChild:(TrafficSample *)child
-{
-    //
-    // dataRef must be sorted.
-    //
-    if ([dataRef count] == 0) {
-        [dataRef addPointer:(__bridge void * _Nullable)(child)];
-        return;
-    }
-    
-    int idx = (int)([dataRef count] - 1);
-    TrafficSample *walk = [dataRef pointerAtIndex:idx];
-    
-    // try to insert to tail.
-    if (walk && [child.Start laterDate:walk.End]) {
-        [dataRef addPointer:(__bridge void * _Nullable)(child)];
-        return;
-    }
-    
-    // try to insert to inermediate position
-    for (idx--;idx >= 0; idx--) {
-        walk = [dataRef pointerAtIndex:idx];
-        if (walk == nil)
-            continue;
-        if ([child.Start earlierDate:walk.Start])
-            continue; // skip old entry.
-        // newer entry is found. insert to previous position.
-        [dataRef insertPointer:(__bridge void * _Nullable)(child) atIndex:(idx + 1)];
-        return;
-    }
-    
-    // insert to head
-    [dataRef insertPointer:(__bridge void * _Nullable)(child) atIndex:0];
-    return;
-}
-
 - (TrafficSample *)addToChildNode:(struct timeval *)tv withBytes:(NSUInteger)bytes
 {
-    if (!self.Resolution || [self msResolution] < NBRANCH) {
+    //
+    // leaf
+    //
+    if (isnan(self.Resolution) ||
+        isnan(self.nextResolution) ||
+        [self msResolution] <= 1) {
         // We have traffic sample directly.
         TrafficSample *child = [TrafficSample sampleOf:self atTimeval:tv withPacketLength:bytes];
-        [self insertChild:child];
+        [dataRef addPointer:(__bridge void * _Nullable)child];
         return child;
     }
 
     //
     // indirect reference via another TrafficData.
     //
-    TrafficData *child = nil;
-    if ([dataRef count] > 0) {
-        // check from tail to head
-        for (int idx = (int)[dataRef count] - 1; idx >= 0; idx--) {
-            child = [dataRef pointerAtIndex:idx];
-            if (child == nil)
-                continue;
-            if ([child acceptableTimeval:tv])
-                break; // use existing child node.
-            child = nil;
-        }
+    //  Start                                End
+    //  |<---------resolution[msec]--------->|
+    //  |<-slot 1->|<-slot 2->|...|<-slot n->| ... n => NBRNACH
+    //                ^
+    //                offset(timestamp - start) [ms]
+    //  slot = offset / (resolution / nbranch) = offset * nbrach / resolution
+    //
+    NSUInteger slot = (tv2msec(tv) - [self msStart]) * NBRANCH / [self msResolution];
+    if (slot >= [dataRef count]) {
+        NSLog(@"slot %lu is out of range", slot);
+        slot = [dataRef count] - 1;
     }
-     if (!child) {
-         // no acceptable child node found.
+    
+    TrafficData *child = [dataRef pointerAtIndex:slot];
+    if (!child) {
+        // create new node.
         child = [TrafficData unixDataOf:self
-                     withMsResolution:([self msResolution] / NBRANCH)
-                              startAt:tv
-                                endAt:tv];
-         [self insertChild:child];
+                       withMsResolution:interval2msec(self.nextResolution)
+                                startAt:tv
+                                  endAt:tv];
+        [dataRef replacePointerAtIndex:slot
+                           withPointer:(__bridge void * _Nullable)child];
     }
 
-    // request child to hold sampling data.
     return [child addSampleAtTimeval:tv withBytes:bytes];
 }
 
 - (TrafficSample *)addSampleAtTimeval:(struct timeval *)tv withBytes:(NSUInteger)bytes
 {
-    if (![self acceptableTimeval:tv])
+    if (![self acceptableTimeval:tv]) {
+        NSLog(@"obj%d request is not acceptable", self.objectID);
         return nil;
+    }
     
     id new = [self addToChildNode:tv withBytes:bytes];
-    if (!new)
+    if (!new) {
+        NSLog(@"obj%d child node rejected the timestamp", self.objectID);
         return nil;
+    }
     
     self.numberOfSamples++;
     self.packetLength += bytes;
@@ -459,28 +470,58 @@
 //
 // debug
 //
-- (void)dumpTree:(NSFileHandle *)file
+- (void)dumpTree:(BOOL)root
 {
-    NSString *msg;
-    if ([dataRef count] > 0) {
-        for (int idx = 0; idx < [dataRef count]; idx++) {
-            TrafficSample *obj = [dataRef pointerAtIndex:idx];
-            if (obj == nil) {
-                msg = [NSString stringWithFormat:@"obj%d -> null\n",
-                       self.uniq_id];
-                [file writeData:[msg dataUsingEncoding:NSUTF8StringEncoding]];
-            }
-            else {
-                msg = [NSString stringWithFormat:@"obj%d -> obj%d\n",
-                       self.uniq_id, obj.uniq_id];
-                [file writeData:[msg dataUsingEncoding:NSUTF8StringEncoding]];
-                [obj dumpTree:file];
-            }
-        }
+    // header
+    if (root) {
+        [self writeDebug:@"digraph xtcpdump {\n"];
+        [self writeDebug:@"node [shape=record];\n"];
+        [self writeDebug:@"graph [rankdir=TB];\n"];
     }
-    else {
-        msg = [NSString stringWithFormat:@"obj%d -> term\n", self.uniq_id];
-        [file writeData:[msg dataUsingEncoding:NSUTF8StringEncoding]];
+    
+    NSArray *node = [dataRef allObjects];
+    if ([node count] == 0) {
+        [self writeDebug:@"node%d [shape=doublecircle label=\"%llu [bytes]\"];\n",
+         self.objectID, self.packetLength];
+        return;
+    }
+
+    // create record def
+    [self writeDebug:@"node%d [shape=record label=\"{<obj%d> obj%d\\n%lu[msec]\\n%llu [bytes]|{",
+     self.objectID, self.objectID, self.objectID, [self msResolution], self.packetLength];
+    __block BOOL delim = false;
+    [node
+     enumerateObjectsUsingBlock:^(TrafficSample *ptr, NSUInteger idx, BOOL *stop) {
+         if ([ptr isMemberOfClass:[self class]]) {
+             if (delim)
+                 [self writeDebug:@"|"];
+             [self writeDebug:@"<obj%d> slot%lu", ptr.objectID, idx];
+             delim = true;
+         }
+         else {
+             [self writeDebug:@"<leaf%d> no child", self.objectID];
+             *stop = true;
+         }
+     }];
+    [self writeDebug:@"}}\"];\n"];
+
+    // create record link
+    [node
+     enumerateObjectsUsingBlock:^(TrafficSample *ptr, NSUInteger idx, BOOL *stop) {
+         if ([ptr isMemberOfClass:[self class]]) {
+             [self writeDebug:@"node%d:obj%d -> node%d:obj%d;\n",
+              self.objectID, ptr.objectID, ptr.objectID, ptr.objectID];
+         }
+         else {
+             [self writeDebug:@"node%d:leaf%d -> obj%d;\n",
+              self.objectID, self.objectID, ptr.objectID];
+         }
+         [ptr dumpTree:false];
+     }];
+    
+    // footer
+    if (root) {
+        [self writeDebug:@"}\n"];
     }
 }
 @end

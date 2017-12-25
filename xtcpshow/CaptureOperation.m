@@ -106,14 +106,23 @@
 	max_mbps = peak_mbps = 0.0;
 	bytes = pkts = 0;
 
-	terminate = FALSE;
-    [bpfControl promiscus:[_model promisc]];
-    [bpfControl start:source_interface];
+    if (![bpfControl promiscus:[_model promisc]]) {
+        NSLog(@"Cannot initizlize BPF.");
+        [self sendError:@"Cannot enable promiscus mode"];
+        return;
+    }
+    if (![bpfControl start:source_interface]) {
+        NSLog(@"Cannot Initiaize BPF.");
+        [self sendError:@"Cannot attach interface"];
+        return;
+    }
     TrafficData *storage = [TrafficData unixDataOf:self
                                     withMsResolution:(1000 * 1000) // 1000 [sec]
                                            startAt:NULL
                                              endAt:NULL];
     NSMutableArray *samples = [[NSMutableArray alloc] init];
+    
+    terminate = FALSE;
     while (!terminate) {
 		@autoreleasepool {
             struct timeval tv;
@@ -127,6 +136,7 @@
 				break;
             if (![bpfControl next:&tv withCaplen:NULL withPktlen:&pktlen]) {
                 NSLog(@"bpfControl error.");
+                [self sendError:@"Failed to read from BPF"];
                 terminate = true;
             }
             else if (tv.tv_sec == 0 && tv.tv_usec == 0) {
@@ -137,7 +147,10 @@
                 bytes += pktlen;
                 [self sendNotify:pktlen withTime:&tv];
                 id obj = [storage addSampleAtTimevalExtend:&tv withBytes:pktlen];
-                [samples addObject:obj];
+                if (obj)
+                    [samples addObject:obj];
+                else
+                    NSLog(@"failed to allocate sampling object");
 			}
 
 			// timer update
@@ -172,17 +185,8 @@
 	[self sendFinish];
     
     // debug
-    NSFileHandle *file;
-    file = [NSFileHandle fileHandleForWritingAtPath:@"/tmp/xtcpdump_tree.dot"];
-    if (file == nil)
-        NSLog(@"Cannot open file.");
-    NSString *msg;
-    msg = [NSString stringWithFormat:@"digraph xtcpdump {\n"];
-    [file writeData:[msg dataUsingEncoding:NSUTF8StringEncoding]];
-    [storage dumpTree:file];
-    msg = [NSString stringWithFormat:@"}\n"];
-    [file writeData:[msg dataUsingEncoding:NSUTF8StringEncoding]];
-    [file closeFile];
+    [storage openDebugFile:@"tree.dot"];
+    [storage dumpTree:true];
 }
 
 - (void)setBPFControl:(BPFControl *)bpfc

@@ -37,6 +37,7 @@
 
 @interface TrafficData : TrafficSample
 @property (assign, nonatomic) NSTimeInterval Resolution;
+@property (assign, nonatomic) NSTimeInterval nextResolution;
 
 #pragma mark - initializer
 + (id)dataOf:(id)parent withResolution:(NSTimeInterval)Resolution startAt:(NSDate *)start endAt:(NSDate *)end;

@@ -32,7 +32,8 @@
 
 #import "TrafficSample.h"
 
-int global_id = 0;
+static int newID;
+static NSFileHandle *debugHandle;
 
 //
 // base class of traffic data
@@ -45,6 +46,7 @@ int global_id = 0;
 @end
 
 @implementation TrafficSample
+@synthesize objectID;
 @synthesize parent;
 @synthesize numberOfSamples;
 @synthesize packetLength;
@@ -57,13 +59,16 @@ int global_id = 0;
 - (id)initAtTimeval:(struct timeval *)tv withPacketLength:(uint64_t)length
 {
     self = [super init];
+    parent = nil;
+    
+    objectID = [[self class] newID];
     if (tv)
         self.Start = self.End = tv2date(tv);
     numberOfSamples = 1;
     packetLength = length;
-    parent = nil;
+    debugHandle = nil;
     [self alignDate];
-    _uniq_id = global_id++;
+    
     return self;
 }
 
@@ -85,6 +90,25 @@ int global_id = 0;
     new = [[TrafficSample alloc] initAtTimeval:tv withPacketLength:length];
     new.parent = parent;
     return new;
+}
+
++ (int)newID
+{
+    return newID++;
+}
+
++ (NSFileHandle *)debugHandle
+{
+    return debugHandle;
+}
+
++ (void)setDebugHandle:(NSFileHandle *)handle
+{
+    if (debugHandle) {
+        [debugHandle closeFile];
+        debugHandle = nil;
+    }
+    debugHandle = handle;
 }
 
 //
@@ -226,11 +250,31 @@ int global_id = 0;
             [self.parent description]];
 }
 
-- (void)dumpTree:(NSFileHandle *)file
+- (void)dumpTree:(BOOL)root
 {
-    NSString *msg;
-    msg = [NSString stringWithFormat:@"obj%d -> leaf\n", self.uniq_id];
-    [file writeData:[msg dataUsingEncoding:NSUTF8StringEncoding]];
-    return;
+    [self writeDebug:@"obj%d [shape=point];\n", self.objectID];
+}
+
+- (void)openDebugFile:(NSString *)fileName
+{
+    NSString *path;
+    path = [NSString stringWithFormat:@"%@/%@", NSHomeDirectory(), fileName];
+    
+    NSFileManager *fmgr = [NSFileManager defaultManager];
+    [fmgr createFileAtPath:path contents:nil attributes:nil];
+    
+    debugHandle = [NSFileHandle fileHandleForWritingAtPath:path];
+    [debugHandle truncateFileAtOffset:0];
+}
+
+- (void)writeDebug:(NSString *)format, ...
+{
+    NSString *contents;
+    va_list args;
+    
+    va_start(args, format);
+    contents = [[NSString alloc] initWithFormat:format arguments:args];
+    va_end(args);
+    [debugHandle writeData:[contents dataUsingEncoding:NSUTF8StringEncoding]];
 }
 @end

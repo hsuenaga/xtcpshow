@@ -36,10 +36,10 @@
 // precision used by smart string representations.
 #define PRECISION 1
 
-extern int global_id;
-
 @interface TrafficSample : NSObject<NSCopying>
-@property (assign, nonatomic) int uniq_id;
+@property (assign, readonly, atomic, class) int newID;
+@property (strong, nonatomic, class) NSFileHandle *debugHandle;
+@property (assign, nonatomic) int objectID;
 @property (strong, nonatomic) id parent;
 @property (assign, nonatomic) uint64_t numberOfSamples;
 @property (assign, nonatomic) uint64_t packetLength;
@@ -72,5 +72,7 @@ extern int global_id;
 - (void)alignDate;
 - (NSUInteger)msStart;
 - (NSUInteger)msEnd;
-- (void)dumpTree:(NSFileHandle *)file;
+- (void)dumpTree:(BOOL)root;
+- (void)openDebugFile:(NSString *)fileName;
+- (void)writeDebug:(NSString *)format, ... __attribute__((format(__NSString__, 1, 2)));
 @end
