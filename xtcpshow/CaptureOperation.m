@@ -120,8 +120,10 @@
                                     withMsResolution:(1000 * 1000) // 1000 [sec]
                                            startAt:NULL
                                              endAt:NULL];
+#if 0
+    [storage openDebugFile:@"timestamp.txt"];
+#endif
     NSMutableArray *samples = [[NSMutableArray alloc] init];
-    
     terminate = FALSE;
     while (!terminate) {
 		@autoreleasepool {
@@ -146,6 +148,9 @@
                 pkts++;
                 bytes += pktlen;
                 [self sendNotify:pktlen withTime:&tv];
+#if 0
+                [storage writeDebug:@"%d,%lu,%d\n", pkts, tv.tv_sec, tv.tv_usec];
+#endif
                 id obj = [storage addSampleAtTimevalExtend:&tv withBytes:pktlen];
                 if (obj)
                     [samples addObject:obj];

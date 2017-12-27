@@ -63,8 +63,8 @@
 
     self.Start = start;
     self.End = end;
-    [self alignDate];
     [self updateResolution:resolution];
+    [self alignDate];
     dataRef = [NSPointerArray weakObjectsPointerArray];
     if (!isnan(self.nextResolution)) {
         for (int i = 0; i < NBRANCH; i++)
@@ -457,6 +457,7 @@
         // minimum resolusion.
         self.Resolution = msec2interval(1);
         self.nextResolution= NAN;
+        return;
     }
 
     // ensure nextResolution to power of NBRANCH.

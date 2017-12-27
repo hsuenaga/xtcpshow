@@ -32,8 +32,8 @@
 
 #import "TrafficSample.h"
 
-static int newID;
-static NSFileHandle *debugHandle;
+static int newID = 0;
+static NSFileHandle *debugHandle = nil;
 
 //
 // base class of traffic data
@@ -66,7 +66,6 @@ static NSFileHandle *debugHandle;
         self.Start = self.End = tv2date(tv);
     numberOfSamples = 1;
     packetLength = length;
-    debugHandle = nil;
     [self alignDate];
     
     return self;
@@ -105,6 +104,7 @@ static NSFileHandle *debugHandle;
 + (void)setDebugHandle:(NSFileHandle *)handle
 {
     if (debugHandle) {
+        [debugHandle synchronizeFile];
         [debugHandle closeFile];
         debugHandle = nil;
     }
@@ -262,13 +262,20 @@ static NSFileHandle *debugHandle;
     
     NSFileManager *fmgr = [NSFileManager defaultManager];
     [fmgr createFileAtPath:path contents:nil attributes:nil];
-    
+    if (debugHandle) {
+        [debugHandle synchronizeFile];
+        [debugHandle closeFile];
+        debugHandle = nil;
+    }
     debugHandle = [NSFileHandle fileHandleForWritingAtPath:path];
     [debugHandle truncateFileAtOffset:0];
 }
 
 - (void)writeDebug:(NSString *)format, ...
 {
+    if (!debugHandle) {
+        NSLog(@"No debug handle.");
+    }
     NSString *contents;
     va_list args;
     
