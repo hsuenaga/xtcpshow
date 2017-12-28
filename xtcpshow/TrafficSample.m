@@ -66,7 +66,7 @@ static NSFileHandle *debugHandle = nil;
         self.Start = self.End = tv2date(tv);
     numberOfSamples = 1;
     packetLength = length;
-    [self alignDate];
+    [self alignStartEnd];
     
     return self;
 }
@@ -82,12 +82,13 @@ static NSFileHandle *debugHandle = nil;
 //  the container class doesn't have 'strong' reference to the allocated object.
 //  the allocated object must be held by some other object.
 //
-+ (id)sampleOf:(id)parent atTimeval:(struct timeval *)tv withPacketLength:(uint64_t)length
++ (id)sampleOf:(id)parent atTimeval:(struct timeval *)tv withPacketLength:(uint64_t)length auxData:(id)aux
 {
     TrafficSample *new;
     
     new = [[TrafficSample alloc] initAtTimeval:tv withPacketLength:length];
     new.parent = parent;
+    new.aux = aux;
     return new;
 }
 
@@ -195,7 +196,17 @@ static NSFileHandle *debugHandle = nil;
 //
 // Utility
 //
-- (void)alignDate
++ (NSDate *)alignTimeval:(struct timeval *)tv withResolution:(NSTimeInterval)resolution
+{
+    NSUInteger msInterval = tv2msec(tv);
+    NSUInteger msResolution = interval2msec(resolution);
+
+    msInterval = msInterval - (msInterval % msResolution);
+
+    return [NSDate dateWithTimeIntervalSince1970:msec2interval(msInterval)];
+}
+
+- (void)alignStartEnd
 {
     self.End = self.Start;
 }

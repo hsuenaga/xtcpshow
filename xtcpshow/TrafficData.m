@@ -41,8 +41,7 @@
 @interface TrafficData ()
 - (id)init;
 - (id)initWithResolution:(NSTimeInterval)resolusion startAt:(NSDate *)start endAt:(NSDate *)end;
-- (id)initWithResolutionUnix:(NSUInteger)msResolution startAt:(struct timeval *)tvStart endAt:(struct timeval *)tvEnd;
-- (TrafficSample *)addToChildNode:(struct timeval *)tv withBytes:(NSUInteger)bytes;
+- (TrafficSample *)addToChildNode:(struct timeval *)tv withBytes:(NSUInteger)bytes auxData:(id)aux;
 @end
 
 @implementation TrafficData {
@@ -64,7 +63,6 @@
     self.Start = start;
     self.End = end;
     [self updateResolution:resolution];
-    [self alignDate];
     dataRef = [NSPointerArray weakObjectsPointerArray];
     if (!isnan(self.nextResolution)) {
         for (int i = 0; i < NBRANCH; i++)
@@ -72,23 +70,6 @@
     }
     
     return self;
-}
-
-- (id)initWithResolutionUnix:(NSUInteger)msResolution
-                     startAt:(struct timeval *)tvStart endAt:(struct timeval *)tvEnd
-{
-    NSTimeInterval resolution = NAN;
-    NSDate *start = nil;
-    NSDate *end = nil;
-    
-    if (msResolution)
-        resolution = msec2interval(msResolution);
-    if (tvStart)
-        start = tv2date(tvStart);
-    if (tvEnd)
-        end = tv2date(tvEnd);
-
-    return [self initWithResolution:resolution startAt:start endAt:end];
 }
 
 - (id)init
@@ -101,6 +82,9 @@
     TrafficData *new = [[TrafficData alloc]
                         initWithResolution:Resolution startAt:start endAt:end];
     new.parent = parent;
+    if (parent && [parent isMemberOfClass:[new class]]) {
+        new.bytesReceived = ((TrafficData *)parent).bytesReceived;
+    }
 
     return new;
 }
@@ -108,11 +92,10 @@
 +(id)unixDataOf:(id)parent withMsResolution:(NSUInteger)msResolution
         startAt:(struct timeval *)tvStart endAt:(struct timeval *)tvEnd
 {
-    TrafficData *new = [[TrafficData alloc]
-                        initWithResolutionUnix:msResolution startAt:tvStart endAt:tvEnd];
-    new.parent = parent;
-    
-    return new;
+    return [TrafficData dataOf:parent
+                withResolution:msec2interval(msResolution)
+                       startAt:tvStart ? tv2date(tvStart) : nil
+                         endAt:tvEnd ? tv2date(tvEnd): nil];
 }
 
 //
@@ -290,13 +273,17 @@
 //
 - (BOOL)acceptableTimeval:(struct timeval *)tv
 {
-    if (self.Start == nil || self.End == nil || tv == NULL)
+    if (self.Start == nil || self.End == nil || tv == NULL) {
+        NSLog(@"obj%d time slot is not defined", self.objectID);
         return false;
+    }
     
     NSUInteger msTimestamp = tv2msec(tv);
     if ([self msStart] <= msTimestamp && msTimestamp < [self msEnd])
         return true;
 
+    NSLog(@"obj%d timestamp %lu is out of range: %lu - %lu", [self objectID],
+          msTimestamp, [self msStart], [self msEnd]);
     return false;
 }
 
@@ -304,16 +291,17 @@
 // insert child container(TrraficData) or sigle data(TrafficSample).
 // we use TrafficSample as abstructed base class.
 //
-- (TrafficSample *)addToChildNode:(struct timeval *)tv withBytes:(NSUInteger)bytes
+- (TrafficSample *)addToChildNode:(struct timeval *)tv withBytes:(NSUInteger)bytes auxData:(id)aux
 {
     //
     // leaf
     //
     if (isnan(self.Resolution) ||
         isnan(self.nextResolution) ||
-        [self msResolution] <= 1) {
+        [self msResolution] <= 1 ||
+        NBRANCH < 2) {
         // We have traffic sample directly.
-        TrafficSample *child = [TrafficSample sampleOf:self atTimeval:tv withPacketLength:bytes];
+        TrafficSample *child = [TrafficSample sampleOf:self atTimeval:tv withPacketLength:bytes auxData:aux];
         [dataRef addPointer:(__bridge void * _Nullable)child];
         return child;
     }
@@ -325,24 +313,58 @@
     TrafficData *child = [dataRef pointerAtIndex:slot];
     if (!child) {
         // create new node.
-        child = [TrafficData unixDataOf:self
-                       withMsResolution:interval2msec(self.nextResolution)
-                                startAt:tv
-                                  endAt:tv];
+        NSDate *start = nil, *end = nil;
+        
+        // copy parent's time marker
+        if (slot == 0 && self.Start) {
+            start = self.Start;
+        }
+        if (slot == (NBRANCH - 1) && self.End) {
+            end = self.End;
+        }
+        
+        // copy sibling's time marker
+        if (!start && slot > 0) {
+            TrafficData *prev = [dataRef pointerAtIndex:(slot - 1)];
+            if (prev)
+                start = prev.End;
+        }
+        if (!end && slot < (NBRANCH - 1)) {
+            TrafficData *next = [dataRef pointerAtIndex:(slot + 1)];
+            if (next)
+                end = next.Start;
+        }
+        
+        // allocatre new marker
+        if (!start) {
+            start = [TrafficSample alignTimeval:tv withResolution:self.nextResolution];
+        }
+        if (!end) {
+            NSUInteger msEnd = date2msec(start) + interval2msec(self.nextResolution);
+            end = msec2date(msEnd);
+        }
+        
+        if ([start isEqual:end]) {
+            NSLog(@"invalid object setup");
+        }
+        child = [TrafficData dataOf:self
+                       withResolution:self.nextResolution
+                                startAt:start
+                                  endAt:end];
         [dataRef replacePointerAtIndex:slot
                            withPointer:(__bridge void * _Nullable)child];
     }
-    return [child addSampleAtTimeval:tv withBytes:bytes];
+    return [child addSampleAtTimeval:tv withBytes:bytes auxData:aux];
 }
 
-- (TrafficSample *)addSampleAtTimeval:(struct timeval *)tv withBytes:(NSUInteger)bytes
+- (TrafficSample *)addSampleAtTimeval:(struct timeval *)tv withBytes:(NSUInteger)bytes auxData:(id)aux
 {
     if (![self acceptableTimeval:tv]) {
         NSLog(@"obj%d request is not acceptable", self.objectID);
         return nil;
     }
     
-    id new = [self addToChildNode:tv withBytes:bytes];
+    id new = [self addToChildNode:tv withBytes:bytes auxData:aux];
     if (!new) {
         NSLog(@"obj%d child node rejected the timestamp", self.objectID);
         return nil;
@@ -350,11 +372,12 @@
     
     self.numberOfSamples++;
     self.packetLength += bytes;
+    self.bytesReceived += bytes;
     return new;
 }
 
 - (TrafficSample *)addSampleAtTimevalExtend:(struct timeval *)tv
-                       withBytes:(NSUInteger)bytes
+                                  withBytes:(NSUInteger)bytes auxData:(id)aux
 {
     if (tv == NULL)
         return nil;
@@ -372,9 +395,9 @@
         extend = true;
     }
     if (extend)
-        [self alignDate];
+        [self alignStartEnd];
     
-    return [self addSampleAtTimeval:tv withBytes:bytes];
+    return [self addSampleAtTimeval:tv withBytes:bytes auxData:aux];
 }
 
 //
@@ -397,12 +420,12 @@
 //
 // Utility
 //
-- (void)alignDate
+- (void)alignStartEnd
 {
-    if (!self.Resolution)
+    NSUInteger msResolution = [self msResolution];
+
+    if (!msResolution)
         return;
-    
-    NSUInteger msResolution = interval2msec(self.Resolution);
     if (self.Start) {
         NSUInteger msStart = date2msec(self.Start);
         msStart = msStart - (msStart % msResolution);

@@ -36,6 +36,7 @@
 #define NBRANCH 10
 
 @interface TrafficData : TrafficSample
+@property (assign, nonatomic) uint64_t bytesReceived;
 @property (assign, nonatomic) NSTimeInterval Resolution;
 @property (assign, nonatomic) NSTimeInterval nextResolution;
 
@@ -59,8 +60,8 @@
 
 #pragma mark - operator
 - (BOOL)acceptableTimeval:(struct timeval *)tv;
-- (TrafficSample *)addSampleAtTimeval:(struct timeval *)tv withBytes:(NSUInteger)bytes;
-- (TrafficSample *)addSampleAtTimevalExtend:(struct timeval *)tv withBytes:(NSUInteger)bytes;
+- (TrafficSample *)addSampleAtTimeval:(struct timeval *)tv withBytes:(NSUInteger)bytes auxData:(id)aux;
+- (TrafficSample *)addSampleAtTimevalExtend:(struct timeval *)tv withBytes:(NSUInteger)bytes auxData:(id)aux;
 
 #pragma mark - NSCopying protocol
 - (id)copyWithZone:(NSZone *)zone;

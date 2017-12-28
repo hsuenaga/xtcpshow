@@ -151,7 +151,7 @@
 #if 0
                 [storage writeDebug:@"%d,%lu,%d\n", pkts, tv.tv_sec, tv.tv_usec];
 #endif
-                id obj = [storage addSampleAtTimevalExtend:&tv withBytes:pktlen];
+                id obj = [storage addSampleAtTimevalExtend:&tv withBytes:pktlen auxData:nil];
                 if (obj)
                     [samples addObject:obj];
                 else

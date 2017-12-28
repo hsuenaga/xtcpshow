@@ -45,9 +45,10 @@
 @property (assign, nonatomic) uint64_t packetLength;
 @property (strong, nonatomic) NSDate *Start;
 @property (strong, nonatomic) NSDate *End;
+@property (strong, nonatomic) id aux;
 
 #pragma mark - initializer
-+ (id)sampleOf:(id)parent atTimeval:(struct timeval *)tv withPacketLength:(uint64_t)length;
++ (id)sampleOf:(id)parent atTimeval:(struct timeval *)tv withPacketLength:(uint64_t)length auxData:(id)aux;
 
 #pragma mark - basic acessor
 - (NSUInteger)bitsFromDate:(NSDate *)from toDate:(NSDate *)to;
@@ -69,7 +70,8 @@
 - (NSString *)bytesString;
 
 #pragma mark - utility
-- (void)alignDate;
++ (NSDate *)alignTimeval:(struct timeval *)tv withResolution:(NSTimeInterval)resolution;
+- (void)alignStartEnd;
 - (NSUInteger)msStart;
 - (NSUInteger)msEnd;
 - (void)dumpTree:(BOOL)root;
