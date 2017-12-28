@@ -540,13 +540,13 @@
     NSArray *node = [dataRef allObjects];
     if ([node count] == 0) {
         [self writeDebug:@"node%d [shape=doublecircle label=\"%llu [bytes]\"];\n",
-         self.objectID, self.packetLength];
+         self.objectID, self.bytesReceived];
         return;
     }
 
     // create record def
     [self writeDebug:@"node%d [shape=record label=\"{<obj%d> obj%d\\n%lu[msec]\\n%llu [bytes]|{",
-     self.objectID, self.objectID, self.objectID, [self msResolution], self.packetLength];
+     self.objectID, self.objectID, self.objectID, [self msResolution], self.bytesReceived];
     __block BOOL delim = false;
     [node
      enumerateObjectsUsingBlock:^(TrafficSample *ptr, NSUInteger idx, BOOL *stop) {

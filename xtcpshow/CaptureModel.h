@@ -77,7 +77,7 @@
 
 - (void)animationTick;
 
-- (void)samplingNotify:(NSNumber *)number;
+- (void)samplingNotify:(SamplingData *)data;
 - (void)samplingError:(NSString *)message;
 - (void)samplingFinish:(id)sender;
 @end
