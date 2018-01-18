@@ -27,9 +27,10 @@
 		4696050E17CDD2DB00798814 /* ServiceManagement.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4696050D17CDD2DB00798814 /* ServiceManagement.framework */; };
 		4696051017CDD2EC00798814 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4696050F17CDD2EC00798814 /* Security.framework */; };
 		46A10AD117CEF4A50011A9E8 /* BPFControl.m in Sources */ = {isa = PBXBuildFile; fileRef = 46A10AD017CEF4A50011A9E8 /* BPFControl.m */; };
+		46C08CBC200875200006E8D5 /* Queue.m in Sources */ = {isa = PBXBuildFile; fileRef = 46C08CBB200875200006E8D5 /* Queue.m */; };
+		46C08CBF20089CB00006E8D5 /* FIR.m in Sources */ = {isa = PBXBuildFile; fileRef = 46C08CBE20089CB00006E8D5 /* FIR.m */; };
 		46D1634217CE117C009418DF /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 46D1634017CE117C009418DF /* Info.plist */; };
 		46D1634317CE117C009418DF /* Launchd.plist in Resources */ = {isa = PBXBuildFile; fileRef = 46D1634117CE117C009418DF /* Launchd.plist */; };
-		46D8CD0117BC7D060028F793 /* DataQueueEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = 46D8CD0017BC7D060028F793 /* DataQueueEntry.m */; };
 		46DE97A917D2D15B009E0A16 /* BPFService.m in Sources */ = {isa = PBXBuildFile; fileRef = 46DE97A817D2D15B009E0A16 /* BPFService.m */; };
 /* End PBXBuildFile section */
 
@@ -90,11 +91,12 @@
 		46A9207E17D836050083CC8D /* README.md */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.md; sourceTree = "<group>"; };
 		46A9208117D837D40083CC8D /* xtcpshow_screen.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = xtcpshow_screen.png; sourceTree = "<group>"; };
 		46A9208217D87D880083CC8D /* License.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = License.txt; sourceTree = "<group>"; };
-		46CE1B661FEA76A100AEFDC7 /* Class.graffle */ = {isa = PBXFileReference; lastKnownFileType = file; path = Class.graffle; sourceTree = "<group>"; };
+		46C08CBB200875200006E8D5 /* Queue.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Queue.m; sourceTree = "<group>"; };
+		46C08CBD200875440006E8D5 /* Queue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Queue.h; sourceTree = "<group>"; };
+		46C08CBE20089CB00006E8D5 /* FIR.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = FIR.m; sourceTree = "<group>"; };
+		46C08CC020089CC70006E8D5 /* FIR.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FIR.h; sourceTree = "<group>"; };
 		46D1634017CE117C009418DF /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		46D1634117CE117C009418DF /* Launchd.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Launchd.plist; sourceTree = "<group>"; };
-		46D8CCFF17BC7D060028F793 /* DataQueueEntry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DataQueueEntry.h; sourceTree = "<group>"; };
-		46D8CD0017BC7D060028F793 /* DataQueueEntry.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DataQueueEntry.m; sourceTree = "<group>"; };
 		46DE97A717D2D15B009E0A16 /* BPFService.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BPFService.h; sourceTree = "<group>"; };
 		46DE97A817D2D15B009E0A16 /* BPFService.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BPFService.m; sourceTree = "<group>"; };
 		46DE97AB17D3035E009E0A16 /* xtcpshow-uninstall.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "xtcpshow-uninstall.sh"; sourceTree = "<group>"; };
@@ -119,7 +121,6 @@
 		4639F8181798BA9600E59491 = {
 			isa = PBXGroup;
 			children = (
-				46CE1B651FEA1A1E00AEFDC7 /* Internal Documents */,
 				46A9208017D8372D0083CC8D /* DiskImage */,
 				46A9207F17D8371E0083CC8D /* GitHUB */,
 				4639F82A1798BA9700E59491 /* xtcpshow */,
@@ -174,12 +175,14 @@
 				46583CB917A0D192007B6572 /* CaptureOperation.m */,
 				466E550817AB491800C978C9 /* DataResampler.h */,
 				466E550917AB491800C978C9 /* DataResampler.m */,
+				46C08CC020089CC70006E8D5 /* FIR.h */,
+				46C08CBE20089CB00006E8D5 /* FIR.m */,
+				46C08CBD200875440006E8D5 /* Queue.h */,
+				46C08CBB200875200006E8D5 /* Queue.m */,
 				466E550517AB2AA500C978C9 /* DataQueue.h */,
 				466E550617AB2AA500C978C9 /* DataQueue.m */,
 				4682948217B4634D008AC9D4 /* SamplingData.h */,
 				4682948317B4634D008AC9D4 /* SamplingData.m */,
-				46D8CCFF17BC7D060028F793 /* DataQueueEntry.h */,
-				46D8CD0017BC7D060028F793 /* DataQueueEntry.m */,
 				46583CB717A0CA4D007B6572 /* GraphView.h */,
 				46583CB517A0CA41007B6572 /* GraphView.m */,
 				4639F8391798BA9700E59491 /* MainMenu.xib */,
@@ -244,14 +247,6 @@
 				46DE97AB17D3035E009E0A16 /* xtcpshow-uninstall.sh */,
 			);
 			name = DiskImage;
-			sourceTree = "<group>";
-		};
-		46CE1B651FEA1A1E00AEFDC7 /* Internal Documents */ = {
-			isa = PBXGroup;
-			children = (
-				46CE1B661FEA76A100AEFDC7 /* Class.graffle */,
-			);
-			path = "Internal Documents";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -335,10 +330,11 @@
 				46583CB617A0CA41007B6572 /* GraphView.m in Sources */,
 				462081201FECEA00003B3C74 /* TrafficSample.m in Sources */,
 				46583CBA17A0D192007B6572 /* CaptureOperation.m in Sources */,
+				46C08CBC200875200006E8D5 /* Queue.m in Sources */,
 				466E550717AB2AA500C978C9 /* DataQueue.m in Sources */,
+				46C08CBF20089CB00006E8D5 /* FIR.m in Sources */,
 				466E550A17AB491800C978C9 /* DataResampler.m in Sources */,
 				4682948417B4634D008AC9D4 /* SamplingData.m in Sources */,
-				46D8CD0117BC7D060028F793 /* DataQueueEntry.m in Sources */,
 				46A10AD117CEF4A50011A9E8 /* BPFControl.m in Sources */,
 				46DE97A917D2D15B009E0A16 /* BPFService.m in Sources */,
 			);

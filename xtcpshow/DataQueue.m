@@ -32,25 +32,59 @@
 #include <sys/queue.h>
 
 #import "DataQueue.h"
-#import "DataQueueEntry.h"
+#import "TrafficSample.h"
 #import "SamplingData.h"
-
-#undef DEBUG_COUNTER
 
 #define REFRESH_THR 1000 // [samples]
 
-#ifdef DEBUG_COUNTER
-#define CHECK_COUNTER(x) [(x) assertCounting]
-#else
-#define CHECK_COUNTER(x) // nothing
-#endif
+@implementation DataQueueEntry
+@synthesize data;
+
+- (DataQueueEntry *)initWithData:(id)data withTimestamp:(NSDate *)ts
+{
+    self = [super initWithData:data withTimestamp:ts];
+    if ([data isMemberOfClass:[SamplingData class]]) {
+        self.data = data;
+    }
+    else if ([data isMemberOfClass:[TrafficSample class]]){
+        TrafficSample *tdata = (TrafficSample *)data;
+        SamplingData *sdata = [SamplingData dataWithInt:(int)[tdata packetLength]
+                                                 atDate:[tdata timestamp]
+                                            fromSamples:[tdata numberOfSamples]];
+        self.data = sdata;
+    }
+    else {
+        NSException *ex = [NSException exceptionWithName:@"Invalid Data"
+                                                  reason:@"class of data is unknown"
+                                                userInfo:nil];
+        @throw ex;
+    }
+    return self;
+}
+
++ (DataQueueEntry *)entryWithData:(id)data withTimestamp:(NSDate *)ts
+{
+    return [[DataQueueEntry alloc] initWithData:data withTimestamp:ts];
+}
+
+- (id)copyWithZone:(NSZone *)zone
+{
+    return [[DataQueueEntry alloc]
+            initWithData:[self.data copy]
+            withTimestamp:self.timestamp];
+}
+@end
 
 @implementation DataQueue
-- (DataQueue *)initWithZeroFill:(int)size
+@synthesize count;
+
+- (DataQueue *)initWithZeroFill:(size_t)size
 {
-    self = [super init];
-    if (size)
-        [self zeroFill:size];
+    if (size == 0)
+        return nil;
+    
+    self = [super initWithSize:size];
+    [self zeroFill];
     refresh_count = REFRESH_THR;
     
     return self;
@@ -59,6 +93,19 @@
 - (DataQueue *)init
 {
     return [self initWithZeroFill:0];
+}
+
+//
+// allocator
+//
++ (DataQueue *)queueWithSize:(size_t)size
+{
+    return [[DataQueue alloc] initWithSize:size];
+}
+
++ (DataQueue *)queueWithZero:(size_t)size
+{
+    return [[DataQueue alloc] initWithZeroFill:size];
 }
 
 //
@@ -130,10 +177,10 @@
 	DataQueueEntry *entry;
 
 	[self clearSumState];
-	for (entry = _head; entry; entry = entry.next) {
+	for (entry = (DataQueueEntry *)self.head; entry; entry = (DataQueueEntry *)entry.next) {
 		float value, new_value;
 
-		value = [entry.content floatValue];
+		value = [entry.data floatValue];
 		if (isnan(value) || isinf(value))
 			[self invalidValueException];
 
@@ -158,161 +205,65 @@
 //
 // public
 //
-- (void)zeroFill:(size_t)size
+- (void)zeroFill
 {
-	_head = _tail = nil;
-	_count = 0;
-	for (int i = 0; i < size; i++)
-		[self addDataEntry:[SamplingData dataWithSingleFloat:0.0f]];
+	self.head = self.tail = nil;
+	self.count = 0;
+    SamplingData *zero = [SamplingData dataWithSingleFloat:0.0];
+    NSDate *now = [NSDate date];
+    for (int i = 0; i < self.size; i++) {
+        [self enqueue:zero withTimestamp:now];
+    }
 	[self refreshSumState];
-	CHECK_COUNTER(self);
 }
 
-- (void)addDataEntry:(SamplingData *)data
+- (SamplingData *)enqueue:(SamplingData *)data withTimestamp:(NSDate *)ts
 {
-	DataQueueEntry *entry;
-
-	if (!data)
-		return;
-	entry = [DataQueueEntry entryWithData:data];
-
-	if (_tail) {
-		_tail.next = entry;
-		_tail = entry;
-	}
-	else {
-		_head = _tail = entry;
-	}
-	[self addSumState:[data floatValue]];
-	_count++;
-	CHECK_COUNTER(self);
+    if (data) {
+        [self addSumState:[data floatValue]];
+    }
+    
+    DataQueueEntry *add = [DataQueueEntry entryWithData:data withTimestamp:ts];
+    DataQueueEntry *sub = (DataQueueEntry *)[self enqueueEntry:add];
+    if (sub == nil)
+        return nil;
+    
+    if (![sub isMemberOfClass:[DataQueueEntry class]]) {
+        NSException *ex = [NSException
+                           exceptionWithName:@"inconsitent queue"
+                           reason:@"not a DataQueueEntry"
+                           userInfo:nil];
+        @throw ex;
+    }
+    [self subSumState:[sub.data floatValue]];
+    
+    return sub.data;
 }
 
--(SamplingData *)addDataEntry:(SamplingData *)entry withLimit:(size_t)limit
+- (SamplingData *)dequeue
 {
-	if (_count < limit) {
-		[self addDataEntry:entry];
-		return nil;
-	}
+    DataQueueEntry *entry;
 
-	return [self shiftDataWithNewData:entry];
-}
-
-- (SamplingData *)dequeueDataEntry
-{
-	DataQueueEntry *entry;
-
-	if (!_head)
-		return nil;
-
-	entry = _head;
-	_head = entry.next;
-	entry.next = nil;
-	if (!_head)
-		_tail = nil;
-	if (_last_read == entry)
-		_last_read = nil;
-	[self subSumState:[entry.content floatValue]];
-	_count--;
-
-	CHECK_COUNTER(self);
-	return entry.content;
-}
-
-- (SamplingData *)shiftDataWithNewData:(SamplingData *)entry
-{
-	[self addDataEntry:entry];
-	return [self dequeueDataEntry];
-}
-
-- (SamplingData *)readNextData
-{
-	DataQueueEntry *entry;
-
-	if (!_head)
-		return nil;
-
-	if (_last_read && _last_read.next == nil)
-		return nil; // no new data arrived.
-
-	if (!_last_read) {
-		entry = [_head copy];
-		entry.next = nil;
-		_last_read = _head;
-	}
-	else {
-		entry = [_last_read.next copy];
-		entry.next = nil;
-		_last_read = _last_read.next;
-	}
-
-	return entry.content;
-}
-
-- (void)seekToDate:(NSDate *)date
-{
-	if (!_head)
-		return;
-	_last_read = nil;
-
-	for (DataQueueEntry *entry = _head; entry;
-	     entry = entry.next)
-	{
-		NSDate *seek = entry.content.timestamp;
-
-		if ([date laterDate:seek] == date) {
-			_last_read = entry;
-			continue;
-		}
-		break;
-	}
-}
-
-
-- (void)rewind
-{
-	_last_read = nil;
-}
-
-- (void)enumerateDataUsingBlock:(void (^)(SamplingData *data, NSUInteger, BOOL *))block
-{
-	DataQueueEntry *entry;
-	BOOL stop = FALSE;
-	NSUInteger idx = 0;
-
-	add = sub = add_remain = sub_remain = 0.0f;
-	for (entry = _head; entry; entry = entry.next) {
-		float v, new_add;
-
-		if (!stop)
-			block(entry.content, idx, &stop);
-		
-		v = [entry.content floatValue] + add_remain;
-		new_add = add + v;
-		add_remain = (new_add - add) - v;
-		add = new_add;
-		idx++;
-	}
-	refresh_count = REFRESH_THR;
-	CHECK_COUNTER(self);
+    entry = (DataQueueEntry *)[self dequeueEntry];
+	[self subSumState:[entry.data floatValue]];
+	return entry.data;
 }
 
 - (DataQueue *)copy
 {
-	DataQueueEntry *entry;
-	DataQueue *new = [[DataQueue alloc] init];
+    DataQueue *new = [DataQueue queueWithSize:self.size];
 
-	for (entry = _head; entry; entry = entry.next)
-		[new addDataEntry:[entry copy]];
-	[new refreshSumState];
+    for (QueueEntry *entry = self.head; entry; entry = entry.next) {
+        [new enqueue:[entry copy] withTimestamp:[entry timestamp]];
+    }
+    [new refreshSumState];
 
-	CHECK_COUNTER(self);
 	return new;
 }
 
 - (BOOL)isEmpty
 {
-	if (!_head)
+	if (!self.head)
 		return TRUE;
 
 	return FALSE;
@@ -320,23 +271,25 @@
 
 - (NSUInteger)maxSamples
 {
-	DataQueueEntry *entry;
+	QueueEntry *entry;
 	NSUInteger max = 0;
 
-	for (entry = _head; entry; entry = entry.next) {
-		if (max < entry.content.numberOfSamples)
-			max = entry.content.numberOfSamples;
+	for (entry = self.head; entry; entry = entry.next) {
+        SamplingData *walk = entry.content;
+		if (max < walk.numberOfSamples)
+			max = walk.numberOfSamples;
 	}
 	return max;
 }
 
 - (float)maxFloatValue
 {
-	DataQueueEntry *entry;
+	QueueEntry *entry;
 	float max = 0.0;
 
-	for (entry = _head; entry; entry = entry.next) {
-		float value = [entry.content floatValue];
+	for (entry = self.head; entry; entry = entry.next) {
+        SamplingData *walk = entry.content;
+		float value = [walk floatValue];
 
 		if (isnan(value))
 			[self invalidValueException];
@@ -349,9 +302,9 @@
 
 - (float)averageFloatValue
 {
-	if (_count == 0)
+	if (self.count == 0)
 		return 0.0;
-    float avg = [self sum] / (float)_count;
+    float avg = [self sum] / (float)self.count;
     if (avg < 0.001f) {
         avg = 0.0f;
     }
@@ -363,10 +316,15 @@
 	float avg = [self averageFloatValue];
 	float variance = 0.0;
 
-    for (DataQueueEntry *entry = _head; entry;
-	     entry = entry.next)
-		variance += pow((avg - entry.content.floatValue), 2.0);
-	variance /= (_count - 1);
+    if (self.count < 1)
+        return 0.0f;
+    
+    for (QueueEntry *entry = self.head; entry;
+         entry = entry.next) {
+        SamplingData *walk = entry.content;
+		variance += pow((avg - walk.floatValue), 2.0);
+    }
+	variance /= (self.count - 1);
 
     float deviation = sqrtf(variance);
     if (deviation < 0.001f) {
@@ -375,58 +333,10 @@
 	return sqrtf(variance);
 }
 
-- (NSDate *)lastDate
-{
-	if (!_tail)
-		return nil;
-	return _tail.content.timestamp;
-}
-
-- (NSDate *)firstDate
-{
-	if (!_head)
-		return nil;
-	return _head.content.timestamp;
-}
-
-- (NSDate *)nextDate
-{
-	if (!_head)
-		return nil;
-
-	if (!_last_read)
-		return _head.content.timestamp;
-
-	if (!_last_read.next)
-		return nil;
-
-	return _last_read.next.content.timestamp;
-}
-
-- (void)assertCounting
-{
-	DataQueueEntry *entry;
-	NSUInteger idx = 0;
-
-	for (entry = _head; entry; entry = entry.next)
-		idx++;
-
-	NSAssert(idx == _count, @"counter(%lu) and entries(%lu) are mismatched", _count, idx);
-}
 
 - (void)invalidValueException
 {
 	NSException *ex = [NSException exceptionWithName:@"Invalid Value" reason:@"Value in DataQueue is not a number." userInfo:nil];
-
-	@throw ex;
-}
-
-- (void)invalidChainException:(NSUInteger)idx
-{
-	NSString *message;
-
-	message = [NSString stringWithFormat:@"counter(%lu) and entry(%lu) are mismatched", _count, idx];
-	NSException *ex = [NSException exceptionWithName:@"Invalid Chain" reason:message userInfo:nil];
 
 	@throw ex;
 }

@@ -109,12 +109,14 @@
         return 0;
     if (self.Start && self.End) {
         // we have data window.
-        if ([from laterDate:self.End])
+        if ([from laterDate:self.End] == from)
             return 0; // out of range
-        if ([to earlierDate:self.Start] || [to isEqual:self.Start])
+        if ([to earlierDate:self.Start] == to ||
+            [to isEqual:self.Start])
             return 0; // out of range. merginal entry must specified by "from".
-        if (([from isEqual:self.Start] || [from earlierDate:self.Start])
-            && [to laterDate:self.End])
+        if (([from isEqual:self.Start] ||
+             [from earlierDate:self.Start] == from) &&
+             [to laterDate:self.End] == to)
             return (self.packetLength * 8); // just report entire data.
     }
 
@@ -132,9 +134,10 @@
         }
 
         TrafficSample *sample = (TrafficSample *)allData[idx];
-        if ([sample.Start earlierDate:from])
+        if ([sample.Start earlierDate:from] == sample.Start)
             continue;
-        if ([sample.Start isEqual:to] || [sample.Start laterDate:to])
+        if ([sample.Start isEqual:to] ||
+            [sample.Start laterDate:to] == sample.Start)
             break;
         // valid sample.
         bits += (sample.packetLength * 8);
@@ -178,12 +181,14 @@
         return 0;
     if (self.Start && self.End) {
         // we have data window.
-        if ([from laterDate:self.End])
+        if ([from laterDate:self.End] == from)
             return 0; // out of range
-        if ([to earlierDate:self.Start] || [to isEqual:self.Start])
+        if ([to earlierDate:self.Start] == to ||
+            [to isEqual:self.Start])
             return 0; // out of range. merginal entry must specified by "from".
-        if (([from isEqual:self.Start] || [from earlierDate:self.Start])
-            && [to laterDate:self.End])
+        if (([from isEqual:self.Start] ||
+             [from earlierDate:self.Start] == from) &&
+             [to laterDate:self.End] == to)
             return self.numberOfSamples; // just report entire data.
     }
     
@@ -202,9 +207,10 @@
         }
         
         TrafficSample *sample = (TrafficSample *)allData[idx];
-        if ([sample.Start earlierDate:from])
+        if ([sample.Start earlierDate:from] == sample.Start)
             continue;
-        if ([sample.Start isEqual:to] || [sample.Start laterDate:to])
+        if ([sample.Start isEqual:to] ||
+            [sample.Start laterDate:to] == sample.Start)
             break;
         // valid sample.
         samples += sample.numberOfSamples;
@@ -515,12 +521,13 @@
 
 - (NSTimeInterval)durationOverwrapFromDate:(NSDate *)from toDate:(NSDate *)to
 {
-    if ([from laterDate:self.End])
+    if ([from laterDate:self.End] == from)
         return NAN;
-    if ([to earlierDate:self.Start] || [to isEqual:self.Start])
+    if ([to earlierDate:self.Start] == to ||
+        [to isEqual:self.Start])
         return NAN;
-    NSDate *start = [self.Start laterDate:from] ? self.Start : from;
-    NSDate *end = [self.End earlierDate:to] ? self.End : to;
+    NSDate *start = [self.Start laterDate:from];
+    NSDate *end = [self.End earlierDate:to];
     
     return [end timeIntervalSinceDate:start];
 }

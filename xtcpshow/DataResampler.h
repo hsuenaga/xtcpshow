@@ -33,12 +33,18 @@
 #import <Foundation/Foundation.h>
 #import "DataQueue.h"
 
+@class FIR;
+
 @interface DataResampler : NSObject {
 	BOOL write_protect;
+    BOOL running;
+    double tick;
+    double bytes2mbps;
+    NSTimeInterval dataLength;
 }
-@property (strong) NSArray *FIR_KZ;
-@property (strong, readonly) DataQueue *data;
-@property (weak, readonly) DataQueue *lastInput;
+@property (strong) FIR *FIR;
+@property (strong, readonly) DataQueue *output;
+@property (weak, readonly) Queue *lastInput;
 @property (assign) NSUInteger outputSamples;
 @property (assign) NSTimeInterval outputTimeLength;
 @property (assign) NSTimeInterval outputTimeOffset;
@@ -49,7 +55,8 @@
 - (void)invalidValueException;
 
 // public
+- (void)updateParams;
 - (void)purgeData;
-- (void)resampleData:(DataQueue *)input;
+- (void)resampleData:(Queue *)input;
 
 @end

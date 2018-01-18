@@ -55,7 +55,11 @@
 
 	// data size
 	_history_size = DEF_HISTORY;
-	_data = [[DataQueue alloc] init];
+	_data = [Queue queueWithSize:_history_size];
+    _index = [TrafficData unixDataOf:self
+                 withMsResolution:(1000 * 1000)
+                          startAt:NULL
+                            endAt:NULL];
 
 	// traffic data
 	[self resetCounter];
@@ -71,13 +75,10 @@
 	CaptureOperation *op = [[CaptureOperation alloc] init];
 
 	NSLog(@"Start capture thread");
-    if (!_bpfc) {
-        NSLog(@"No capture device.");
-//        return;
-    }
 	[self resetCounter];
 	[op setModel:self];
-    [op setBPFControl:_bpfc];
+    [op setIndex:_index];
+    [op setBpfControl:_bpfc];
 	[op setSource:_device];
 	[op setFilter:_filter];
 	[op setQueuePriority:NSOperationQueuePriorityHigh];
@@ -116,19 +117,24 @@
 	return (_samplingIntervalLast * 1000.0f);
 }
 
-- (void) animationTick
-{
-	// nothing to do
-}
-
 //
 // notify from Capture operation thread
 //
-- (void) samplingNotify:(SamplingData *)entry
+- (void) samplingNotify:(TrafficSample *)entry
 {
-	if (entry.numberOfSamples > 0)
-		[_data addDataEntry:entry withLimit:_history_size];
-	_data.last_update = [entry timestamp];
+    if (!entry)
+        return;
+
+    if (entry.numberOfSamples > 0) {
+        TrafficSample *prev = nil;
+        
+        if ([_data tail])
+            prev = [[_data tail] content];
+        if (prev)
+            prev.next = entry;
+		[_data enqueue:entry withTimestamp:[entry timestamp]];
+    }
+    _data.last_used = [entry timestamp];
 }
 
 - (void) samplingError:(NSString *)message

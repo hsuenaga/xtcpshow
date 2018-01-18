@@ -32,26 +32,18 @@
 #include "math.h"
 
 #import "DataResampler.h"
+#import "TrafficSample.h"
 #import "SamplingData.h"
+#import "FIR.h"
 
 // Gaussian filter.
 // larger value is more better and more slow.
-#define KZ_STAGE 3
-
 @implementation DataResampler
-@synthesize FIR_KZ;
 
 - (id)init
 {
     self = [super init];
 
-    NSMutableArray *FIR_Factory = [[NSMutableArray alloc] init];
-    for (int i = 0; i < KZ_STAGE; i++) {
-        DataQueue *stage = [[DataQueue alloc] init];
-        [FIR_Factory addObject:stage];
-    }
-    FIR_KZ = [NSArray arrayWithArray:FIR_Factory];
-    
     return self;
 }
 
@@ -65,9 +57,41 @@
 	@throw ex;
 }
 
+- (void)updateParams
+{
+    // convert units
+    tick = _outputTimeLength / _outputSamples; // [sec/sample]
+    bytes2mbps = 8.0 / tick; // [bps]
+    bytes2mbps = bytes2mbps / 1000.0 / 1000.0; // [Mbps]
+    dataLength = -(_outputTimeLength + _MATimeLength);
+    
+    // allocate FIR
+    _FIR = [FIR FIRwithTap:ceil(_MATimeLength/tick)];
+    
+    NSUInteger maxSamples = _outputSamples + [_FIR tap];
+    _output = [DataQueue queueWithZero:maxSamples];
+    _output.last_used = nil;
+
+#ifdef DEBUG
+    [self dumpParams];
+#endif
+    running = TRUE;
+}
+
+- (void)dumpParams
+{
+    NSLog(@"===== Resampler =====");
+    NSLog(@"Duration: %f [sec]", _outputTimeLength);
+    NSLog(@"Plot: %lu [point]", (unsigned long)_outputSamples);
+    NSLog(@"Tick: %f [sec/point]", tick);
+    NSLog(@"FIR Duration: %f [sec]", _MATimeLength);
+    NSLog(@"FIR Taps: %lu [point]", [_FIR tap]);
+    NSLog(@"Output samples: %lu [point]", _outputSamples + [_FIR tap]);
+}
+
 - (void)purgeData
 {
-	_data = nil;
+    running = FALSE;
 }
 
 - (NSDate *)roundDate:(NSDate *)date toTick:(NSTimeInterval)tick
@@ -79,90 +103,57 @@
 	return [NSDate dateWithTimeIntervalSince1970:unixTime];
 }
 
-- (void)resampleData:(DataQueue *)input
+- (void)resampleData:(Queue *)input
 {
-	NSTimeInterval dataLength;
 	NSDate *start, *end;
-	NSUInteger FIR_Samples, maxSamples;
-	float bytes2mbps, tick;
-
-	// convert units
-	tick = _outputTimeLength / _outputSamples; // [sec/sample]
-	FIR_Samples = ceil(_MATimeLength / tick);
-	maxSamples = _outputSamples + FIR_Samples;
-	bytes2mbps = 8.0f / tick; // [bps]
-	bytes2mbps = bytes2mbps / 1000.0f / 1000.0f; // [Mbps]
-
-	// allocate data if need
-	if (_data == nil) {
-		_data = [[DataQueue alloc] init];
-		_data.last_update = nil;
-
-        NSUInteger FIR_tap = FIR_Samples / [FIR_KZ count];
-        if (FIR_tap <= 0) {
-            FIR_Samples = [FIR_KZ count];
-            FIR_tap = 1;
-        }
-        for (int i = 0; i < [FIR_KZ count]; i++)
-            [[FIR_KZ objectAtIndex:i] zeroFill:FIR_tap];
-	}
+    
+    if (!running)
+        [self updateParams];
 
 	// get range of time
-	dataLength = -(_outputTimeLength + _MATimeLength);
-	end = [input.last_update dateByAddingTimeInterval:_outputTimeOffset];
+	end = [input.last_used dateByAddingTimeInterval:_outputTimeOffset];
 	start = [self roundDate:[end dateByAddingTimeInterval:dataLength] toTick:tick];
 
-	if (!_data.last_update) {
+	if (!_output.last_used) {
 		// 1st time. adjust input date.
 		[input seekToDate:start];
-		_data.last_update = start;
+		_output.last_used = start;
 	}
 	else {
 		// continue from last update
-		start = [start laterDate:_data.lastDate];
+		start = [start laterDate:_output.lastDate];
 		start = [start dateByAddingTimeInterval:tick];
 	}
 	
 	// filter
-	for (NSDate *slot = start; [slot laterDate:end] == end;
-	     slot = [slot dateByAddingTimeInterval:tick]) {
+	for (NSDate *slot = start;
+         [slot laterDate:end] == end;
+         slot = [slot dateByAddingTimeInterval:tick]) {
 		SamplingData *sample;
 		NSUInteger sample_count = 0;
-		float slot_value = 0.0f, remain = 0.0f;
+        uint64_t slot_sum = 0;
 		// Step1: folding(sum) source data before slot
 		while ([input nextDate] &&
 		       [slot laterDate:[input nextDate]] == slot) {
-			SamplingData *source;
-			float value, new_value;
-
-			source = [input readNextData];
-			value = [source floatValue] + remain;
-			new_value = slot_value + value;
-			remain = (new_value - slot_value) - value;
-			slot_value = new_value;
-
+			TrafficSample *source = [input readNextData];
+            slot_sum += [source bytes];
 			sample_count += source.numberOfSamples;
-			_data.last_update = source.timestamp;
+			_output.last_used = source.timestamp;
 		}
-		sample = [SamplingData dataWithSingleFloat:(slot_value + remain)];
+		sample = [SamplingData dataWithSingleFloat:(float)slot_sum];
 
 		// Step2: FIR
-		if (FIR_Samples > [FIR_KZ count]) {
-            for (int i = 0; i < [FIR_KZ count]; i++) {
-                [[FIR_KZ objectAtIndex:i] shiftDataWithNewData:sample];
-                sample = [SamplingData dataWithSingleFloat:[[FIR_KZ objectAtIndex:i] averageFloatValue]];
-            }
-		}
+        sample = [self.FIR filter:sample];
 
 		// Step3: convert unit of sample
 		sample = [SamplingData dataWithFloat:([sample floatValue] * bytes2mbps) atDate:slot fromSamples:sample_count];
 
 		// finalize and output sample
-		[_data addDataEntry:sample withLimit:maxSamples];
+		[_output enqueue:sample withTimestamp:[sample timestamp]];
 	}
 
 	// get additional data(noise) generated by filter
-	_overSample = [_data count] - _outputSamples;
+	_overSample = [_output count] - _outputSamples;
 	_lastInput = input;
 }
 @end

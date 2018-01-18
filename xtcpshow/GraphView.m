@@ -165,8 +165,9 @@ float const scroll_sensitivity = 10.0f;
 	if (_viewTimeOffset > 0.0)
 		_viewTimeOffset = 0.0;
 
-	if (resample)
+    if (resample) {
 		[resampler purgeData];
+    }
 }
 
 - (float)setRange:(NSString *)mode withRange:(float)range
@@ -497,15 +498,24 @@ float const scroll_sensitivity = 10.0f;
 	[NSGraphicsContext restoreGraphicsState];
 }
 
-- (void)resampleData:(DataQueue *)data inRect:(NSRect)rect
+- (void)resampleData:(Queue *)data inRect:(NSRect)rect
 {
 	NSDate *end;
 
+    if (!resampler) {
+        NSLog(@"No resampler object");
+        return;
+    }
+    
 	// fix up _viewTimeOffset
-	end = [data last_update];
+	end = [data last_used];
+    if (end == nil) {
+        NSLog(@"No timestamp");
+        return;
+    }
 	end = [end dateByAddingTimeInterval:_viewTimeOffset];
 	if ([end laterDate:[data firstDate]] != end) {
-		_viewTimeOffset = [[data firstDate] timeIntervalSinceDate:[data last_update]];
+		_viewTimeOffset = [[data firstDate] timeIntervalSinceDate:[data last_used]];
 	}
 
 	resampler.outputTimeLength = _viewTimeLength;
@@ -515,7 +525,7 @@ float const scroll_sensitivity = 10.0f;
 
 	[resampler resampleData:data];
 
-	_data = [resampler data];
+	_data = [resampler output];
 	_maxSamples = [_data maxSamples];
 	_maxValue = [_data maxFloatValue];
 	_averageValue = [_data averageFloatValue];
@@ -524,7 +534,7 @@ float const scroll_sensitivity = 10.0f;
 	XmarkOffset = [resampler overSample] / 2;
 }
 
-- (void)importData:(DataQueue *)data
+- (void)importData:(Queue *)data
 {
 	[self resampleData:data inRect:_bounds];
 }
@@ -534,7 +544,7 @@ float const scroll_sensitivity = 10.0f;
 	[resampler purgeData];
 }
 
-- (void)saveFile:(DataQueue *)data;
+- (void)saveFile:(Queue *)data;
 {
 	NSSize image_size = NSMakeSize(640, 480);
 	NSRect image_rect;

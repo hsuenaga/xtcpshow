@@ -23,34 +23,25 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 //
-//  DataQueueEntry.m
+//  FIR.h
 //  xtcpshow
 //
-//  Created by SUENAGA Hiroki on 2013/08/15.
-//  Copyright (c) 2013 SUENAGA Hiroki. All rights reserved.
+//  Created by SUENAGA Hiroki on 2018/01/12.
+//  Copyright © 2018年 SUENAGA Hiroki. All rights reserved.
 //
 
-#import "DataQueueEntry.h"
-#import "SamplingData.h"
+#ifndef FIR_h
+#define FIR_h
 
-@implementation DataQueueEntry
-+ (DataQueueEntry *)entryWithData:(SamplingData *)data
-{
-	DataQueueEntry *new = [[DataQueueEntry alloc] init];
+@class SamplingData;
 
-	new->_content = data;
-	new->_next = nil;
+@interface FIR : NSObject
+- (id)init;
++ (id)FIRwithTap:(size_t)tap;
+- (SamplingData *)filter:(SamplingData *)sample;
 
-	return new;
-}
-
-- (id)copyWithZone:(NSZone *)zone
-{
-	DataQueueEntry *new = [[DataQueueEntry alloc] init];
-
-	new->_content = _content;
-	new->_next = nil;
-
-	return new;
-}
+@property (nonatomic)NSUInteger tap;
+@property (nonatomic)NSArray *stage;
 @end
+
+#endif /* FIR_h */

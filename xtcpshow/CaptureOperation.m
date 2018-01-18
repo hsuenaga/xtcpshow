@@ -37,10 +37,7 @@
 #import "CaptureOperation.h"
 #import "CaptureModel.h"
 #import "DataQueue.h"
-#import "DataQueueEntry.h"
 #import "SamplingData.h"
-
-#import "TrafficData.h"
 
 /*
  * Capture thread
@@ -48,6 +45,7 @@
 @implementation CaptureOperation
 @synthesize bpfControl;
 @synthesize peak_hold_queue;
+@synthesize index;
 
 - (CaptureOperation *)init
 {
@@ -56,6 +54,7 @@
 	source_interface = NULL;
 	filter_program = NULL;
 	bpfControl = NULL;
+    index = nil;
 
 	return self;
 }
@@ -69,6 +68,7 @@
 	source_interface = NULL;
 	filter_program = NULL;
 	bpfControl = nil;
+    index = nil;
 }
 
 - (void) main
@@ -89,6 +89,11 @@
 		[self sendError:@"Syntax erorr in filter statement"];
 		return;
 	}
+    
+    if (!index) {
+        NSLog(@"no packet index");
+        return;
+    }
 	
 	// reset timer
 	gettimeofday(&tv_next_tick, NULL);
@@ -98,9 +103,6 @@
         .tv_usec = CAP_TICK * 1000, // [msec]
     };
     [bpfControl timeout:&tick];
-
-	// init peak hold buffer for 1[sec]
-    peak_hold_queue = [[DataQueue alloc] initWithZeroFill:(int)(ceil(1.0f/TIMESLOT))];
 
 	// reset counter
 	max_mbps = peak_mbps = 0.0;
@@ -116,14 +118,11 @@
         [self sendError:@"Cannot attach interface"];
         return;
     }
-    TrafficData *storage = [TrafficData unixDataOf:self
-                                    withMsResolution:(1000 * 1000) // 1000 [sec]
-                                           startAt:NULL
-                                             endAt:NULL];
-#if 0
-    [storage openDebugFile:@"timestamp.txt"];
-#endif
-    NSMutableArray *samples = [[NSMutableArray alloc] init];
+
+    TrafficSample *timeout = [TrafficSample sampleOf:self
+                                           atTimeval:NULL
+                                    withPacketLength:0
+                                             auxData:nil];
     terminate = FALSE;
     while (!terminate) {
 		@autoreleasepool {
@@ -141,39 +140,32 @@
                 [self sendError:@"Failed to read from BPF"];
                 terminate = true;
             }
-            else if (tv.tv_sec == 0 && tv.tv_usec == 0) {
-                [self sendNotify:0 withTime:NULL];
-            }
-            else {
+            else if (tv.tv_sec || tv.tv_usec) {
+                TrafficSample *sample;
                 pkts++;
                 bytes += pktlen;
-                [self sendNotify:pktlen withTime:&tv];
-#if 0
-                [storage writeDebug:@"%d,%lu,%d\n", pkts, tv.tv_sec, tv.tv_usec];
-#endif
-                id obj = [storage addSampleAtTimevalExtend:&tv withBytes:pktlen auxData:nil];
-                if (obj)
-                    [samples addObject:obj];
-                else
-                    NSLog(@"failed to allocate sampling object");
+                sample = [index addSampleAtTimevalExtend:&tv withBytes:pktlen auxData:nil];
+                [self sendNotify:sample];
 			}
+            else {
+                // timeout
+                timeout.Start = timeout.End = [NSDate date];
+                [self sendNotify:timeout];
+            }
 
 			// timer update
 			if ([self tick_expired] == FALSE)
 				continue;
-
+            
 			// update max
 			mbps = (float)(bytes * 8) / last_interval; // [bps]
 			mbps = mbps / (1000.0f * 1000.0f); // [mbps]
 			if (max_mbps < mbps)
 				max_mbps = mbps;
-			[peak_hold_queue shiftDataWithNewData:[SamplingData dataWithSingleFloat:mbps]];
-			peak_mbps = [peak_hold_queue maxFloatValue];
 
 			// update model
 			[_model setTotal_pkts:pkts];
 			[_model setMbps:mbps];
-			[_model setPeek_hold_mbps:peak_mbps];
 			[_model setMax_mbps:max_mbps];
 			[_model setSamplingIntervalLast:last_interval];
 			bytes = 0;
@@ -190,13 +182,8 @@
 	[self sendFinish];
     
     // debug
-    [storage openDebugFile:@"tree.dot"];
-    [storage dumpTree:true];
-}
-
-- (void)setBPFControl:(BPFControl *)bpfc
-{
-    bpfControl = bpfc;
+    [index openDebugFile:@"tree.dot"];
+    [index dumpTree:true];
 }
 
 - (void)setSource:(const char *)source
@@ -219,7 +206,7 @@
 		filter_program = strdup(filter);
 }
 
-- (float)elapsed:(struct timeval *)last
+- (float)elapsedFrom:(struct timeval *)last
 {
 	struct timeval now, delta;
 	float elapsed;
@@ -261,11 +248,11 @@
 {
 	float expired, elapsed;
 
-	expired = [self elapsed:&tv_next_tick];
+	expired = [self elapsedFrom:&tv_next_tick];
 	if (expired < TIMESLOT)
 		return FALSE;
 	
-	elapsed = [self elapsed:&tv_last_tick];
+	elapsed = [self elapsedFrom:&tv_last_tick];
 	last_interval = elapsed;
 
 	[self addSecond:TIMESLOT toTimeval:&tv_next_tick];
@@ -273,22 +260,10 @@
 	return TRUE;
 }
 
-- (void)sendNotify:(int)size withTime:(const struct timeval *)tv
+- (void)sendNotify:(TrafficSample *)sample
 {
-	SamplingData *sample;
-	NSTimeInterval unix_time;
-	NSDate *date;
-
-	if (tv) {
-		unix_time = tv->tv_sec;
-		unix_time += ((double)tv->tv_usec / 1000000.0);
-		date = [NSDate dateWithTimeIntervalSince1970:unix_time];
-		sample = [SamplingData dataWithInt:size atDate:date fromSamples:1];
-	}
-	else {
-		// psuedo clock frame
-		sample = [SamplingData dataWithoutSample];
-	}
+    if (!sample)
+        return;
 
 	[_model
 	 performSelectorOnMainThread:@selector(samplingNotify:)

@@ -33,6 +33,7 @@
 
 @class AppDelegate;
 @class GraphData;
+@class Queue;
 @class DataQueue;
 @class DataResampler;
 
@@ -108,10 +109,10 @@ extern NSString *const RANGE_MANUAL;
 - (void)drawDate:(NSRect)rect;
 - (void)drawAllWithSize:(NSRect)rect OffScreen:(BOOL)off;
 
-- (void)importData:(DataQueue *)data;
-- (void)resampleData:(DataQueue *)data inRect:(NSRect) rect;
+- (void)importData:(Queue *)data;
+- (void)resampleData:(Queue *)data inRect:(NSRect) rect;
 - (void)purgeData;
-- (void)saveFile:(DataQueue *)data;
+- (void)saveFile:(Queue *)data;
 - (void)drawRect:(NSRect)rect;
 
 @end

@@ -62,11 +62,12 @@ static NSFileHandle *debugHandle = nil;
     parent = nil;
     
     objectID = [[self class] newID];
-    if (tv)
+    if (tv) {
         self.Start = self.End = tv2date(tv);
-    numberOfSamples = 1;
-    packetLength = length;
-    [self alignStartEnd];
+        numberOfSamples = 1;
+        packetLength = length;
+        [self alignStartEnd];
+    }
     
     return self;
 }
@@ -133,6 +134,11 @@ static NSFileHandle *debugHandle = nil;
     if ((from && [from laterDate:End]) || (to && [to earlierDate:Start]))
         return 0; // out of range
     return self.numberOfSamples;
+}
+
+-(NSDate *)timestamp
+{
+    return self.Start;
 }
 
 //

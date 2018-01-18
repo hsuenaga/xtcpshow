@@ -23,21 +23,59 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 //
-//  DataQueueEntry.h
+//  FIR.m
 //  xtcpshow
 //
-//  Created by SUENAGA Hiroki on 2013/08/15.
-//  Copyright (c) 2013 SUENAGA Hiroki. All rights reserved.
+//  Created by SUENAGA Hiroki on 2018/01/12.
+//  Copyright © 2018年 SUENAGA Hiroki. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
+#import "FIR.h"
+#import "DataQueue.h"
+#import "SamplingData.h"
 
-@class SamplingData;
+@implementation FIR
+@synthesize tap;
 
-@interface DataQueueEntry : NSObject<NSCopying>
-@property (strong, readonly) SamplingData *content;
-@property (strong) DataQueueEntry *next;
+#define KZ_STAGE 3
 
-+ (DataQueueEntry *)entryWithData:(SamplingData *)data;
-- (id)copyWithZone:(NSZone *)zone;
+- (id)init
+{
+    self = [super init];
+    return self;
+}
+
++ (id)FIRwithTap:(size_t)tap
+{
+    FIR *new = [[FIR alloc] init];
+    NSUInteger tapStage = tap / KZ_STAGE;
+    
+    if (tapStage <= 0) {
+        tapStage = 1;
+    }
+    new.tap = tapStage * KZ_STAGE;
+
+    NSMutableArray *FIR_Factory = [[NSMutableArray alloc] init];
+    for (int i = 0; i < KZ_STAGE; i++) {
+        DataQueue *stage = [DataQueue queueWithZero:tapStage];
+        [FIR_Factory addObject:stage];
+    }
+    new.stage = [NSArray arrayWithArray:FIR_Factory];
+    
+    return new;
+}
+
+- (SamplingData *)filter:(SamplingData *)sample
+{
+    for (int i = 0; i < [self.stage count]; i++) {
+        DataQueue *stage = [self.stage objectAtIndex:i];
+        [stage enqueue:sample withTimestamp:[sample timestamp]];
+        
+        float value = [stage averageFloatValue];
+        sample = [SamplingData dataWithSingleFloat:value];
+    }
+    
+    return sample;
+}
 @end

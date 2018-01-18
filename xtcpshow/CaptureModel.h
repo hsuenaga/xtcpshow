@@ -36,6 +36,8 @@
 
 #define DEF_HISTORY 50000 // packets
 
+@class TrafficData;
+
 @interface CaptureModel : NSObject {
 	NSOperationQueue *capture_cue;
 	BOOL running;
@@ -49,6 +51,8 @@
 
 // data size
 @property (assign) size_t history_size;
+@property (strong, nonatomic) Queue *data;
+@property (strong, nonatomic) TrafficData *index;
 
 // traffic data reported by capture thread
 @property (atomic, assign) uint32_t total_pkts;
@@ -59,8 +63,6 @@
 @property (atomic, assign) float samplingInterval; // [sec]
 
 // data processing (don't acccess from other thread)
-@property (strong) DataQueue *data;
-
 @property (weak) AppDelegate *controller;
 
 - (CaptureModel *)init;
@@ -75,9 +77,7 @@
 - (float)samplingIntervalMS;
 - (float)samplingIntervalLastMS;
 
-- (void)animationTick;
-
-- (void)samplingNotify:(SamplingData *)data;
+- (void)samplingNotify:(TrafficData *)data;
 - (void)samplingError:(NSString *)message;
 - (void)samplingFinish:(id)sender;
 @end

@@ -23,61 +23,78 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 //
-//  DataQueue.h
+//  Queue.h
 //  xtcpshow
 //
-//  Created by SUENAGA Hiroki on 2013/08/02.
-//  Copyright (c) 2013 SUENAGA Hiroki. All rights reserved.
+//  Created by SUENAGA Hiroki on 2018/01/12.
+//  Copyright © 2018年 SUENAGA Hiroki. All rights reserved.
 //
-#include <sys/queue.h>
-#import <Foundation/Foundation.h>
-#import "SamplingData.h"
-#import "Queue.h"
 
-@interface DataQueueEntry : QueueEntry
-@property SamplingData *data;
-- (DataQueueEntry *)initWithData:(id)data withTimestamp:(NSDate *)ts;
-+ (DataQueueEntry *)entryWithData:(id)data withTimestamp:(NSDate *)ts;
+#ifndef Queue_h
+#define Queue_h
+#import <Foundation/Foundation.h>
+
+@interface QueueEntry : NSObject<NSCopying>
+@property (nonatomic) NSDate *timestamp;
+@property (nonatomic) id content;
+@property (atomic) QueueEntry *next;
+
+- (QueueEntry *)initWithData:(id)data withTimestamp:(NSDate *)ts;
+- (QueueEntry *)init;
++ (QueueEntry *)entryWithData:(id)data withTimestamp:(NSDate *)ts;
+- (id)copyWithZone:(NSZone *)zone;
 @end
 
-@interface DataQueue : Queue {
-	NSUInteger refresh_count;
-	float add;
-	float add_remain;
-	float sub;
-	float sub_remain;
-}
+@interface Queue : NSObject
+@property (atomic) NSDate *last_used;
+@property (nonatomic) NSUInteger count;
+@property (nonatomic) size_t size;
+@property (atomic) QueueEntry *head;
+@property (atomic) QueueEntry *tail;
+@property (atomic) QueueEntry *last_read;
 
 //
 // protected
 //
-- (DataQueue *)initWithZeroFill:(size_t)size;
-- (DataQueue *)init;
-- (void)addSumState:(float)value;
-- (void)subSumState:(float)sub;
-- (void)clearSumState;
-- (void)refreshSumState;
-- (float)sum;
+- (Queue *)init;
+- (Queue *)initWithSize:(size_t)size;
 
 //
-// allocator
+// public
 //
-+ (DataQueue *)queueWithSize:(size_t)size;
-+ (DataQueue *)queueWithZero:(size_t)size;
++ (Queue *)queueWithSize:(size_t)size;
++ (Queue *)queueWithoutSize;
 
-// initizlize
-- (void)zeroFill;
+// add data
+- (QueueEntry *)enqueueEntry:(QueueEntry *)entry;
+- (QueueEntry *)dequeueEntry;
+- (id)enqueue:(id)entry withTimestamp:(NSDate *)ts;
+- (id)dequeue;
 
-// queue op
-- (SamplingData *)enqueue:(SamplingData *)data withTimestamp:(NSDate *)ts;
-- (SamplingData *)dequeue;
+// read data
+- (id)readNextData;
+- (void)rewind;
+
+//
+// date
+//
+- (NSDate *)firstDate;
+- (NSDate *)lastDate;
+- (NSDate *)nextDate;
+- (void)seekToDate:(NSDate *)date;
+
+// enumerate all data
+- (void)enumerateDataUsingBlock:(void(^)(id data, NSUInteger idx, BOOL *stop))block;
+
+// copy/clipping queue
+- (Queue *)copy;
 
 // queue status
-- (float)maxFloatValue;
-- (NSUInteger)maxSamples;
-- (float)averageFloatValue;
-- (float)standardDeviation;
+- (BOOL)isEmpty;
 
 // debug & exception
-- (void)invalidValueException;
+- (void)assertCounting;
+- (void)invalidChainException:(NSUInteger)count;
 @end
+
+#endif /* Queue_h */

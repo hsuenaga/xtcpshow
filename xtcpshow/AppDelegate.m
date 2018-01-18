@@ -155,12 +155,12 @@ static NSString *const PREFER_DEVICE=@"en";
 
 - (void)scrollGesture:(id)sender
 {
-	float value;
-
-	value = [_graphView MATimeLength];
+#if 0
+	float value = [_graphView MATimeLength];
 	[_smoothBar setFloatValue:value];
 	[self animationNotify:nil];
 	[self updateUserInterface];
+#endif
 }
 
 - (IBAction)changeRange:(id)sender {
@@ -256,8 +256,7 @@ static NSString *const PREFER_DEVICE=@"en";
 
 - (void)animationNotify:(id)sender
 {
-	[_model animationTick];
-	[_graphView importData:[_model data]];
+    [_graphView importData:[_model data]];
 	[_graphView setNeedsDisplay:YES];
 
 	[self updateUserInterface];
@@ -270,13 +269,15 @@ static NSString *const PREFER_DEVICE=@"en";
 	[_startButton setTitle:LBL_START];
 	[_deviceSelector setEnabled:YES];
 	[_filterField setEnabled:YES];
-
+    NSLog(@"alert: %@", message);
     alert = [[NSAlert alloc] init];
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Cancel"];
     [alert setAlertStyle:NSAlertStyleWarning];
     [alert setMessageText:LBL_CAP_ERROR];
     if (message)
         [alert setInformativeText:message];
-	[alert runModal];
+    [alert runModal];
 
 	[self updateUserInterface];
 }
