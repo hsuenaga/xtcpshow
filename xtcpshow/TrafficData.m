@@ -26,47 +26,47 @@
 //  TrafficData.m
 //  xtcpshow
 //
-//  Created by SUENAGA Hiroki on 2017/12/21.
+//  Created by SUENAGA Hiroki on 2017/12/22.
 //  Copyright © 2017年 SUENAGA Hiroki. All rights reserved.
 //
 
-#import "math.h"
-#import "TimeConverter.h"
-#import "TrafficSample.h"
 #import "TrafficData.h"
 
+static int newID = 0;
+static NSFileHandle *debugHandle = nil;
+
 //
-// Traffic Data Container
+// base class of traffic data
 //
 @interface TrafficData ()
+@property (weak,atomic) TrafficData *newerSample;
+@property (weak,atomic) TrafficData *olderSample;
 - (id)init;
-- (id)initWithResolution:(NSTimeInterval)resolusion startAt:(NSDate *)start endAt:(NSDate *)end;
-- (TrafficSample *)addToChildNode:(struct timeval *)tv withBytes:(NSUInteger)bytes auxData:(id)aux;
+- (id)initAtTimeval:(struct timeval *)tv withPacketLength:(uint64_t)lengh;
 @end
 
-@implementation TrafficData {
-    NSPointerArray *dataRef; // child nodes
-};
-@synthesize Resolution;
-@synthesize nextResolution;
+@implementation TrafficData
+@synthesize objectID;
+@synthesize parent;
+@synthesize numberOfSamples;
+@synthesize packetLength;
+@synthesize Start;
+@synthesize End;
 
 //
-// initializer
+// private initializer
 //
-- (id)initWithResolution:(NSTimeInterval)resolution startAt:(NSDate *)start endAt:(NSDate *)end
+- (id)initAtTimeval:(struct timeval *)tv withPacketLength:(uint64_t)length
 {
     self = [super init];
-
-    self.numberOfSamples = 0;
-    self.packetLength = 0;
-
-    self.Start = start;
-    self.End = end;
-    [self updateResolution:resolution];
-    dataRef = [NSPointerArray weakObjectsPointerArray];
-    if (!isnan(self.nextResolution)) {
-        for (int i = 0; i < NBRANCH; i++)
-            [dataRef addPointer:nil];
+    parent = nil;
+    
+    objectID = [[self class] newID];
+    if (tv) {
+        self.Start = self.End = tv2date(tv);
+        numberOfSamples = 1;
+        packetLength = length;
+        [self alignStartEnd];
     }
     
     return self;
@@ -74,336 +74,163 @@
 
 - (id)init
 {
-    return [self initWithResolution:NAN startAt:nil endAt:nil];
+    return [self initAtTimeval:NULL withPacketLength:0];
 }
 
-+(id)dataOf:(id)parent withResolution:(NSTimeInterval)Resolution startAt:(NSDate *)start endAt:(NSDate *)end
+//
+// public allocator
+//  create new sampling data in contaier class 'parent'.
+//  the container class doesn't have 'strong' reference to the allocated object.
+//  the allocated object must be held by some other object.
+//
++ (id)sampleOf:(id)parent atTimeval:(struct timeval *)tv withPacketLength:(uint64_t)length auxData:(id)aux
 {
-    TrafficData *new = [[TrafficData alloc]
-                        initWithResolution:Resolution startAt:start endAt:end];
+    TrafficData *new;
+    
+    new = [[TrafficData alloc] initAtTimeval:tv withPacketLength:length];
     new.parent = parent;
-    if (parent && [parent isMemberOfClass:[new class]]) {
-        new.bytesReceived = ((TrafficData *)parent).bytesReceived;
-    }
-
+    new.aux = aux;
     return new;
 }
 
-+(id)unixDataOf:(id)parent withMsResolution:(NSUInteger)msResolution
-        startAt:(struct timeval *)tvStart endAt:(struct timeval *)tvEnd
++ (int)newID
 {
-    return [TrafficData dataOf:parent
-                withResolution:msec2interval(msResolution)
-                       startAt:tvStart ? tv2date(tvStart) : nil
-                         endAt:tvEnd ? tv2date(tvEnd): nil];
+    return newID++;
+}
+
++ (NSFileHandle *)debugHandle
+{
+    return debugHandle;
+}
+
++ (void)setDebugHandle:(NSFileHandle *)handle
+{
+    if (debugHandle) {
+        [debugHandle synchronizeFile];
+        [debugHandle closeFile];
+        debugHandle = nil;
+    }
+    debugHandle = handle;
 }
 
 //
 // basic acsessor
 //
-- (NSUInteger)bitsFromDate:(NSDate *)from toDate:(NSDate *)to
+-(NSUInteger)bitsFromDate:(NSDate *)from toDate:(NSDate *)to
 {
-    if (from == nil || to == nil)
-        return 0;
-    if (self.packetLength == 0)
-        return 0;
-    if (self.Start && self.End) {
-        // we have data window.
-        if ([from laterDate:self.End] == from)
-            return 0; // out of range
-        if ([to earlierDate:self.Start] == to ||
-            [to isEqual:self.Start])
-            return 0; // out of range. merginal entry must specified by "from".
-        if (([from isEqual:self.Start] ||
-             [from earlierDate:self.Start] == from) &&
-             [to laterDate:self.End] == to)
-            return (self.packetLength * 8); // just report entire data.
-    }
-
-    //
-    // correct individual samples.
-    //
-    NSArray *allData = [dataRef allObjects];
-    NSUInteger bits = 0;
-    BOOL overflow;
-    for (int idx = 0; idx < [allData count]; idx++) {
-        if (allData[idx] == nil) {
-            // sampling data was lost due to buffer limitation.
-            overflow = true;
-            break;
-        }
-
-        TrafficSample *sample = (TrafficSample *)allData[idx];
-        if ([sample.Start earlierDate:from] == sample.Start)
-            continue;
-        if ([sample.Start isEqual:to] ||
-            [sample.Start laterDate:to] == sample.Start)
-            break;
-        // valid sample.
-        bits += (sample.packetLength * 8);
-    }
-    if ([allData count] > 0 && !overflow)
-        return bits; // return accurate data.
-
-    //
-    // accurate data was lost.
-    //
-    if (!self.Resolution || !self.Start || !self.End)
-        return (self.packetLength * 8);
-
-    NSTimeInterval duration = [self durationOverwrapFromDate:from toDate:to];
-    double ratio = duration / self.Resolution;
-    return (NSUInteger)floor(((double)(self.packetLength * 8)) * ratio);
-}
-
-- (NSUInteger)bytesFromDate:(NSDate *)from toDate:(NSDate *)to
-{
-    return ([self bitsFromDate:from toDate:to] / 8);
-}
-
-- (double)bitsPerSecFromDate:(NSDate *)from toDate:(NSDate *)to
-{
-    NSUInteger bits = [self bitsFromDate:from toDate:to];
-    NSTimeInterval duration = [self durationOverwrapFromDate:from toDate:to];
-    return ((double)bits / (double)duration);
-}
-
-- (double)bytesPerSecFromDate:(NSDate *)from toDate:(NSDate *)to
-{
-    return [self bitsPerSecFromDate:from toDate:to] / 8.0;
-}
-
-- (NSUInteger)samplesFromDate:(NSDate *)from toDate:(NSDate *)to
-{
-    if (from == nil || to == nil)
-        return 0;
-    if (self.numberOfSamples == 0)
-        return 0;
-    if (self.Start && self.End) {
-        // we have data window.
-        if ([from laterDate:self.End] == from)
-            return 0; // out of range
-        if ([to earlierDate:self.Start] == to ||
-            [to isEqual:self.Start])
-            return 0; // out of range. merginal entry must specified by "from".
-        if (([from isEqual:self.Start] ||
-             [from earlierDate:self.Start] == from) &&
-             [to laterDate:self.End] == to)
-            return self.numberOfSamples; // just report entire data.
-    }
     
-    //
-    // correct individual samples.
-    //
-    NSArray *allData = [dataRef allObjects];
-    NSUInteger samples = 0;
-    BOOL overflow;
-
-    for (int idx = 0; idx < [allData count]; idx++) {
-        if (allData[idx] == nil) {
-            // sampling data was lost due to buffer limitation.
-            overflow = true;
-            break;
-        }
-        
-        TrafficSample *sample = (TrafficSample *)allData[idx];
-        if ([sample.Start earlierDate:from] == sample.Start)
-            continue;
-        if ([sample.Start isEqual:to] ||
-            [sample.Start laterDate:to] == sample.Start)
-            break;
-        // valid sample.
-        samples += sample.numberOfSamples;
-    }
-    if ([allData count] > 0 && !overflow)
-        return samples; // return accurate data.
-    
-    //
-    // accurate data was lost.
-    //
-    if (!self.Resolution || !self.Start || !self.End)
-        return self.numberOfSamples;
-    
-    NSTimeInterval duration = [self durationOverwrapFromDate:from toDate:to];
-    double ratio = duration / self.Resolution;
-    return (NSUInteger)floor(((double)(self.numberOfSamples)) * ratio);
+    return ([self bytesFromDate:from toDate:to] * 8);
 }
 
-- (double)bps
+-(NSUInteger)bytesFromDate:(NSDate *)from toDate:(NSDate *)to
 {
-    if (self.Start == nil || self.End == nil)
-        return NAN;
-    
-    double delta = (double)[self.End timeIntervalSinceDate:self.Start];
-    double dbits = (double)[self bits];
-    
-    return (dbits / delta);
+    if ([from earlierDate:Start] && [to laterDate:End])
+        return self.packetLength;
+    return 0;
 }
 
-- (double)kbps
+-(NSUInteger)samplesFromDate:(NSDate *)from toDate:(NSDate *)to
 {
-    return [self bps] * 1.0E-3;
+    if ((from && [from laterDate:End]) || (to && [to earlierDate:Start]))
+        return 0; // out of range
+    return self.numberOfSamples;
 }
 
-- (double)Mbps
+-(NSDate *)timestamp
 {
-    return [self bps] * 1.0E-6;
+    return self.Start;
 }
 
-- (double)Gbps
+//
+// simple scaled acsessor
+//
+- (NSUInteger)bytes
 {
-    return [self bps] * 1.0E-9;
+    return self.packetLength;
+}
+
+- (double)kbytes
+{
+    return ((double)[self bytes]) * 1.0E-3;
+}
+
+- (double)Mbytes
+{
+    return ((double)[self bytes]) * 1.0E-6;
+}
+
+- (double)Gbytes
+{
+    return ((double)[self bytes]) * 1.0E-9;
+}
+
+- (NSUInteger)bits
+{
+    return (self.packetLength * 8);
+}
+
+- (double)kbits
+{
+    return ((double)[self bits]) * 1.0E-3;
+}
+
+- (double)Mbits
+{
+    return ((double)[self bits]) * 1.0E-6;
+}
+
+- (double)Gbits
+{
+    return ((double)[self bits]) * 1.0E-9;
 }
 
 //
 // smart string representations
 //
-- (NSString *)bpsString
+- (NSString *)bytesString
 {
-    double bps = [self bps];
+    if (self.packetLength < 1000)
+        return [NSString stringWithFormat:@"%3lu [bytes]", [self bytes]];
+    else if (self.packetLength < 1000000)
+        return [NSString stringWithFormat:@"%4.1f [kbytes]", [self kbytes]];
+    else if (self.packetLength < 1000000000)
+        return [NSString stringWithFormat:@"%4.1f [Mbytes]", [self Mbytes]];
     
-    if (isnan(bps))
-        return @"NaN";
-    else if (bps < 1.0E3)
-        return [NSString stringWithFormat:@"%4.1f [bps]", [self bps]];
-    else if (bps < 1.0E6)
-        return [NSString stringWithFormat:@"%4.1f [kbps]", [self kbps]];
-    else if (bps < 1.0E9)
-        return [NSString stringWithFormat:@"%4.1f [Mbps]", [self Mbps]];
-    
-    return [NSString stringWithFormat:@"%.1f [Gbps]", [self Gbps]];
+    return [NSString stringWithFormat:@"%.1f [Gbytes]", [self Gbytes]];
 }
 
 //
-// operator
+// Utility
 //
-- (BOOL)acceptableTimeval:(struct timeval *)tv
++ (NSDate *)alignTimeval:(struct timeval *)tv withResolution:(NSTimeInterval)resolution
 {
-    if (self.Start == nil || self.End == nil || tv == NULL) {
-        NSLog(@"obj%d time slot is not defined", self.objectID);
-        return false;
-    }
-    
-    NSUInteger msTimestamp = tv2msec(tv);
-    if ([self msStart] <= msTimestamp && msTimestamp < [self msEnd])
-        return true;
+    NSUInteger msInterval = tv2msec(tv);
+    NSUInteger msResolution = interval2msec(resolution);
 
-    NSLog(@"obj%d timestamp %lu is out of range: %lu - %lu", [self objectID],
-          msTimestamp, [self msStart], [self msEnd]);
-    return false;
+    msInterval = msInterval - (msInterval % msResolution);
+
+    return [NSDate dateWithTimeIntervalSince1970:msec2interval(msInterval)];
 }
 
-//
-// insert child container(TrraficData) or sigle data(TrafficSample).
-// we use TrafficSample as abstructed base class.
-//
-- (TrafficSample *)addToChildNode:(struct timeval *)tv withBytes:(NSUInteger)bytes auxData:(id)aux
+- (void)alignStartEnd
 {
-    //
-    // leaf
-    //
-    if (isnan(self.Resolution) ||
-        isnan(self.nextResolution) ||
-        [self msResolution] <= 1 ||
-        NBRANCH < 2) {
-        // We have traffic sample directly.
-        TrafficSample *child = [TrafficSample sampleOf:self atTimeval:tv withPacketLength:bytes auxData:aux];
-        [dataRef addPointer:(__bridge void * _Nullable)child];
-        return child;
-    }
-
-    //
-    // aggregate
-    //
-    NSUInteger slot = [self slotFromTimeval:tv];
-    TrafficData *child = [dataRef pointerAtIndex:slot];
-    if (!child) {
-        // create new node.
-        NSDate *start = nil, *end = nil;
-        
-        // copy parent's time marker
-        if (slot == 0 && self.Start) {
-            start = self.Start;
-        }
-        if (slot == (NBRANCH - 1) && self.End) {
-            end = self.End;
-        }
-        
-        // copy sibling's time marker
-        if (!start && slot > 0) {
-            TrafficData *prev = [dataRef pointerAtIndex:(slot - 1)];
-            if (prev)
-                start = prev.End;
-        }
-        if (!end && slot < (NBRANCH - 1)) {
-            TrafficData *next = [dataRef pointerAtIndex:(slot + 1)];
-            if (next)
-                end = next.Start;
-        }
-        
-        // allocatre new marker
-        if (!start) {
-            start = [TrafficSample alignTimeval:tv withResolution:self.nextResolution];
-        }
-        if (!end) {
-            NSUInteger msEnd = date2msec(start) + interval2msec(self.nextResolution);
-            end = msec2date(msEnd);
-        }
-        
-        if ([start isEqual:end]) {
-            NSLog(@"invalid object setup");
-        }
-        child = [TrafficData dataOf:self
-                       withResolution:self.nextResolution
-                                startAt:start
-                                  endAt:end];
-        [dataRef replacePointerAtIndex:slot
-                           withPointer:(__bridge void * _Nullable)child];
-    }
-    return [child addSampleAtTimeval:tv withBytes:bytes auxData:aux];
+    self.End = self.Start;
 }
 
-- (TrafficSample *)addSampleAtTimeval:(struct timeval *)tv withBytes:(NSUInteger)bytes auxData:(id)aux
+- (NSUInteger)msStart
 {
-    if (![self acceptableTimeval:tv]) {
-        NSLog(@"obj%d request is not acceptable", self.objectID);
-        return nil;
-    }
+    if (!self.Start)
+        return 0;
     
-    id new = [self addToChildNode:tv withBytes:bytes auxData:aux];
-    if (!new) {
-        NSLog(@"obj%d child node rejected the timestamp", self.objectID);
-        return nil;
-    }
-    
-    self.numberOfSamples++;
-    self.packetLength += bytes;
-    self.bytesReceived += bytes;
-    return new;
+    return date2msec(self.Start);
 }
 
-- (TrafficSample *)addSampleAtTimevalExtend:(struct timeval *)tv
-                                  withBytes:(NSUInteger)bytes auxData:(id)aux
+- (NSUInteger)msEnd
 {
-    if (tv == NULL)
-        return nil;
+    if (!self.End)
+        return 0;
     
-    NSUInteger msTimestamp = tv2msec(tv);
-    BOOL extend = false;
-
-    if (![self msStart] || msTimestamp < [self msStart]) {
-        self.Start = msec2date(msTimestamp);
-        extend = true;
-    }
-    
-    if (![self msEnd] || [self msEnd] < msTimestamp) {
-        self.End = msec2date(msTimestamp);
-        extend = true;
-    }
-    if (extend)
-        [self alignStartEnd];
-    
-    return [self addSampleAtTimeval:tv withBytes:bytes auxData:aux];
+    return date2msec(self.End);
 }
 
 //
@@ -413,180 +240,65 @@
 {
     TrafficData *new = [[TrafficData alloc] init];
     
-    new.numberOfSamples = self.numberOfSamples;
-    new.packetLength = self.packetLength;
-    new.Start = self.Start;
-    new.End = self.End;
-    new.Resolution = self.Resolution;
-    new.parent = nil;
-
+    new->numberOfSamples = self.numberOfSamples;
+    new->packetLength = self.packetLength;
+    new->Start = self.Start;
+    new->End = self.End;
+    new->parent = nil;
+    
     return new;
 }
 
 //
-// Utility
+// runtime support
 //
-- (void)alignStartEnd
+- (NSString *)description
 {
-    NSUInteger msResolution = [self msResolution];
-
-    if (!msResolution)
-        return;
-    if (self.Start) {
-        NSUInteger msStart = date2msec(self.Start);
-        msStart = msStart - (msStart % msResolution);
-        self.Start = msec2date(msStart);
-    }
-    if (self.End) {
-        NSUInteger msEnd = date2msec(self.End);
-        msEnd = msEnd - (msEnd % msResolution) + msResolution;
-        self.End = msec2date(msEnd);
-    }
+    return [NSString stringWithFormat:@"TrafficData(%llu samples, %@)",
+            self.numberOfSamples, [self bytesString]];
 }
 
-- (NSUInteger)msResolution
+- (NSString *)debugDescription
 {
-    if (isnan(self.Resolution))
-        return 0;
-    
-    return interval2msec(self.Resolution);
+    return [NSString stringWithFormat:@"TrafficData: %llu samples, %@, From %@ To %@, parent=%@",
+            self.numberOfSamples, [self bytesString],
+            [self.Start description],
+            [self.End description],
+            [self.parent description]];
 }
 
-- (NSUInteger)slotFromTimeval:(struct timeval *)tv
-{
-    //
-    // indirect reference via another TrafficData.
-    //
-    //  Start                                End
-    //  |<---------resolution[msec]--------->|
-    //  |<-slot 1->|<-slot 2->|...|<-slot n->| ... n => NBRNACH
-    //                ^
-    //                offset(timestamp - start) [ms]
-    //  slot = offset / (resolution / nbranch) = offset * nbrach / resolution
-    //
-    NSUInteger slot = (tv2msec(tv) - [self msStart]) * NBRANCH / [self msResolution];
-    if (slot >= [dataRef count]) {
-        NSLog(@"slot %lu is out of range", slot);
-        slot = [dataRef count] - 1;
-    }
-    
-    return slot;
-}
-
-- (void)updateResolution:(NSTimeInterval)resolusion
-{
-    if (isnan(resolusion)) {
-        self.Resolution = NAN;
-        self.nextResolution = NAN;
-        return;
-    }
-    
-    NSUInteger msResolution = interval2msec(resolusion);
-    if (msResolution <= 1) {
-        // minimum resolusion.
-        self.Resolution = msec2interval(1);
-        self.nextResolution= NAN;
-        return;
-    }
-
-    // ensure nextResolution to power of NBRANCH.
-    NSUInteger pf = (NSUInteger)round(log(msResolution)/log(NBRANCH));
-    NSUInteger msNext = NBRANCH;
-    msNext = NBRANCH;
-    for (int i = 1; i < pf; i++) {
-        msNext *= NBRANCH;
-    }
-    if (msNext == msResolution) {
-        // for example)
-        // log(9999)/log(10) = 4 = log(10000)/log(10)
-        // we need power of 3 for 9999.
-        msNext /= NBRANCH;
-    }
-    if (msNext < 1) {
-        self.Resolution = resolusion;
-        self.nextResolution = NAN;
-        return;
-    }
-
-    // adjust msResolution to multiple of nextResolution
-    NSUInteger nslot = msResolution / msNext;
-    if (msResolution % msNext) {
-        nslot += 1;
-    }
-    msResolution = nslot * msNext;
-    
-    self.Resolution = msec2interval(msResolution);
-    self.nextResolution = msec2interval(msNext);
-}
-
-- (NSTimeInterval)durationOverwrapFromDate:(NSDate *)from toDate:(NSDate *)to
-{
-    if ([from laterDate:self.End] == from)
-        return NAN;
-    if ([to earlierDate:self.Start] == to ||
-        [to isEqual:self.Start])
-        return NAN;
-    NSDate *start = [self.Start laterDate:from];
-    NSDate *end = [self.End earlierDate:to];
-    
-    return [end timeIntervalSinceDate:start];
-}
-
-//
-// debug
-//
 - (void)dumpTree:(BOOL)root
 {
-    // header
-    if (root) {
-        [self writeDebug:@"digraph xtcpdump {\n"];
-        [self writeDebug:@"node [shape=record];\n"];
-        [self writeDebug:@"graph [rankdir=TB];\n"];
-    }
-    
-    NSArray *node = [dataRef allObjects];
-    if ([node count] == 0) {
-        [self writeDebug:@"node%d [shape=doublecircle label=\"%llu [bytes]\"];\n",
-         self.objectID, self.bytesReceived];
-        return;
-    }
+    [self writeDebug:@"obj%d [shape=point];\n", self.objectID];
+}
 
-    // create record def
-    [self writeDebug:@"node%d [shape=record label=\"{<obj%d> obj%d\\n%lu[msec]\\n%llu [bytes]|{",
-     self.objectID, self.objectID, self.objectID, [self msResolution], self.bytesReceived];
-    __block BOOL delim = false;
-    [node
-     enumerateObjectsUsingBlock:^(TrafficSample *ptr, NSUInteger idx, BOOL *stop) {
-         if ([ptr isMemberOfClass:[self class]]) {
-             if (delim)
-                 [self writeDebug:@"|"];
-             [self writeDebug:@"<obj%d> slot%lu", ptr.objectID, idx];
-             delim = true;
-         }
-         else {
-             [self writeDebug:@"<leaf%d> no child", self.objectID];
-             *stop = true;
-         }
-     }];
-    [self writeDebug:@"}}\"];\n"];
-
-    // create record link
-    [node
-     enumerateObjectsUsingBlock:^(TrafficSample *ptr, NSUInteger idx, BOOL *stop) {
-         if ([ptr isMemberOfClass:[self class]]) {
-             [self writeDebug:@"node%d:obj%d -> node%d:obj%d;\n",
-              self.objectID, ptr.objectID, ptr.objectID, ptr.objectID];
-         }
-         else {
-             [self writeDebug:@"node%d:leaf%d -> obj%d;\n",
-              self.objectID, self.objectID, ptr.objectID];
-         }
-         [ptr dumpTree:false];
-     }];
+- (void)openDebugFile:(NSString *)fileName
+{
+    NSString *path;
+    path = [NSString stringWithFormat:@"%@/%@", NSHomeDirectory(), fileName];
     
-    // footer
-    if (root) {
-        [self writeDebug:@"}\n"];
+    NSFileManager *fmgr = [NSFileManager defaultManager];
+    [fmgr createFileAtPath:path contents:nil attributes:nil];
+    if (debugHandle) {
+        [debugHandle synchronizeFile];
+        [debugHandle closeFile];
+        debugHandle = nil;
     }
+    debugHandle = [NSFileHandle fileHandleForWritingAtPath:path];
+    [debugHandle truncateFileAtOffset:0];
+}
+
+- (void)writeDebug:(NSString *)format, ...
+{
+    if (!debugHandle) {
+        NSLog(@"No debug handle.");
+    }
+    NSString *contents;
+    va_list args;
+    
+    va_start(args, format);
+    contents = [[NSString alloc] initWithFormat:format arguments:args];
+    va_end(args);
+    [debugHandle writeData:[contents dataUsingEncoding:NSUTF8StringEncoding]];
 }
 @end

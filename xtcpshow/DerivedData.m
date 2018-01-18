@@ -23,19 +23,19 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 //
-//  SamplingData.m
+//  DerivedData.m
 //  xtcpshow
 //
 //  Created by SUENAGA Hiroki on 2013/08/09.
 //  Copyright (c) 2013 SUENAGA Hiroki. All rights reserved.
 //
 
-#import "SamplingData.h"
+#import "DerivedData.h"
 
-@implementation SamplingData
+@implementation DerivedData
 + (id)dataWithoutSample
 {
-	SamplingData *new = [[[self class] alloc] init];
+	DerivedData *new = [[[self class] alloc] init];
 	new->_timestamp = [NSDate date];
 
 	return new;
@@ -43,7 +43,7 @@
 
 + (id)dataWithSingleFloat:(float)data
 {
-	SamplingData *new = [[[self class] alloc] init];
+	DerivedData *new = [[[self class] alloc] init];
 
 	new->_number = [NSNumber numberWithFloat:data];
 	new->_timestamp = [NSDate date];
@@ -54,7 +54,7 @@
 
 + (id)dataWithSingleInt:(int)data
 {
-	SamplingData *new = [[[self class] alloc] init];
+	DerivedData *new = [[[self class] alloc] init];
 
 	new->_number = [NSNumber numberWithInt:data];
 	new->_timestamp = [NSDate date];
@@ -65,7 +65,7 @@
 
 + (id)dataWithFloat:(float)data atDate:(NSDate *)date fromSamples:(NSUInteger)samples;
 {
-	SamplingData *new = [[[self class] alloc] init];
+	DerivedData *new = [[[self class] alloc] init];
 
 	new->_number = [NSNumber numberWithFloat:data];
 	new->_timestamp = [date copy];
@@ -76,7 +76,7 @@
 
 + (id)dataWithInt:(int)data atDate:(NSDate *)date fromSamples:(NSUInteger)samples
 {
-	SamplingData *new = [[[self class] alloc] init];
+	DerivedData *new = [[[self class] alloc] init];
 
 	new->_number = [NSNumber numberWithInt:data];
 	new->_timestamp = date;
@@ -87,7 +87,7 @@
 
 + (id)dataWithNumber:(NSNumber *)number atDate:(NSDate *)date fromSamples:(NSUInteger)samples
 {
-	SamplingData *new = [[[self class] alloc] init];
+	DerivedData *new = [[[self class] alloc] init];
 
 	new->_number = number;
 	new->_timestamp = date;
@@ -108,7 +108,7 @@
 
 - (id)copyWithZone:(NSZone *)zone
 {
-	SamplingData *new = [[SamplingData alloc] init];
+	DerivedData *new = [[DerivedData alloc] init];
 
 	new->_number = [_number copy];
 	new->_timestamp = [_timestamp copy];

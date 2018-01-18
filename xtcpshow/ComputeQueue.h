@@ -31,16 +31,16 @@
 //
 #include <sys/queue.h>
 #import <Foundation/Foundation.h>
-#import "SamplingData.h"
+#import "DerivedData.h"
 #import "Queue.h"
 
-@interface DataQueueEntry : QueueEntry
-@property SamplingData *data;
-- (DataQueueEntry *)initWithData:(id)data withTimestamp:(NSDate *)ts;
-+ (DataQueueEntry *)entryWithData:(id)data withTimestamp:(NSDate *)ts;
+@interface ComputeQueueEntry : QueueEntry
+@property DerivedData *data;
+- (ComputeQueueEntry *)initWithData:(id)data withTimestamp:(NSDate *)ts;
++ (ComputeQueueEntry *)entryWithData:(id)data withTimestamp:(NSDate *)ts;
 @end
 
-@interface DataQueue : Queue {
+@interface ComputeQueue : Queue {
 	NSUInteger refresh_count;
 	float add;
 	float add_remain;
@@ -51,8 +51,8 @@
 //
 // protected
 //
-- (DataQueue *)initWithZeroFill:(size_t)size;
-- (DataQueue *)init;
+- (ComputeQueue *)initWithZeroFill:(size_t)size;
+- (ComputeQueue *)init;
 - (void)addSumState:(float)value;
 - (void)subSumState:(float)sub;
 - (void)clearSumState;
@@ -62,15 +62,15 @@
 //
 // allocator
 //
-+ (DataQueue *)queueWithSize:(size_t)size;
-+ (DataQueue *)queueWithZero:(size_t)size;
++ (ComputeQueue *)queueWithSize:(size_t)size;
++ (ComputeQueue *)queueWithZero:(size_t)size;
 
 // initizlize
 - (void)zeroFill;
 
 // queue op
-- (SamplingData *)enqueue:(SamplingData *)data withTimestamp:(NSDate *)ts;
-- (SamplingData *)dequeue;
+- (DerivedData *)enqueue:(DerivedData *)data withTimestamp:(NSDate *)ts;
+- (DerivedData *)dequeue;
 
 // queue status
 - (float)maxFloatValue;

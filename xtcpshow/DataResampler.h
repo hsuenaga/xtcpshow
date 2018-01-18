@@ -31,7 +31,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "DataQueue.h"
+#import "ComputeQueue.h"
 
 @class FIR;
 
@@ -43,7 +43,7 @@
     NSTimeInterval dataLength;
 }
 @property (strong) FIR *FIR;
-@property (strong, readonly) DataQueue *output;
+@property (strong, readonly) ComputeQueue *output;
 @property (weak, readonly) Queue *lastInput;
 @property (assign) NSUInteger outputSamples;
 @property (assign) NSTimeInterval outputTimeLength;

@@ -36,8 +36,8 @@
 #import "BPFControl.h"
 #import "CaptureOperation.h"
 #import "CaptureModel.h"
-#import "DataQueue.h"
-#import "SamplingData.h"
+#import "ComputeQueue.h"
+#import "DerivedData.h"
 
 /*
  * Capture thread
@@ -119,7 +119,7 @@
         return;
     }
 
-    TrafficSample *timeout = [TrafficSample sampleOf:self
+    TrafficData *timeout = [TrafficData sampleOf:self
                                            atTimeval:NULL
                                     withPacketLength:0
                                              auxData:nil];
@@ -141,7 +141,7 @@
                 terminate = true;
             }
             else if (tv.tv_sec || tv.tv_usec) {
-                TrafficSample *sample;
+                TrafficData *sample;
                 pkts++;
                 bytes += pktlen;
                 sample = [index addSampleAtTimevalExtend:&tv withBytes:pktlen auxData:nil];
@@ -260,7 +260,7 @@
 	return TRUE;
 }
 
-- (void)sendNotify:(TrafficSample *)sample
+- (void)sendNotify:(TrafficData *)sample
 {
     if (!sample)
         return;

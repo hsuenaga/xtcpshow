@@ -33,12 +33,12 @@
 #ifndef FIR_h
 #define FIR_h
 
-@class SamplingData;
+@class DerivedData;
 
 @interface FIR : NSObject
 - (id)init;
 + (id)FIRwithTap:(size_t)tap;
-- (SamplingData *)filter:(SamplingData *)sample;
+- (DerivedData *)filter:(DerivedData *)sample;
 
 @property (nonatomic)NSUInteger tap;
 @property (nonatomic)NSArray *stage;

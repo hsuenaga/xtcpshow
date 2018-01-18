@@ -23,7 +23,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 //
-//  SamplingData.h
+//  DerivedData.h
 //  xtcpshow
 //
 //  Created by SUENAGA Hiroki on 2013/08/09.
@@ -32,7 +32,7 @@
 #include <sys/queue.h>
 #import <Foundation/Foundation.h>
 
-@interface SamplingData : NSObject<NSCopying> {
+@interface DerivedData : NSObject<NSCopying> {
 	NSNumber *_number;
 }
 @property (strong, readonly) NSDate *timestamp;

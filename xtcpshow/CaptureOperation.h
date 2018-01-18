@@ -34,7 +34,7 @@
 #import <Foundation/Foundation.h>
 
 #import "AppDelegate.h"
-#import "TrafficData.h"
+#import "TrafficIndex.h"
 
 #define TIMESLOT (0.10f) // [sec] (= 100[ms])
 #define HOLDSLOT (1.0f)  // [sec]
@@ -44,7 +44,7 @@
 #define CAP_BUFSIZ (CAP_SNAPLEN * 128)
 
 @class CaptureModel;
-@class DataQueue;
+@class ComputeQueue;
 @class BPFControl;
 
 @interface CaptureOperation : NSOperation {
@@ -66,8 +66,8 @@
 }
 @property (weak) CaptureModel *model;
 @property (weak) BPFControl *bpfControl;
-@property (strong) DataQueue *peak_hold_queue;
-@property (weak, nonatomic) TrafficData *index;
+@property (strong) ComputeQueue *peak_hold_queue;
+@property (weak, nonatomic) TrafficIndex *index;
 
 - (CaptureOperation *)init;
 - (void)dealloc;
@@ -77,7 +77,7 @@
 
 - (float)elapsedFrom:(struct timeval *)last;
 - (BOOL)tick_expired;
-- (void)sendNotify:(TrafficSample *)sample;
+- (void)sendNotify:(TrafficData *)sample;
 - (void)sendError:(NSString *)message;
 - (void)sendFinish;
 - (BOOL)attachFilter;

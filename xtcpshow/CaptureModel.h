@@ -30,13 +30,13 @@
 //  Copyright (c) 2013 SUENAGA Hiroki. All rights reserved.
 //
 #import <Foundation/Foundation.h>
-#import "DataQueue.h"
+#import "ComputeQueue.h"
 #import "AppDelegate.h"
 #import "BPFControl.h"
 
 #define DEF_HISTORY 50000 // packets
 
-@class TrafficData;
+@class TrafficIndex;
 
 @interface CaptureModel : NSObject {
 	NSOperationQueue *capture_cue;
@@ -52,7 +52,7 @@
 // data size
 @property (assign) size_t history_size;
 @property (strong, nonatomic) Queue *data;
-@property (strong, nonatomic) TrafficData *index;
+@property (strong, nonatomic) TrafficIndex *index;
 
 // traffic data reported by capture thread
 @property (atomic, assign) uint32_t total_pkts;
@@ -77,7 +77,7 @@
 - (float)samplingIntervalMS;
 - (float)samplingIntervalLastMS;
 
-- (void)samplingNotify:(TrafficData *)data;
+- (void)samplingNotify:(TrafficIndex *)data;
 - (void)samplingError:(NSString *)message;
 - (void)samplingFinish:(id)sender;
 @end

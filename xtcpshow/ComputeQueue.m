@@ -31,24 +31,24 @@
 //
 #include <sys/queue.h>
 
-#import "DataQueue.h"
-#import "TrafficSample.h"
-#import "SamplingData.h"
+#import "ComputeQueue.h"
+#import "TrafficData.h"
+#import "DerivedData.h"
 
 #define REFRESH_THR 1000 // [samples]
 
-@implementation DataQueueEntry
+@implementation ComputeQueueEntry
 @synthesize data;
 
-- (DataQueueEntry *)initWithData:(id)data withTimestamp:(NSDate *)ts
+- (ComputeQueueEntry *)initWithData:(id)data withTimestamp:(NSDate *)ts
 {
     self = [super initWithData:data withTimestamp:ts];
-    if ([data isMemberOfClass:[SamplingData class]]) {
+    if ([data isMemberOfClass:[DerivedData class]]) {
         self.data = data;
     }
-    else if ([data isMemberOfClass:[TrafficSample class]]){
-        TrafficSample *tdata = (TrafficSample *)data;
-        SamplingData *sdata = [SamplingData dataWithInt:(int)[tdata packetLength]
+    else if ([data isMemberOfClass:[TrafficData class]]){
+        TrafficData *tdata = (TrafficData *)data;
+        DerivedData *sdata = [DerivedData dataWithInt:(int)[tdata packetLength]
                                                  atDate:[tdata timestamp]
                                             fromSamples:[tdata numberOfSamples]];
         self.data = sdata;
@@ -62,23 +62,23 @@
     return self;
 }
 
-+ (DataQueueEntry *)entryWithData:(id)data withTimestamp:(NSDate *)ts
++ (ComputeQueueEntry *)entryWithData:(id)data withTimestamp:(NSDate *)ts
 {
-    return [[DataQueueEntry alloc] initWithData:data withTimestamp:ts];
+    return [[ComputeQueueEntry alloc] initWithData:data withTimestamp:ts];
 }
 
 - (id)copyWithZone:(NSZone *)zone
 {
-    return [[DataQueueEntry alloc]
+    return [[ComputeQueueEntry alloc]
             initWithData:[self.data copy]
             withTimestamp:self.timestamp];
 }
 @end
 
-@implementation DataQueue
+@implementation ComputeQueue
 @synthesize count;
 
-- (DataQueue *)initWithZeroFill:(size_t)size
+- (ComputeQueue *)initWithZeroFill:(size_t)size
 {
     if (size == 0)
         return nil;
@@ -90,7 +90,7 @@
     return self;
 }
 
-- (DataQueue *)init
+- (ComputeQueue *)init
 {
     return [self initWithZeroFill:0];
 }
@@ -98,14 +98,14 @@
 //
 // allocator
 //
-+ (DataQueue *)queueWithSize:(size_t)size
++ (ComputeQueue *)queueWithSize:(size_t)size
 {
-    return [[DataQueue alloc] initWithSize:size];
+    return [[ComputeQueue alloc] initWithSize:size];
 }
 
-+ (DataQueue *)queueWithZero:(size_t)size
++ (ComputeQueue *)queueWithZero:(size_t)size
 {
-    return [[DataQueue alloc] initWithZeroFill:size];
+    return [[ComputeQueue alloc] initWithZeroFill:size];
 }
 
 //
@@ -174,10 +174,10 @@
 
 - (void)refreshSumState
 {
-	DataQueueEntry *entry;
+	ComputeQueueEntry *entry;
 
 	[self clearSumState];
-	for (entry = (DataQueueEntry *)self.head; entry; entry = (DataQueueEntry *)entry.next) {
+	for (entry = (ComputeQueueEntry *)self.head; entry; entry = (ComputeQueueEntry *)entry.next) {
 		float value, new_value;
 
 		value = [entry.data floatValue];
@@ -209,7 +209,7 @@
 {
 	self.head = self.tail = nil;
 	self.count = 0;
-    SamplingData *zero = [SamplingData dataWithSingleFloat:0.0];
+    DerivedData *zero = [DerivedData dataWithSingleFloat:0.0];
     NSDate *now = [NSDate date];
     for (int i = 0; i < self.size; i++) {
         [self enqueue:zero withTimestamp:now];
@@ -217,18 +217,18 @@
 	[self refreshSumState];
 }
 
-- (SamplingData *)enqueue:(SamplingData *)data withTimestamp:(NSDate *)ts
+- (DerivedData *)enqueue:(DerivedData *)data withTimestamp:(NSDate *)ts
 {
     if (data) {
         [self addSumState:[data floatValue]];
     }
     
-    DataQueueEntry *add = [DataQueueEntry entryWithData:data withTimestamp:ts];
-    DataQueueEntry *sub = (DataQueueEntry *)[self enqueueEntry:add];
+    ComputeQueueEntry *add = [ComputeQueueEntry entryWithData:data withTimestamp:ts];
+    ComputeQueueEntry *sub = (ComputeQueueEntry *)[self enqueueEntry:add];
     if (sub == nil)
         return nil;
     
-    if (![sub isMemberOfClass:[DataQueueEntry class]]) {
+    if (![sub isMemberOfClass:[ComputeQueueEntry class]]) {
         NSException *ex = [NSException
                            exceptionWithName:@"inconsitent queue"
                            reason:@"not a DataQueueEntry"
@@ -240,18 +240,18 @@
     return sub.data;
 }
 
-- (SamplingData *)dequeue
+- (DerivedData *)dequeue
 {
-    DataQueueEntry *entry;
+    ComputeQueueEntry *entry;
 
-    entry = (DataQueueEntry *)[self dequeueEntry];
+    entry = (ComputeQueueEntry *)[self dequeueEntry];
 	[self subSumState:[entry.data floatValue]];
 	return entry.data;
 }
 
-- (DataQueue *)copy
+- (ComputeQueue *)copy
 {
-    DataQueue *new = [DataQueue queueWithSize:self.size];
+    ComputeQueue *new = [ComputeQueue queueWithSize:self.size];
 
     for (QueueEntry *entry = self.head; entry; entry = entry.next) {
         [new enqueue:[entry copy] withTimestamp:[entry timestamp]];
@@ -275,7 +275,7 @@
 	NSUInteger max = 0;
 
 	for (entry = self.head; entry; entry = entry.next) {
-        SamplingData *walk = entry.content;
+        DerivedData *walk = entry.content;
 		if (max < walk.numberOfSamples)
 			max = walk.numberOfSamples;
 	}
@@ -288,7 +288,7 @@
 	float max = 0.0;
 
 	for (entry = self.head; entry; entry = entry.next) {
-        SamplingData *walk = entry.content;
+        DerivedData *walk = entry.content;
 		float value = [walk floatValue];
 
 		if (isnan(value))
@@ -321,7 +321,7 @@
     
     for (QueueEntry *entry = self.head; entry;
          entry = entry.next) {
-        SamplingData *walk = entry.content;
+        DerivedData *walk = entry.content;
 		variance += pow((avg - walk.floatValue), 2.0);
     }
 	variance /= (self.count - 1);

@@ -33,8 +33,8 @@
 #import "BPFControl.h"
 #import "CaptureModel.h"
 #import "CaptureOperation.h"
-#import "DataQueue.h"
-#import "SamplingData.h"
+#import "ComputeQueue.h"
+#import "DerivedData.h"
 
 /*
  * Model object: almost values are updated by operation thread.
@@ -56,7 +56,7 @@
 	// data size
 	_history_size = DEF_HISTORY;
 	_data = [Queue queueWithSize:_history_size];
-    _index = [TrafficData unixDataOf:self
+    _index = [TrafficIndex unixDataOf:self
                  withMsResolution:(1000 * 1000)
                           startAt:NULL
                             endAt:NULL];
@@ -120,13 +120,13 @@
 //
 // notify from Capture operation thread
 //
-- (void) samplingNotify:(TrafficSample *)entry
+- (void) samplingNotify:(TrafficData *)entry
 {
     if (!entry)
         return;
 
     if (entry.numberOfSamples > 0) {
-        TrafficSample *prev = nil;
+        TrafficData *prev = nil;
         
         if ([_data tail])
             prev = [[_data tail] content];

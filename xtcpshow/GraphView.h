@@ -34,7 +34,7 @@
 @class AppDelegate;
 @class GraphData;
 @class Queue;
-@class DataQueue;
+@class ComputeQueue;
 @class DataResampler;
 
 extern NSString *const RANGE_AUTO;
@@ -65,7 +65,7 @@ extern NSString *const RANGE_MANUAL;
 	DataResampler *resampler;
 }
 @property (strong) AppDelegate *controller;
-@property (strong) DataQueue *data;
+@property (strong) ComputeQueue *data;
 
 // statistics
 @property (assign, readonly) NSUInteger maxSamples;

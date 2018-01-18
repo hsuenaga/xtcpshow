@@ -26,49 +26,56 @@
 //  TrafficData.h
 //  xtcpshow
 //
-//  Created by SUENAGA Hiroki on 2017/12/21.
+//  Created by SUENAGA Hiroki on 2017/12/22.
 //  Copyright © 2017年 SUENAGA Hiroki. All rights reserved.
 //
 #import <sys/time.h>
+
 #import <Foundation/Foundation.h>
-#import "TrafficSample.h"
+#import "TimeConverter.h"
+// precision used by smart string representations.
+#define PRECISION 1
 
-#define NBRANCH 10
-
-@interface TrafficData : TrafficSample
-@property (assign, nonatomic) uint64_t bytesReceived;
-@property (assign, nonatomic) NSTimeInterval Resolution;
-@property (assign, nonatomic) NSTimeInterval nextResolution;
-
+@interface TrafficData : NSObject<NSCopying>
+@property (assign, readonly, atomic, class) int newID;
+@property (strong, nonatomic, class) NSFileHandle *debugHandle;
+@property (assign, nonatomic) int objectID;
+@property (strong, nonatomic) id parent;
+@property (strong, nonatomic) id next;
+@property (assign, nonatomic) uint64_t numberOfSamples;
+@property (assign, nonatomic) uint64_t packetLength;
+@property (strong, nonatomic) NSDate *Start;
+@property (strong, nonatomic) NSDate *End;
+@property (strong, nonatomic) id aux;
 #pragma mark - initializer
-+ (id)dataOf:(id)parent withResolution:(NSTimeInterval)Resolution startAt:(NSDate *)start endAt:(NSDate *)end;
-+ (id)unixDataOf:(id)parent withMsResolution:(NSUInteger)msResolution
-         startAt:(struct timeval *)tvStart endAt:(struct timeval *)tvEnd;
++ (id)sampleOf:(id)parent atTimeval:(struct timeval *)tv withPacketLength:(uint64_t)length auxData:(id)aux;
 
 #pragma mark - basic acessor
-- (double)bytesPerSecFromDate:(NSDate *)from toDate:(NSDate *)to;
-- (double)bitsPerSecFromDate:(NSDate *)from toDate:(NSDate *)to;
+- (NSDate *)timestamp;
+- (NSUInteger)bitsFromDate:(NSDate *)from toDate:(NSDate *)to;
+- (NSUInteger)bytesFromDate:(NSDate *)from toDate:(NSDate *)to;
+- (NSUInteger)samplesFromDate:(NSDate *)from toDate:(NSDate *)to;
 
 #pragma mark - simple scaled acsessor
-- (double)bps;
-- (double)kbps;
-- (double)Mbps;
-- (double)Gbps;
+- (NSUInteger)bytes;
+- (double)kbytes;
+- (double)Mbytes;
+- (double)Gbytes;
+
+- (NSUInteger)bits;
+- (double)kbits;
+- (double)Mbits;
+- (double)Gbits;
 
 #pragma mark - smart string representations
-- (NSString *)bpsString;
-
-#pragma mark - operator
-- (BOOL)acceptableTimeval:(struct timeval *)tv;
-- (TrafficSample *)addSampleAtTimeval:(struct timeval *)tv withBytes:(NSUInteger)bytes auxData:(id)aux;
-- (TrafficSample *)addSampleAtTimevalExtend:(struct timeval *)tv withBytes:(NSUInteger)bytes auxData:(id)aux;
-
-#pragma mark - NSCopying protocol
-- (id)copyWithZone:(NSZone *)zone;
+- (NSString *)bytesString;
 
 #pragma mark - utility
-- (NSUInteger)msResolution;
-- (NSUInteger)slotFromTimeval:(struct timeval *)tv;
-- (void)updateResolution:(NSTimeInterval)resolution;
-- (NSTimeInterval)durationOverwrapFromDate:(NSDate *)from toDate:(NSDate *)to;
++ (NSDate *)alignTimeval:(struct timeval *)tv withResolution:(NSTimeInterval)resolution;
+- (void)alignStartEnd;
+- (NSUInteger)msStart;
+- (NSUInteger)msEnd;
+- (void)dumpTree:(BOOL)root;
+- (void)openDebugFile:(NSString *)fileName;
+- (void)writeDebug:(NSString *)format, ... __attribute__((format(__NSString__, 1, 2)));
 @end

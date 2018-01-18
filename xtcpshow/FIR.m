@@ -32,8 +32,8 @@
 
 #import <Foundation/Foundation.h>
 #import "FIR.h"
-#import "DataQueue.h"
-#import "SamplingData.h"
+#import "ComputeQueue.h"
+#import "DerivedData.h"
 
 @implementation FIR
 @synthesize tap;
@@ -58,7 +58,7 @@
 
     NSMutableArray *FIR_Factory = [[NSMutableArray alloc] init];
     for (int i = 0; i < KZ_STAGE; i++) {
-        DataQueue *stage = [DataQueue queueWithZero:tapStage];
+        ComputeQueue *stage = [ComputeQueue queueWithZero:tapStage];
         [FIR_Factory addObject:stage];
     }
     new.stage = [NSArray arrayWithArray:FIR_Factory];
@@ -66,14 +66,14 @@
     return new;
 }
 
-- (SamplingData *)filter:(SamplingData *)sample
+- (DerivedData *)filter:(DerivedData *)sample
 {
     for (int i = 0; i < [self.stage count]; i++) {
-        DataQueue *stage = [self.stage objectAtIndex:i];
+        ComputeQueue *stage = [self.stage objectAtIndex:i];
         [stage enqueue:sample withTimestamp:[sample timestamp]];
         
         float value = [stage averageFloatValue];
-        sample = [SamplingData dataWithSingleFloat:value];
+        sample = [DerivedData dataWithSingleFloat:value];
     }
     
     return sample;

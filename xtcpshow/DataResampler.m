@@ -32,8 +32,8 @@
 #include "math.h"
 
 #import "DataResampler.h"
-#import "TrafficSample.h"
-#import "SamplingData.h"
+#import "TrafficData.h"
+#import "DerivedData.h"
 #import "FIR.h"
 
 // Gaussian filter.
@@ -69,10 +69,10 @@
     _FIR = [FIR FIRwithTap:ceil(_MATimeLength/tick)];
     
     NSUInteger maxSamples = _outputSamples + [_FIR tap];
-    _output = [DataQueue queueWithZero:maxSamples];
+    _output = [ComputeQueue queueWithZero:maxSamples];
     _output.last_used = nil;
 
-#ifdef DEBUG
+#if 0
     [self dumpParams];
 #endif
     running = TRUE;
@@ -129,24 +129,24 @@
 	for (NSDate *slot = start;
          [slot laterDate:end] == end;
          slot = [slot dateByAddingTimeInterval:tick]) {
-		SamplingData *sample;
+		DerivedData *sample;
 		NSUInteger sample_count = 0;
         uint64_t slot_sum = 0;
 		// Step1: folding(sum) source data before slot
 		while ([input nextDate] &&
 		       [slot laterDate:[input nextDate]] == slot) {
-			TrafficSample *source = [input readNextData];
+			TrafficData *source = [input readNextData];
             slot_sum += [source bytes];
 			sample_count += source.numberOfSamples;
 			_output.last_used = source.timestamp;
 		}
-		sample = [SamplingData dataWithSingleFloat:(float)slot_sum];
+		sample = [DerivedData dataWithSingleFloat:(float)slot_sum];
 
 		// Step2: FIR
         sample = [self.FIR filter:sample];
 
 		// Step3: convert unit of sample
-		sample = [SamplingData dataWithFloat:([sample floatValue] * bytes2mbps) atDate:slot fromSamples:sample_count];
+		sample = [DerivedData dataWithFloat:([sample floatValue] * bytes2mbps) atDate:slot fromSamples:sample_count];
 
 		// finalize and output sample
 		[_output enqueue:sample withTimestamp:[sample timestamp]];
