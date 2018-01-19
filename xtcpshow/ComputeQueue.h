@@ -41,11 +41,9 @@
 @end
 
 @interface ComputeQueue : Queue {
-	NSUInteger refresh_count;
-	float add;
-	float add_remain;
-	float sub;
-	float sub_remain;
+    double prec;
+	double sumState;
+	double add_remain;
 }
 
 //
@@ -53,11 +51,10 @@
 //
 - (ComputeQueue *)initWithZeroFill:(size_t)size;
 - (ComputeQueue *)init;
-- (void)addSumState:(float)value;
-- (void)subSumState:(float)sub;
+- (void)addSumState:(double)value;
+- (void)subSumState:(double)sub;
 - (void)clearSumState;
-- (void)refreshSumState;
-- (float)sum;
+- (double)sum;
 
 //
 // allocator
@@ -73,10 +70,10 @@
 - (DerivedData *)dequeue;
 
 // queue status
-- (float)maxFloatValue;
+- (double)maxDoubleValue;
 - (NSUInteger)maxSamples;
-- (float)averageFloatValue;
-- (float)standardDeviation;
+- (double)averageDoubleValue;
+- (double)standardDeviation;
 
 // debug & exception
 - (void)invalidValueException;

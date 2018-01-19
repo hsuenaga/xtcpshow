@@ -39,13 +39,13 @@
 @property (assign, readonly) NSUInteger numberOfSamples;
 
 + (id)dataWithoutSample;
-+ (id)dataWithSingleFloat:(float)data;
++ (id)dataWithSingleDouble:(double)data;
 + (id)dataWithSingleInt:(int)data;
-+ (id)dataWithFloat:(float)data atDate:(NSDate *)date fromSamples:(NSUInteger)samples;
++ (id)dataWithDouble:(double)data atDate:(NSDate *)date fromSamples:(NSUInteger)samples;
 + (id)dataWithInt:(int)data atDate:(NSDate *)date fromSamples:(NSUInteger)samples;
 + (id)dataWithNumber:(NSNumber *)number atDate:(NSDate *)date fromSamples:(NSUInteger)samples;
 
-- (float)floatValue;
+- (double)doubleValue;
 - (int)intValue;
 
 // Pr: NSCopying

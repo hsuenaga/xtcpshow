@@ -72,8 +72,8 @@
         NSDate *timestamp = [sample timestamp];
         NSUInteger samples = [sample numberOfSamples];
         [[self.stage objectAtIndex:i] enqueue:sample withTimestamp:timestamp];
-        float value = [[self.stage objectAtIndex:i] averageFloatValue];
-        sample = [DerivedData dataWithFloat:value atDate:timestamp fromSamples:samples];
+        float value = [[self.stage objectAtIndex:i] averageDoubleValue];
+        sample = [DerivedData dataWithDouble:value atDate:timestamp fromSamples:samples];
     }
     
     return sample;

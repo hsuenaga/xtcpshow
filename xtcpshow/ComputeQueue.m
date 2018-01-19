@@ -35,7 +35,7 @@
 #import "TrafficData.h"
 #import "DerivedData.h"
 
-#define REFRESH_THR 1000 // [samples]
+#define ROUND (0.001)
 
 @implementation ComputeQueueEntry
 @synthesize data;
@@ -75,8 +75,20 @@
 }
 @end
 
+@interface ComputeQueue ()
+- (double)roundDouble:(double)value;
+@end
+
 @implementation ComputeQueue
 @synthesize count;
+
+- (double)roundDouble:(double)value
+{
+    double rvalue = floor(value / prec) * prec;
+    if (rvalue == -0.0)
+        rvalue = fabs(rvalue);
+    return rvalue;
+}
 
 - (ComputeQueue *)initWithZeroFill:(size_t)size
 {
@@ -85,7 +97,7 @@
     
     self = [super initWithSize:size];
     [self zeroFill];
-    refresh_count = REFRESH_THR;
+    prec = ROUND;
     
     return self;
 }
@@ -111,95 +123,46 @@
 //
 // protected
 //
-- (void)addSumState:(float)value
+- (void)addSumState:(double)value
 {
-	float new_value;
-	float delta;
+	double new_value;
+	double delta;
 	
-	if (isnan(value) || isinf(value))
+    if (isnan(value) || isinf(value)) {
 		[self invalidValueException];
+        return;
+    }
 	
-	if (value == 0.0f)
+	if (value == 0.0)
 		return;
-	if (refresh_count-- == 0) {
-		[self refreshSumState];
-		return;
-	}
 
 	value = value + add_remain;
-	new_value = add + value;
-	if (isinf(new_value) || isnan(new_value)) {
-		[self refreshSumState];
-		return;
-	}
-	delta = new_value - add;
+	new_value = sumState + value;
+    if (isinf(new_value) || isnan(new_value)) {
+        [self invalidValueException];
+        return;
+    }
+    delta = new_value - sumState;
 	add_remain = value - delta;
-	add = new_value;
+	sumState = new_value;
 }
 
-- (void)subSumState:(float)value
+- (void)subSumState:(double)value
 {
-	float new_value;
-	float delta;
-
-	if (isnan(value) || isinf(value))
-		[self invalidValueException];
-	
-	if (value == 0.0f)
-		return;
-	if (refresh_count-- == 0) {
-		[self refreshSumState];
-		return;
-	}
-	
-	value = value + sub_remain;
-	new_value = sub + value;
-	if (isinf(new_value) || isnan(new_value)) {
-		[self refreshSumState];
-		return;
-	}
-	
-	delta = new_value - sub;
-	sub_remain = value - delta;
-	sub = new_value;
+    return [self addSumState:(-value)];
 }
 
 - (void)clearSumState
 {
-	add = 0.0f;
-	sub = 0.0f;
-	add_remain = 0.0f;
-	sub_remain = 0.0f;
+	sumState = 0.0;
+	add_remain = 0.0;
 }
 
-- (void)refreshSumState
+- (double)sum
 {
-	ComputeQueueEntry *entry;
-
-	[self clearSumState];
-	for (entry = (ComputeQueueEntry *)self.head; entry; entry = (ComputeQueueEntry *)entry.next) {
-		float value, new_value;
-
-		value = [entry.data floatValue];
-		if (isnan(value) || isinf(value))
-			[self invalidValueException];
-
-		value = value + add_remain;
-		new_value = add + value;
-		add_remain = (new_value - add) - value;
-		add = new_value;
-	}
-	refresh_count = REFRESH_THR;
-}
-
-- (float)sum
-{
-	float sum;
-	// XXX: cancellation of significant digits
-
-	sum = add_remain - sub_remain;
-	sum += add - sub;
-	return sum;
+	double sum;
+	sum = sumState + add_remain;
+    return sum;
 }
 
 //
@@ -209,25 +172,24 @@
 {
 	self.head = self.tail = nil;
 	self.count = 0;
-    DerivedData *zero = [DerivedData dataWithSingleFloat:0.0];
+    DerivedData *zero = [DerivedData dataWithSingleDouble:0.0];
     NSDate *now = [NSDate date];
     for (int i = 0; i < self.size; i++) {
         [self enqueue:zero withTimestamp:now];
     }
-	[self refreshSumState];
+    [self clearSumState];
 }
 
 - (DerivedData *)enqueue:(DerivedData *)data withTimestamp:(NSDate *)ts
 {
     if (data) {
-        [self addSumState:[data floatValue]];
+        [self addSumState:[data doubleValue]];
     }
     
     ComputeQueueEntry *add = [ComputeQueueEntry entryWithData:data withTimestamp:ts];
     ComputeQueueEntry *sub = (ComputeQueueEntry *)[self enqueueEntry:add];
     if (sub == nil)
         return nil;
-    
     if (![sub isMemberOfClass:[ComputeQueueEntry class]]) {
         NSException *ex = [NSException
                            exceptionWithName:@"inconsitent queue"
@@ -235,7 +197,7 @@
                            userInfo:nil];
         @throw ex;
     }
-    [self subSumState:[sub.data floatValue]];
+    [self subSumState:[sub.data doubleValue]];
     
     return sub.data;
 }
@@ -245,7 +207,7 @@
     ComputeQueueEntry *entry;
 
     entry = (ComputeQueueEntry *)[self dequeueEntry];
-	[self subSumState:[entry.data floatValue]];
+	[self subSumState:[entry.data doubleValue]];
 	return entry.data;
 }
 
@@ -256,7 +218,6 @@
     for (QueueEntry *entry = self.head; entry; entry = entry.next) {
         [new enqueue:[entry copy] withTimestamp:[entry timestamp]];
     }
-    [new refreshSumState];
 
 	return new;
 }
@@ -282,14 +243,14 @@
 	return max;
 }
 
-- (float)maxFloatValue
+- (double)maxDoubleValue
 {
 	QueueEntry *entry;
-	float max = 0.0;
+	double max = 0.0;
 
 	for (entry = self.head; entry; entry = entry.next) {
         DerivedData *walk = entry.content;
-		float value = [walk floatValue];
+		double value = [walk doubleValue];
 
 		if (isnan(value))
 			[self invalidValueException];
@@ -297,42 +258,35 @@
 		if (max < value)
 			max = value;
 	}
-	return max;
+    return max;
 }
 
-- (float)averageFloatValue
+- (double)averageDoubleValue
 {
 	if (self.count == 0)
 		return 0.0;
-    float avg = [self sum] / (float)self.count;
-    if (avg < 0.001f) {
-        avg = 0.0f;
-    }
-    return avg;
+    double avg = [self sum] / (double)self.count;
+    return [self roundDouble:avg];
 }
 
-- (float)standardDeviation
+- (double)standardDeviation
 {
-	float avg = [self averageFloatValue];
-	float variance = 0.0;
+	double avg = [self averageDoubleValue];
+	double variance = 0.0;
 
     if (self.count < 1)
-        return 0.0f;
+        return 0.0;
     
     for (QueueEntry *entry = self.head; entry;
          entry = entry.next) {
         DerivedData *walk = entry.content;
-		variance += pow((avg - walk.floatValue), 2.0);
+		variance += pow((avg - walk.doubleValue), 2.0);
     }
 	variance /= (self.count - 1);
 
-    float deviation = sqrtf(variance);
-    if (deviation < 0.001f) {
-        deviation = 0.0f;
-    }
-	return sqrtf(variance);
+    double deviation = sqrt(variance);
+    return [self roundDouble:deviation];
 }
-
 
 - (void)invalidValueException
 {

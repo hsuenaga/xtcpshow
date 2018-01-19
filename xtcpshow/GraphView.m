@@ -96,7 +96,7 @@ float const scroll_sensitivity = 10.0f;
 	BOOL resample = NO;
 
 	// Y-axis
-	max = [[self data] maxFloatValue];
+	max = [[self data] maxDoubleValue];
 	if (range_mode == RANGE_MANUAL) {
 		if (manual_range <= 0.5f)
 			new_range = 0.5f;
@@ -242,7 +242,7 @@ float const scroll_sensitivity = 10.0f;
 	[NSGraphicsContext saveGraphicsState];
 	[_data enumerateDataUsingBlock:^(DerivedData *data, NSUInteger idx, BOOL *stop) {
 		NSRect bar;
-		float value = [data floatValue];
+		float value = [data doubleValue];
 
 		if (idx < GraphOffset)
 			return;
@@ -531,8 +531,8 @@ float const scroll_sensitivity = 10.0f;
 
 	_data = [resampler output];
 	_maxSamples = [_data maxSamples];
-	_maxValue = [_data maxFloatValue];
-	_averageValue = [_data averageFloatValue];
+	_maxValue = [_data maxDoubleValue];
+	_averageValue = [_data averageDoubleValue];
 
 	GraphOffset = [resampler overSample];
 	XmarkOffset = [resampler overSample] / 2;

@@ -41,11 +41,11 @@
 	return new;
 }
 
-+ (id)dataWithSingleFloat:(float)data
++ (id)dataWithSingleDouble:(double)data
 {
 	DerivedData *new = [[[self class] alloc] init];
 
-	new->_number = [NSNumber numberWithFloat:data];
+	new->_number = [NSNumber numberWithDouble:data];
 	new->_timestamp = [NSDate date];
 	new->_numberOfSamples = 1;
 
@@ -63,11 +63,11 @@
 	return new;
 }
 
-+ (id)dataWithFloat:(float)data atDate:(NSDate *)date fromSamples:(NSUInteger)samples;
++ (id)dataWithDouble:(double)data atDate:(NSDate *)date fromSamples:(NSUInteger)samples;
 {
 	DerivedData *new = [[[self class] alloc] init];
 
-	new->_number = [NSNumber numberWithFloat:data];
+    new->_number = [NSNumber numberWithDouble:data];
 	new->_timestamp = [date copy];
 	new->_numberOfSamples = samples;
 
@@ -96,7 +96,7 @@
 	return new;
 }
 
-- (float)floatValue
+- (double)doubleValue
 {
 	return [_number floatValue];
 }

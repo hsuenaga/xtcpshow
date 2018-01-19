@@ -142,13 +142,13 @@
 			sample_count += source.numberOfSamples;
 			_output.last_used = source.timestamp;
 		}
-		sample = [DerivedData dataWithSingleFloat:(float)slot_sum];
+		sample = [DerivedData dataWithSingleDouble:(float)slot_sum];
 
 		// Step2: FIR
         sample = [self.FIR filter:sample];
 
 		// Step3: convert unit of sample
-		sample = [DerivedData dataWithFloat:([sample floatValue] * bytes2mbps) atDate:slot fromSamples:sample_count];
+		sample = [DerivedData dataWithDouble:([sample doubleValue] * bytes2mbps) atDate:slot fromSamples:sample_count];
 
 		// finalize and output sample
 		[_output enqueue:sample withTimestamp:[sample timestamp]];
@@ -192,7 +192,7 @@
         NSUInteger bits = nbits - pbits;
         NSUInteger pkts = [index samplesAtDate:slot] - [index samplesAtDate:prev];
         double mbps = (double)bits / ((tick * 2.0) * (1000.0 * 1000.0));
-        DerivedData *sample = [DerivedData dataWithFloat:mbps atDate:slot fromSamples:pkts];
+        DerivedData *sample = [DerivedData dataWithDouble:mbps atDate:slot fromSamples:pkts];
         
         // Step2: FIR
         sample = [self.FIR filter:sample];
