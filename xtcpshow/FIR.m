@@ -69,11 +69,11 @@
 - (DerivedData *)filter:(DerivedData *)sample
 {
     for (int i = 0; i < [self.stage count]; i++) {
-        ComputeQueue *stage = [self.stage objectAtIndex:i];
-        [stage enqueue:sample withTimestamp:[sample timestamp]];
-        
-        float value = [stage averageFloatValue];
-        sample = [DerivedData dataWithSingleFloat:value];
+        NSDate *timestamp = [sample timestamp];
+        NSUInteger samples = [sample numberOfSamples];
+        [[self.stage objectAtIndex:i] enqueue:sample withTimestamp:timestamp];
+        float value = [[self.stage objectAtIndex:i] averageFloatValue];
+        sample = [DerivedData dataWithFloat:value atDate:timestamp fromSamples:samples];
     }
     
     return sample;

@@ -180,10 +180,6 @@
 	NSLog(@"%d packets proccessed.", pkts);
 	NSLog(@"done thread");
 	[self sendFinish];
-    
-    // debug
-    [index openDebugFile:@"tree.dot"];
-    [index dumpTree:true];
 }
 
 - (void)setSource:(const char *)source

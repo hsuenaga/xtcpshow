@@ -48,7 +48,7 @@
     }
     else if ([data isMemberOfClass:[TrafficData class]]){
         TrafficData *tdata = (TrafficData *)data;
-        DerivedData *sdata = [DerivedData dataWithInt:(int)[tdata packetLength]
+        DerivedData *sdata = [DerivedData dataWithInt:(int)[tdata bytesReceived]
                                                  atDate:[tdata timestamp]
                                             fromSamples:[tdata numberOfSamples]];
         self.data = sdata;

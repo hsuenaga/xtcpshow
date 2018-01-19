@@ -87,4 +87,13 @@ tv2date(struct timeval *tv)
 {
     return [NSDate dateWithTimeIntervalSince1970:tv2interval(tv)];
 }
+
+static inline void
+date2tv(NSDate *date, struct timeval *tv)
+{
+    NSUInteger msec = date2msec(date);
+    tv->tv_sec = msec / 1000;
+    tv->tv_usec = (msec % 1000) * 1000;
+}
+
 #endif /* TimeConverter_h */

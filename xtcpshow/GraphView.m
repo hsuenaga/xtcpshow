@@ -36,6 +36,7 @@
 #import "ComputeQueue.h"
 #import "DataResampler.h"
 #import "DerivedData.h"
+#import "TrafficIndex.h"
 
 //
 // string resources
@@ -498,7 +499,7 @@ float const scroll_sensitivity = 10.0f;
 	[NSGraphicsContext restoreGraphicsState];
 }
 
-- (void)resampleData:(Queue *)data inRect:(NSRect)rect
+- (void)resampleData:(Queue *)data withIndex:(TrafficIndex *)index inRect:(NSRect)rect
 {
 	NSDate *end;
 
@@ -523,7 +524,10 @@ float const scroll_sensitivity = 10.0f;
 	resampler.outputSamples = rect.size.width;
 	resampler.MATimeLength = _MATimeLength;
 
-	[resampler resampleData:data];
+    if (index)
+        [resampler resampleDataWithIndex:index atDate:end];
+    else
+        [resampler resampleData:data];
 
 	_data = [resampler output];
 	_maxSamples = [_data maxSamples];
@@ -534,9 +538,9 @@ float const scroll_sensitivity = 10.0f;
 	XmarkOffset = [resampler overSample] / 2;
 }
 
-- (void)importData:(Queue *)data
+- (void)importData:(Queue *)data withIndex:(TrafficIndex *)index
 {
-	[self resampleData:data inRect:_bounds];
+    [self resampleData:data withIndex:index inRect:_bounds];
 }
 
 - (void)purgeData
@@ -560,7 +564,7 @@ float const scroll_sensitivity = 10.0f;
 	image_rect.origin.y = 0;
 	NSLog(@"create PNG image");
 	[self purgeData];
-	[self resampleData:data inRect:image_rect];
+    [self resampleData:data withIndex:nil inRect:image_rect];
 	[self drawAllWithSize:image_rect OffScreen:YES];
 	[NSGraphicsContext restoreGraphicsState];
 
@@ -581,7 +585,7 @@ float const scroll_sensitivity = 10.0f;
 
 	// restore data for display
 	[self purgeData];
-	[self resampleData:data inRect:_bounds];
+    [self resampleData:data withIndex:nil inRect:_bounds];
 }
 
 - (void)drawRect:(NSRect)dirty_rect

@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		46129EFD1FE90039004C6130 /* SecurityFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 46129EFC1FE90039004C6130 /* SecurityFoundation.framework */; };
-		462081201FECEA00003B3C74 /* TrafficData.m in Sources */ = {isa = PBXBuildFile; fileRef = 4620811F1FECEA00003B3C74 /* TrafficData.m */; };
+		462081201FECEA00003B3C74 /* TrafficIndex.m in Sources */ = {isa = PBXBuildFile; fileRef = 4620811F1FECEA00003B3C74 /* TrafficIndex.m */; };
 		46219ABB17B1C6EC00740A80 /* xtcpshow.iconset in Resources */ = {isa = PBXBuildFile; fileRef = 46219ABA17B1C6EC00740A80 /* xtcpshow.iconset */; };
 		4639F8251798BA9700E59491 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4639F8241798BA9700E59491 /* Cocoa.framework */; };
 		4639F82F1798BA9700E59491 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 4639F82D1798BA9700E59491 /* InfoPlist.strings */; };
@@ -20,7 +20,7 @@
 		4639F847179D0D0900E59491 /* libpcap.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4639F846179D0D0900E59491 /* libpcap.dylib */; };
 		46583CB617A0CA41007B6572 /* GraphView.m in Sources */ = {isa = PBXBuildFile; fileRef = 46583CB517A0CA41007B6572 /* GraphView.m */; };
 		46583CBA17A0D192007B6572 /* CaptureOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 46583CB917A0D192007B6572 /* CaptureOperation.m */; };
-		466DD1731FEB6D8300A58CB1 /* TrafficIndex.m in Sources */ = {isa = PBXBuildFile; fileRef = 466DD1721FEB6D8300A58CB1 /* TrafficIndex.m */; };
+		466DD1731FEB6D8300A58CB1 /* TrafficData.m in Sources */ = {isa = PBXBuildFile; fileRef = 466DD1721FEB6D8300A58CB1 /* TrafficData.m */; };
 		466E550717AB2AA500C978C9 /* ComputeQueue.m in Sources */ = {isa = PBXBuildFile; fileRef = 466E550617AB2AA500C978C9 /* ComputeQueue.m */; };
 		466E550A17AB491800C978C9 /* DataResampler.m in Sources */ = {isa = PBXBuildFile; fileRef = 466E550917AB491800C978C9 /* DataResampler.m */; };
 		4682948417B4634D008AC9D4 /* DerivedData.m in Sources */ = {isa = PBXBuildFile; fileRef = 4682948317B4634D008AC9D4 /* DerivedData.m */; };
@@ -49,8 +49,8 @@
 /* Begin PBXFileReference section */
 		46129EFC1FE90039004C6130 /* SecurityFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SecurityFoundation.framework; path = System/Library/Frameworks/SecurityFoundation.framework; sourceTree = SDKROOT; };
 		4620811D1FECE93C003B3C74 /* TimeConverter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeConverter.h; sourceTree = "<group>"; };
-		4620811E1FECEA00003B3C74 /* TrafficData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TrafficData.h; sourceTree = "<group>"; };
-		4620811F1FECEA00003B3C74 /* TrafficData.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TrafficData.m; sourceTree = "<group>"; };
+		4620811E1FECEA00003B3C74 /* TrafficIndex.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TrafficIndex.h; sourceTree = "<group>"; };
+		4620811F1FECEA00003B3C74 /* TrafficIndex.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TrafficIndex.m; sourceTree = "<group>"; };
 		46219ABA17B1C6EC00740A80 /* xtcpshow.iconset */ = {isa = PBXFileReference; lastKnownFileType = folder.iconset; path = xtcpshow.iconset; sourceTree = SOURCE_ROOT; };
 		4639F8211798BA9700E59491 /* xtcpshow.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = xtcpshow.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4639F8241798BA9700E59491 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
@@ -72,8 +72,8 @@
 		46583CB717A0CA4D007B6572 /* GraphView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GraphView.h; sourceTree = "<group>"; };
 		46583CB817A0D187007B6572 /* CaptureOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CaptureOperation.h; sourceTree = "<group>"; };
 		46583CB917A0D192007B6572 /* CaptureOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CaptureOperation.m; sourceTree = "<group>"; };
-		466DD1711FEB6D8300A58CB1 /* TrafficIndex.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TrafficIndex.h; sourceTree = "<group>"; };
-		466DD1721FEB6D8300A58CB1 /* TrafficIndex.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TrafficIndex.m; sourceTree = "<group>"; };
+		466DD1711FEB6D8300A58CB1 /* TrafficData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TrafficData.h; sourceTree = "<group>"; };
+		466DD1721FEB6D8300A58CB1 /* TrafficData.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TrafficData.m; sourceTree = "<group>"; };
 		466E550517AB2AA500C978C9 /* ComputeQueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ComputeQueue.h; sourceTree = "<group>"; };
 		466E550617AB2AA500C978C9 /* ComputeQueue.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ComputeQueue.m; sourceTree = "<group>"; };
 		466E550817AB491800C978C9 /* DataResampler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DataResampler.h; sourceTree = "<group>"; };
@@ -181,15 +181,15 @@
 				46C08CBB200875200006E8D5 /* Queue.m */,
 				466E550517AB2AA500C978C9 /* ComputeQueue.h */,
 				466E550617AB2AA500C978C9 /* ComputeQueue.m */,
+				4682948217B4634D008AC9D4 /* DerivedData.h */,
+				4682948317B4634D008AC9D4 /* DerivedData.m */,
 				46583CB717A0CA4D007B6572 /* GraphView.h */,
 				46583CB517A0CA41007B6572 /* GraphView.m */,
 				4639F8391798BA9700E59491 /* MainMenu.xib */,
-				4682948217B4634D008AC9D4 /* DerivedData.h */,
-				4682948317B4634D008AC9D4 /* DerivedData.m */,
-				466DD1711FEB6D8300A58CB1 /* TrafficIndex.h */,
-				466DD1721FEB6D8300A58CB1 /* TrafficIndex.m */,
-				4620811E1FECEA00003B3C74 /* TrafficData.h */,
-				4620811F1FECEA00003B3C74 /* TrafficData.m */,
+				466DD1711FEB6D8300A58CB1 /* TrafficData.h */,
+				466DD1721FEB6D8300A58CB1 /* TrafficData.m */,
+				4620811E1FECEA00003B3C74 /* TrafficIndex.h */,
+				4620811F1FECEA00003B3C74 /* TrafficIndex.m */,
 				4620811D1FECE93C003B3C74 /* TimeConverter.h */,
 				4639F82B1798BA9700E59491 /* Supporting Files */,
 			);
@@ -324,11 +324,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				4639F8311798BA9700E59491 /* main.m in Sources */,
-				466DD1731FEB6D8300A58CB1 /* TrafficIndex.m in Sources */,
+				466DD1731FEB6D8300A58CB1 /* TrafficData.m in Sources */,
 				4639F8381798BA9700E59491 /* AppDelegate.m in Sources */,
 				4639F8431799095A00E59491 /* CaptureModel.m in Sources */,
 				46583CB617A0CA41007B6572 /* GraphView.m in Sources */,
-				462081201FECEA00003B3C74 /* TrafficData.m in Sources */,
+				462081201FECEA00003B3C74 /* TrafficIndex.m in Sources */,
 				46583CBA17A0D192007B6572 /* CaptureOperation.m in Sources */,
 				46C08CBC200875200006E8D5 /* Queue.m in Sources */,
 				466E550717AB2AA500C978C9 /* ComputeQueue.m in Sources */,

@@ -49,7 +49,7 @@ static NSFileHandle *debugHandle = nil;
 @synthesize objectID;
 @synthesize parent;
 @synthesize numberOfSamples;
-@synthesize packetLength;
+@synthesize bytesReceived;
 @synthesize Start;
 @synthesize End;
 
@@ -65,7 +65,7 @@ static NSFileHandle *debugHandle = nil;
     if (tv) {
         self.Start = self.End = tv2date(tv);
         numberOfSamples = 1;
-        packetLength = length;
+        bytesReceived = length;
         [self alignStartEnd];
     }
     
@@ -116,24 +116,42 @@ static NSFileHandle *debugHandle = nil;
 //
 // basic acsessor
 //
--(NSUInteger)bitsFromDate:(NSDate *)from toDate:(NSDate *)to
+-(BOOL)dataAtDate:(NSDate *)date withBytes:(NSUInteger *)bytes withSamples:(NSUInteger *)samples
+{
+    if (!date || !self.Start) {
+        *bytes = *samples = 0;
+        return TRUE; // no date
+    }
+    
+    if ([date isEqual:date] ||
+        ([date laterDate:self.Start] == date && [date earlierDate:self.End] == date)) {
+        *bytes = self.bytes;
+        *samples = self.numberOfSamples;
+        return TRUE;
+    }
+        
+    return FALSE;
+}
+-(NSUInteger)bitsAtDate:(NSDate *)date
 {
     
-    return ([self bytesFromDate:from toDate:to] * 8);
+    return ([self bytesAtDate:date] * 8);
 }
 
--(NSUInteger)bytesFromDate:(NSDate *)from toDate:(NSDate *)to
+-(NSUInteger)bytesAtDate:(NSDate *)date
 {
-    if ([from earlierDate:Start] && [to laterDate:End])
-        return self.packetLength;
+    if ([date isEqual:Start] ||
+        ([date laterDate:Start] == date && [date earlierDate:End] == date))
+        return self.bytesReceived;
     return 0;
 }
 
--(NSUInteger)samplesFromDate:(NSDate *)from toDate:(NSDate *)to
+-(NSUInteger)samplesAtDate:(NSDate *)date
 {
-    if ((from && [from laterDate:End]) || (to && [to earlierDate:Start]))
-        return 0; // out of range
-    return self.numberOfSamples;
+    if ([date isEqual:Start] ||
+        ([date laterDate:Start] == date && [date earlierDate:End] == date))
+        return self.numberOfSamples;
+    return 0;
 }
 
 -(NSDate *)timestamp
@@ -146,7 +164,7 @@ static NSFileHandle *debugHandle = nil;
 //
 - (NSUInteger)bytes
 {
-    return self.packetLength;
+    return self.bytesReceived;
 }
 
 - (double)kbytes
@@ -166,7 +184,7 @@ static NSFileHandle *debugHandle = nil;
 
 - (NSUInteger)bits
 {
-    return (self.packetLength * 8);
+    return (self.bytesReceived * 8);
 }
 
 - (double)kbits
@@ -189,11 +207,11 @@ static NSFileHandle *debugHandle = nil;
 //
 - (NSString *)bytesString
 {
-    if (self.packetLength < 1000)
+    if (self.bytesReceived < 1000)
         return [NSString stringWithFormat:@"%3lu [bytes]", [self bytes]];
-    else if (self.packetLength < 1000000)
+    else if (self.bytesReceived < 1000000)
         return [NSString stringWithFormat:@"%4.1f [kbytes]", [self kbytes]];
-    else if (self.packetLength < 1000000000)
+    else if (self.bytesReceived < 1000000000)
         return [NSString stringWithFormat:@"%4.1f [Mbytes]", [self Mbytes]];
     
     return [NSString stringWithFormat:@"%.1f [Gbytes]", [self Gbytes]];
@@ -241,7 +259,7 @@ static NSFileHandle *debugHandle = nil;
     TrafficData *new = [[TrafficData alloc] init];
     
     new->numberOfSamples = self.numberOfSamples;
-    new->packetLength = self.packetLength;
+    new->bytesReceived = self.bytesReceived;
     new->Start = self.Start;
     new->End = self.End;
     new->parent = nil;

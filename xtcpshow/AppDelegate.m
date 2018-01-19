@@ -155,12 +155,10 @@ static NSString *const PREFER_DEVICE=@"en";
 
 - (void)scrollGesture:(id)sender
 {
-#if 0
 	float value = [_graphView MATimeLength];
 	[_smoothBar setFloatValue:value];
 	[self animationNotify:nil];
 	[self updateUserInterface];
-#endif
 }
 
 - (IBAction)changeRange:(id)sender {
@@ -226,7 +224,7 @@ static NSString *const PREFER_DEVICE=@"en";
 		[_graphView setShowPacketMarker:NO];
 
 	[_graphView purgeData];
-	[_graphView importData:[_model data]];
+	[_graphView importData:[_model data] withIndex:[_model index]];
 	[_graphView setNeedsDisplay:YES];
 }
 
@@ -256,7 +254,7 @@ static NSString *const PREFER_DEVICE=@"en";
 
 - (void)animationNotify:(id)sender
 {
-    [_graphView importData:[_model data]];
+    [_graphView importData:[_model data] withIndex:[_model index]];
 	[_graphView setNeedsDisplay:YES];
 
 	[self updateUserInterface];

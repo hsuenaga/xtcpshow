@@ -36,6 +36,7 @@
 @class Queue;
 @class ComputeQueue;
 @class DataResampler;
+@class TrafficIndex;
 
 extern NSString *const RANGE_AUTO;
 extern NSString *const RANGE_PEAKHOLD;
@@ -109,8 +110,8 @@ extern NSString *const RANGE_MANUAL;
 - (void)drawDate:(NSRect)rect;
 - (void)drawAllWithSize:(NSRect)rect OffScreen:(BOOL)off;
 
-- (void)importData:(Queue *)data;
-- (void)resampleData:(Queue *)data inRect:(NSRect) rect;
+- (void)importData:(Queue *)data withIndex:(TrafficIndex *)index;
+- (void)resampleData:(Queue *)data withIndex:(TrafficIndex *)index inRect:(NSRect) rect;
 - (void)purgeData;
 - (void)saveFile:(Queue *)data;
 - (void)drawRect:(NSRect)rect;

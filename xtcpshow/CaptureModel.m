@@ -91,6 +91,11 @@
 	NSLog(@"Stop capture thread");
 	[capture_cue cancelAllOperations];
 	[capture_cue waitUntilAllOperationsAreFinished];
+#ifdef DEBUG
+    [_index openDebugFile:@"debug_tree.dot"];
+    [_index dumpTree:TRUE];
+#endif
+
 }
 
 - (BOOL) captureEnabled
@@ -135,6 +140,7 @@
 		[_data enqueue:entry withTimestamp:[entry timestamp]];
     }
     _data.last_used = [entry timestamp];
+    _index.last_used = [entry timestamp];
 }
 
 - (void) samplingError:(NSString *)message

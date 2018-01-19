@@ -36,27 +36,16 @@
 #define NBRANCH 10
 
 @interface TrafficIndex : TrafficData
-@property (assign, nonatomic) uint64_t bytesReceived;
-@property (assign, nonatomic) NSTimeInterval Resolution;
-@property (assign, nonatomic) NSTimeInterval nextResolution;
+@property (strong, atomic) NSDate *last_used;
+@property (assign, atomic) uint64_t bytesMin;
+@property (assign, atomic) uint64_t samplesMin;
+@property (assign, atomic) NSTimeInterval Resolution;
+@property (assign, atomic) NSTimeInterval nextResolution;
 
 #pragma mark - initializer
 + (id)dataOf:(id)parent withResolution:(NSTimeInterval)Resolution startAt:(NSDate *)start endAt:(NSDate *)end;
 + (id)unixDataOf:(id)parent withMsResolution:(NSUInteger)msResolution
          startAt:(struct timeval *)tvStart endAt:(struct timeval *)tvEnd;
-
-#pragma mark - basic acessor
-- (double)bytesPerSecFromDate:(NSDate *)from toDate:(NSDate *)to;
-- (double)bitsPerSecFromDate:(NSDate *)from toDate:(NSDate *)to;
-
-#pragma mark - simple scaled acsessor
-- (double)bps;
-- (double)kbps;
-- (double)Mbps;
-- (double)Gbps;
-
-#pragma mark - smart string representations
-- (NSString *)bpsString;
 
 #pragma mark - operator
 - (BOOL)acceptableTimeval:(struct timeval *)tv;
@@ -70,5 +59,4 @@
 - (NSUInteger)msResolution;
 - (NSUInteger)slotFromTimeval:(struct timeval *)tv;
 - (void)updateResolution:(NSTimeInterval)resolution;
-- (NSTimeInterval)durationOverwrapFromDate:(NSDate *)from toDate:(NSDate *)to;
 @end

@@ -49,6 +49,7 @@
 };
 @synthesize Resolution;
 @synthesize nextResolution;
+@synthesize last_used;
 
 //
 // initializer
@@ -58,7 +59,8 @@
     self = [super init];
 
     self.numberOfSamples = 0;
-    self.packetLength = 0;
+    self.bytesReceived = 0;
+    self.last_used = [NSDate date];
 
     self.Start = start;
     self.End = end;
@@ -82,10 +84,6 @@
     TrafficIndex *new = [[TrafficIndex alloc]
                         initWithResolution:Resolution startAt:start endAt:end];
     new.parent = parent;
-    if (parent && [parent isMemberOfClass:[new class]]) {
-        new.bytesReceived = ((TrafficIndex *)parent).bytesReceived;
-    }
-
     return new;
 }
 
@@ -101,177 +99,97 @@
 //
 // basic acsessor
 //
-- (NSUInteger)bitsFromDate:(NSDate *)from toDate:(NSDate *)to
+- (NSUInteger)bitsAtDate:(NSDate *)date
 {
-    if (from == nil || to == nil)
-        return 0;
-    if (self.packetLength == 0)
-        return 0;
-    if (self.Start && self.End) {
-        // we have data window.
-        if ([from laterDate:self.End] == from)
-            return 0; // out of range
-        if ([to earlierDate:self.Start] == to ||
-            [to isEqual:self.Start])
-            return 0; // out of range. merginal entry must specified by "from".
-        if (([from isEqual:self.Start] ||
-             [from earlierDate:self.Start] == from) &&
-             [to laterDate:self.End] == to)
-            return (self.packetLength * 8); // just report entire data.
+    return [self bytesAtDate:date] * 8;
+}
+
+- (BOOL)dataAtDate:(NSDate *)date withBytes:(NSUInteger *)bytes withSamples:(NSUInteger *)samples
+{
+    if (self.bytesReceived == 0 && self.numberOfSamples == 0) {
+        if (bytes)
+            *bytes = 0;
+        if (samples)
+            *samples = 0;
+        return TRUE; // no data
     }
-
-    //
-    // correct individual samples.
-    //
-    NSArray *allData = [dataRef allObjects];
-    NSUInteger bits = 0;
-    BOOL overflow;
-    for (int idx = 0; idx < [allData count]; idx++) {
-        if (allData[idx] == nil) {
-            // sampling data was lost due to buffer limitation.
-            overflow = true;
-            break;
-        }
-
-        TrafficData *sample = (TrafficData *)allData[idx];
-        if ([sample.Start earlierDate:from] == sample.Start)
-            continue;
-        if ([sample.Start isEqual:to] ||
-            [sample.Start laterDate:to] == sample.Start)
-            break;
-        // valid sample.
-        bits += (sample.packetLength * 8);
-    }
-    if ([allData count] > 0 && !overflow)
-        return bits; // return accurate data.
-
-    //
-    // accurate data was lost.
-    //
-    if (!self.Resolution || !self.Start || !self.End)
-        return (self.packetLength * 8);
-
-    NSTimeInterval duration = [self durationOverwrapFromDate:from toDate:to];
-    double ratio = duration / self.Resolution;
-    return (NSUInteger)floor(((double)(self.packetLength * 8)) * ratio);
-}
-
-- (NSUInteger)bytesFromDate:(NSDate *)from toDate:(NSDate *)to
-{
-    return ([self bitsFromDate:from toDate:to] / 8);
-}
-
-- (double)bitsPerSecFromDate:(NSDate *)from toDate:(NSDate *)to
-{
-    NSUInteger bits = [self bitsFromDate:from toDate:to];
-    NSTimeInterval duration = [self durationOverwrapFromDate:from toDate:to];
-    return ((double)bits / (double)duration);
-}
-
-- (double)bytesPerSecFromDate:(NSDate *)from toDate:(NSDate *)to
-{
-    return [self bitsPerSecFromDate:from toDate:to] / 8.0;
-}
-
-- (NSUInteger)samplesFromDate:(NSDate *)from toDate:(NSDate *)to
-{
-    if (from == nil || to == nil)
-        return 0;
-    if (self.numberOfSamples == 0)
-        return 0;
-    if (self.Start && self.End) {
-        // we have data window.
-        if ([from laterDate:self.End] == from)
-            return 0; // out of range
-        if ([to earlierDate:self.Start] == to ||
-            [to isEqual:self.Start])
-            return 0; // out of range. merginal entry must specified by "from".
-        if (([from isEqual:self.Start] ||
-             [from earlierDate:self.Start] == from) &&
-             [to laterDate:self.End] == to)
-            return self.numberOfSamples; // just report entire data.
+    if (!date || !self.Start || !self.End) {
+        if (bytes)
+            *bytes = self.bytesReceived;
+        if (samples)
+            *samples = self.numberOfSamples;
+        return TRUE; // no date
     }
     
-    //
-    // correct individual samples.
-    //
-    NSArray *allData = [dataRef allObjects];
+    // we have data window.
+    struct timeval tv;
+    date2tv(date, &tv);
+    if ([date earlierDate:self.Start] == date) {
+        if (bytes)
+            *bytes = self.bytesMin;
+        if (samples)
+            *samples = self.samplesMin;
+        return FALSE; // out of range
+    }
+    if ([date isEqual:self.End] ||
+        [date laterDate:self.End] == date) {
+        if (bytes)
+            *bytes = self.bytesReceived;
+        if (samples)
+            *samples = self.numberOfSamples;
+        return FALSE; // out of range
+    }
+    
+    // leaf
+    if (isnan(self.Resolution) ||
+        isnan(self.nextResolution) ||
+        [self msResolution] <= 1 ||
+        NBRANCH < 2) {
+        if (bytes)
+            *bytes = self.bytesReceived;
+        if (samples)
+            *samples = self.numberOfSamples;
+        return TRUE;
+    }
+    
+    // search tree
+    NSUInteger slot = [self slotFromTimeval:&tv];
+    TrafficIndex *child = [dataRef pointerAtIndex:slot];
+    if (!child) {
+        while (slot > 0) {
+            slot--;
+            child = [dataRef pointerAtIndex:slot];
+            if (child) {
+                if (bytes)
+                    *bytes = child.bytesReceived;
+                if (samples)
+                    *samples = child.numberOfSamples;
+                return TRUE;
+            }
+        }
+        if (bytes)
+            *bytes = self.bytesMin;
+        if (samples)
+            *samples = self.samplesMin;
+        return TRUE;
+    }
+    return [child dataAtDate:date withBytes:bytes withSamples:samples];
+}
+
+- (NSUInteger)bytesAtDate:(NSDate *)date
+{
+    NSUInteger bytes = 0;
+    
+    [self dataAtDate:date withBytes:&bytes withSamples:NULL];
+    return bytes;
+}
+
+- (NSUInteger)samplesAtDate:(NSDate *)date
+{
     NSUInteger samples = 0;
-    BOOL overflow;
 
-    for (int idx = 0; idx < [allData count]; idx++) {
-        if (allData[idx] == nil) {
-            // sampling data was lost due to buffer limitation.
-            overflow = true;
-            break;
-        }
-        
-        TrafficData *sample = (TrafficData *)allData[idx];
-        if ([sample.Start earlierDate:from] == sample.Start)
-            continue;
-        if ([sample.Start isEqual:to] ||
-            [sample.Start laterDate:to] == sample.Start)
-            break;
-        // valid sample.
-        samples += sample.numberOfSamples;
-    }
-    if ([allData count] > 0 && !overflow)
-        return samples; // return accurate data.
-    
-    //
-    // accurate data was lost.
-    //
-    if (!self.Resolution || !self.Start || !self.End)
-        return self.numberOfSamples;
-    
-    NSTimeInterval duration = [self durationOverwrapFromDate:from toDate:to];
-    double ratio = duration / self.Resolution;
-    return (NSUInteger)floor(((double)(self.numberOfSamples)) * ratio);
-}
-
-- (double)bps
-{
-    if (self.Start == nil || self.End == nil)
-        return NAN;
-    
-    double delta = (double)[self.End timeIntervalSinceDate:self.Start];
-    double dbits = (double)[self bits];
-    
-    return (dbits / delta);
-}
-
-- (double)kbps
-{
-    return [self bps] * 1.0E-3;
-}
-
-- (double)Mbps
-{
-    return [self bps] * 1.0E-6;
-}
-
-- (double)Gbps
-{
-    return [self bps] * 1.0E-9;
-}
-
-//
-// smart string representations
-//
-- (NSString *)bpsString
-{
-    double bps = [self bps];
-    
-    if (isnan(bps))
-        return @"NaN";
-    else if (bps < 1.0E3)
-        return [NSString stringWithFormat:@"%4.1f [bps]", [self bps]];
-    else if (bps < 1.0E6)
-        return [NSString stringWithFormat:@"%4.1f [kbps]", [self kbps]];
-    else if (bps < 1.0E9)
-        return [NSString stringWithFormat:@"%4.1f [Mbps]", [self Mbps]];
-    
-    return [NSString stringWithFormat:@"%.1f [Gbps]", [self Gbps]];
+    [self dataAtDate:date withBytes:NULL withSamples:&samples];
+    return samples;
 }
 
 //
@@ -357,10 +275,16 @@
                        withResolution:self.nextResolution
                                 startAt:start
                                   endAt:end];
+        child.bytesMin = self.bytesReceived - bytes;
+        child.samplesMin = self.numberOfSamples - 1;
         [dataRef replacePointerAtIndex:slot
                            withPointer:(__bridge void * _Nullable)child];
     }
-    return [child addSampleAtTimeval:tv withBytes:bytes auxData:aux];
+    child.numberOfSamples = self.numberOfSamples;
+    child.bytesReceived = self.bytesReceived;
+    child.last_used = self.last_used;
+    return [child addToChildNode:tv withBytes:bytes auxData:aux];
+
 }
 
 - (TrafficData *)addSampleAtTimeval:(struct timeval *)tv withBytes:(NSUInteger)bytes auxData:(id)aux
@@ -369,17 +293,10 @@
         NSLog(@"obj%d request is not acceptable", self.objectID);
         return nil;
     }
-    
-    id new = [self addToChildNode:tv withBytes:bytes auxData:aux];
-    if (!new) {
-        NSLog(@"obj%d child node rejected the timestamp", self.objectID);
-        return nil;
-    }
-    
+    self.last_used = tv2date(tv);
     self.numberOfSamples++;
-    self.packetLength += bytes;
     self.bytesReceived += bytes;
-    return new;
+    return [self addToChildNode:tv withBytes:bytes auxData:aux];
 }
 
 - (TrafficData *)addSampleAtTimevalExtend:(struct timeval *)tv
@@ -414,7 +331,7 @@
     TrafficIndex *new = [[TrafficIndex alloc] init];
     
     new.numberOfSamples = self.numberOfSamples;
-    new.packetLength = self.packetLength;
+    new.bytesReceived = self.bytesReceived;
     new.Start = self.Start;
     new.End = self.End;
     new.Resolution = self.Resolution;
@@ -519,19 +436,6 @@
     self.nextResolution = msec2interval(msNext);
 }
 
-- (NSTimeInterval)durationOverwrapFromDate:(NSDate *)from toDate:(NSDate *)to
-{
-    if ([from laterDate:self.End] == from)
-        return NAN;
-    if ([to earlierDate:self.Start] == to ||
-        [to isEqual:self.Start])
-        return NAN;
-    NSDate *start = [self.Start laterDate:from];
-    NSDate *end = [self.End earlierDate:to];
-    
-    return [end timeIntervalSinceDate:start];
-}
-
 //
 // debug
 //
@@ -552,8 +456,8 @@
     }
 
     // create record def
-    [self writeDebug:@"node%d [shape=record label=\"{<obj%d> obj%d\\n%lu[msec]\\n%llu [bytes]|{",
-     self.objectID, self.objectID, self.objectID, [self msResolution], self.bytesReceived];
+    [self writeDebug:@"node%d [shape=record label=\"{<obj%d> obj%d\\n%lu[msec]\\n%llu [pkts]\\n%llu [bytes]\\n%llu [bytes]|{",
+     self.objectID, self.objectID, self.objectID, [self msResolution], self.numberOfSamples, self.bytesMin, self.bytesReceived];
     __block BOOL delim = false;
     [node
      enumerateObjectsUsingBlock:^(TrafficData *ptr, NSUInteger idx, BOOL *stop) {

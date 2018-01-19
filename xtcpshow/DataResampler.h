@@ -31,9 +31,11 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "ComputeQueue.h"
 
+@class Queue;
+@class ComputeQueue;
 @class FIR;
+@class TrafficIndex;
 
 @interface DataResampler : NSObject {
 	BOOL write_protect;
@@ -58,5 +60,6 @@
 - (void)updateParams;
 - (void)purgeData;
 - (void)resampleData:(Queue *)input;
+- (void)resampleDataWithIndex:(TrafficIndex *)input atDate:(NSDate *)date;
 
 @end
