@@ -49,17 +49,12 @@
 	running = FALSE;
 
 	// pcap
-	_device = NULL;
-	_filter = "tcp";
-    _bpfc = [[BPFControl alloc] init];
+	self.device = NULL;
+	self.filter = "tcp";
+    self.bpfc = [[BPFControl alloc] init];
 
 	// data size
-	_history_size = DEF_HISTORY;
-	_data = [Queue queueWithSize:_history_size];
-    _index = [TrafficIndex unixDataOf:self
-                 withMsResolution:(1000 * 1000)
-                          startAt:NULL
-                            endAt:NULL];
+    self.dataBase = [TrafficDB TrafficDBWithHistorySize:DEF_HISTORY withResolution:(1000 * 1000) startAt:NULL endAt:NULL];
 
 	// traffic data
 	[self resetCounter];
@@ -77,10 +72,10 @@
 	NSLog(@"Start capture thread");
 	[self resetCounter];
 	[op setModel:self];
-    [op setIndex:_index];
-    [op setBpfControl:_bpfc];
-	[op setSource:_device];
-	[op setFilter:_filter];
+    [op setDataBase:self.dataBase];
+    [op setBpfControl:self.bpfc];
+	[op setSource:self.device];
+	[op setFilter:self.filter];
 	[op setQueuePriority:NSOperationQueuePriorityHigh];
 	[capture_cue addOperation:op];
 	running = TRUE;
@@ -92,8 +87,8 @@
 	[capture_cue cancelAllOperations];
 	[capture_cue waitUntilAllOperationsAreFinished];
 #ifdef DEBUG
-    [_index openDebugFile:@"debug_tree.dot"];
-    [_index dumpTree:TRUE];
+    [self.dataBase openDebugFile:@"debug_tree.dot"];
+    [self.dataBase dumpTree:TRUE];
 #endif
 
 }
@@ -105,51 +100,33 @@
 
 - (void) resetCounter
 {
-	_total_pkts = 0;
-	_mbps = 0.0f;
-	_max_mbps = 0.0f;
-	_peek_hold_mbps = 0.0f;
-	_samplingIntervalLast = 0.0f;
+	self.total_pkts = 0;
+	self.mbps = 0.0f;
+	self.max_mbps = 0.0f;
+	self.peek_hold_mbps = 0.0f;
+	self.samplingIntervalLast = 0.0f;
 }
 
 - (float) samplingIntervalMS
 {
-	return ([self samplingInterval] * 1000.0f);
+	return (self.samplingInterval * 1000.0f);
 }
 
 - (float) samplingIntervalLastMS
 {
-	return (_samplingIntervalLast * 1000.0f);
+	return (self.samplingIntervalLast * 1000.0f);
 }
 
 //
 // notify from Capture operation thread
 //
-- (void) samplingNotify:(TrafficData *)entry
+- (void) recvError:(NSString *)message
 {
-    if (!entry)
-        return;
-
-    if (entry.numberOfSamples > 0) {
-        TrafficData *prev = nil;
-        
-        if ([_data tail])
-            prev = [[_data tail] content];
-        if (prev)
-            prev.next = entry;
-		[_data enqueue:entry withTimestamp:[entry timestamp]];
-    }
-    _data.last_used = [entry timestamp];
-    _index.last_used = [entry timestamp];
-}
-
-- (void) samplingError:(NSString *)message
-{
-	[_controller samplingError:message];
+	[self.controller samplingError:message];
 	running = FALSE;
 }
 
-- (void) samplingFinish:(id)sender
+- (void) recvFinish:(id)sender
 {
 	running = FALSE;
 }

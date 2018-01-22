@@ -40,7 +40,6 @@
 //
 @interface TrafficIndex ()
 - (id)init;
-- (id)initWithResolution:(NSTimeInterval)resolusion startAt:(NSDate *)start endAt:(NSDate *)end;
 - (TrafficData *)addToChildNode:(struct timeval *)tv withBytes:(NSUInteger)bytes auxData:(id)aux;
 @end
 
@@ -49,7 +48,7 @@
 };
 @synthesize Resolution;
 @synthesize nextResolution;
-@synthesize last_used;
+@synthesize lastDate;
 
 //
 // initializer
@@ -60,7 +59,7 @@
 
     self.numberOfSamples = 0;
     self.bytesReceived = 0;
-    self.last_used = [NSDate date];
+    self.lastDate = [NSDate date];
 
     self.Start = start;
     self.End = end;
@@ -99,11 +98,6 @@
 //
 // basic acsessor
 //
-- (NSUInteger)bitsAtDate:(NSDate *)date
-{
-    return [self bytesAtDate:date] * 8;
-}
-
 - (BOOL)dataAtDate:(NSDate *)date withBytes:(NSUInteger *)bytes withSamples:(NSUInteger *)samples
 {
     if (self.bytesReceived == 0 && self.numberOfSamples == 0) {
@@ -174,6 +168,11 @@
         return TRUE;
     }
     return [child dataAtDate:date withBytes:bytes withSamples:samples];
+}
+
+- (NSUInteger)bitsAtDate:(NSDate *)date
+{
+    return [self bytesAtDate:date] * 8;
 }
 
 - (NSUInteger)bytesAtDate:(NSDate *)date
@@ -282,7 +281,7 @@
     }
     child.numberOfSamples = self.numberOfSamples;
     child.bytesReceived = self.bytesReceived;
-    child.last_used = self.last_used;
+    child.lastDate = self.lastDate;
     return [child addToChildNode:tv withBytes:bytes auxData:aux];
 
 }
@@ -293,7 +292,7 @@
         NSLog(@"obj%d request is not acceptable", self.objectID);
         return nil;
     }
-    self.last_used = tv2date(tv);
+    self.lastDate = tv2date(tv);
     self.numberOfSamples++;
     self.bytesReceived += bytes;
     return [self addToChildNode:tv withBytes:bytes auxData:aux];

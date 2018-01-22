@@ -27,6 +27,7 @@
 		4696050E17CDD2DB00798814 /* ServiceManagement.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4696050D17CDD2DB00798814 /* ServiceManagement.framework */; };
 		4696051017CDD2EC00798814 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4696050F17CDD2EC00798814 /* Security.framework */; };
 		46A10AD117CEF4A50011A9E8 /* BPFControl.m in Sources */ = {isa = PBXBuildFile; fileRef = 46A10AD017CEF4A50011A9E8 /* BPFControl.m */; };
+		46B19D9520157E7A009F2ECD /* TrafficDB.m in Sources */ = {isa = PBXBuildFile; fileRef = 46B19D9420157E7A009F2ECD /* TrafficDB.m */; };
 		46C08CBC200875200006E8D5 /* Queue.m in Sources */ = {isa = PBXBuildFile; fileRef = 46C08CBB200875200006E8D5 /* Queue.m */; };
 		46C08CBF20089CB00006E8D5 /* FIR.m in Sources */ = {isa = PBXBuildFile; fileRef = 46C08CBE20089CB00006E8D5 /* FIR.m */; };
 		46D1634217CE117C009418DF /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 46D1634017CE117C009418DF /* Info.plist */; };
@@ -91,6 +92,8 @@
 		46A9207E17D836050083CC8D /* README.md */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.md; sourceTree = "<group>"; };
 		46A9208117D837D40083CC8D /* xtcpshow_screen.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = xtcpshow_screen.png; sourceTree = "<group>"; };
 		46A9208217D87D880083CC8D /* License.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = License.txt; sourceTree = "<group>"; };
+		46B19D9320157E7A009F2ECD /* TrafficDB.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TrafficDB.h; sourceTree = "<group>"; };
+		46B19D9420157E7A009F2ECD /* TrafficDB.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TrafficDB.m; sourceTree = "<group>"; };
 		46C08CBB200875200006E8D5 /* Queue.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Queue.m; sourceTree = "<group>"; };
 		46C08CBD200875440006E8D5 /* Queue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Queue.h; sourceTree = "<group>"; };
 		46C08CBE20089CB00006E8D5 /* FIR.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = FIR.m; sourceTree = "<group>"; };
@@ -190,6 +193,8 @@
 				466DD1721FEB6D8300A58CB1 /* TrafficData.m */,
 				4620811E1FECEA00003B3C74 /* TrafficIndex.h */,
 				4620811F1FECEA00003B3C74 /* TrafficIndex.m */,
+				46B19D9320157E7A009F2ECD /* TrafficDB.h */,
+				46B19D9420157E7A009F2ECD /* TrafficDB.m */,
 				4620811D1FECE93C003B3C74 /* TimeConverter.h */,
 				4639F82B1798BA9700E59491 /* Supporting Files */,
 			);
@@ -325,6 +330,7 @@
 			files = (
 				4639F8311798BA9700E59491 /* main.m in Sources */,
 				466DD1731FEB6D8300A58CB1 /* TrafficData.m in Sources */,
+				46B19D9520157E7A009F2ECD /* TrafficDB.m in Sources */,
 				4639F8381798BA9700E59491 /* AppDelegate.m in Sources */,
 				4639F8431799095A00E59491 /* CaptureModel.m in Sources */,
 				46583CB617A0CA41007B6572 /* GraphView.m in Sources */,

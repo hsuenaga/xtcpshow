@@ -33,6 +33,7 @@
 #import "ComputeQueue.h"
 #import "AppDelegate.h"
 #import "BPFControl.h"
+#import "TrafficDB.h"
 
 #define DEF_HISTORY 50000 // packets
 
@@ -49,10 +50,8 @@
 @property (assign) BOOL promisc;
 @property (strong) BPFControl *bpfc;
 
-// data size
-@property (assign) size_t history_size;
-@property (strong, nonatomic) Queue *data;
-@property (strong, nonatomic) TrafficIndex *index;
+// data base
+@property (strong, nonatomic) TrafficDB *dataBase;
 
 // traffic data reported by capture thread
 @property (atomic, assign) uint32_t total_pkts;
@@ -77,7 +76,6 @@
 - (float)samplingIntervalMS;
 - (float)samplingIntervalLastMS;
 
-- (void)samplingNotify:(TrafficIndex *)data;
-- (void)samplingError:(NSString *)message;
-- (void)samplingFinish:(id)sender;
+- (void)recvError:(NSString *)message;
+- (void)recvFinish:(id)sender;
 @end

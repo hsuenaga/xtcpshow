@@ -36,13 +36,14 @@
 #define NBRANCH 10
 
 @interface TrafficIndex : TrafficData
-@property (strong, atomic) NSDate *last_used;
-@property (assign, atomic) uint64_t bytesMin;
-@property (assign, atomic) uint64_t samplesMin;
-@property (assign, atomic) NSTimeInterval Resolution;
-@property (assign, atomic) NSTimeInterval nextResolution;
+@property (strong, atomic) NSDate *lastDate;
+@property (assign, nonatomic) uint64_t bytesMin;
+@property (assign, nonatomic) uint64_t samplesMin;
+@property (assign, nonatomic) NSTimeInterval Resolution;
+@property (assign, nonatomic) NSTimeInterval nextResolution;
 
 #pragma mark - initializer
+- (id)initWithResolution:(NSTimeInterval)resolusion startAt:(NSDate *)start endAt:(NSDate *)end;
 + (id)dataOf:(id)parent withResolution:(NSTimeInterval)Resolution startAt:(NSDate *)start endAt:(NSDate *)end;
 + (id)unixDataOf:(id)parent withMsResolution:(NSUInteger)msResolution
          startAt:(struct timeval *)tvStart endAt:(struct timeval *)tvEnd;

@@ -45,7 +45,7 @@
 @implementation CaptureOperation
 @synthesize bpfControl;
 @synthesize peak_hold_queue;
-@synthesize index;
+@synthesize dataBase;
 
 - (CaptureOperation *)init
 {
@@ -54,21 +54,21 @@
 	source_interface = NULL;
 	filter_program = NULL;
 	bpfControl = NULL;
-    index = nil;
+    self.dataBase = nil;
 
 	return self;
 }
 
 - (void)dealloc
 {
-	if (source_interface)
+    if (source_interface) {
 		free(source_interface);
-	if (filter_program)
+        source_interface = NULL;
+    }
+    if (filter_program) {
 		free(filter_program);
-	source_interface = NULL;
-	filter_program = NULL;
-	bpfControl = nil;
-    index = nil;
+        filter_program = NULL;
+    }
 }
 
 - (void) main
@@ -90,8 +90,8 @@
 		return;
 	}
     
-    if (!index) {
-        NSLog(@"no packet index");
+    if (self.dataBase == nil) {
+        NSLog(@"no packet data base");
         return;
     }
 	
@@ -119,10 +119,6 @@
         return;
     }
 
-    TrafficData *timeout = [TrafficData sampleOf:self
-                                           atTimeval:NULL
-                                    withPacketLength:0
-                                             auxData:nil];
     terminate = FALSE;
     while (!terminate) {
 		@autoreleasepool {
@@ -133,7 +129,7 @@
 			if ([self isCancelled] == YES)
 				break;
 
-			if (_model == nil)
+			if (self.model == nil)
 				break;
             if (![bpfControl next:&tv withCaplen:NULL withPktlen:&pktlen]) {
                 NSLog(@"bpfControl error.");
@@ -144,13 +140,13 @@
                 TrafficData *sample;
                 pkts++;
                 bytes += pktlen;
-                sample = [index addSampleAtTimevalExtend:&tv withBytes:pktlen auxData:nil];
-                [self sendNotify:sample];
+                sample = [self.dataBase addSampleAtTimevalExtend:&tv withBytes:pktlen auxData:nil];
 			}
             else {
-                // timeout
-                timeout.Start = timeout.End = [NSDate date];
-                [self sendNotify:timeout];
+                // BPF timeout.
+                // there is no samples received. this means
+                // we confirmed there is no traffic until now.
+                self.dataBase.lastDate = [NSDate date];
             }
 
 			// timer update
@@ -164,10 +160,10 @@
 				max_mbps = mbps;
 
 			// update model
-			[_model setTotal_pkts:pkts];
-			[_model setMbps:mbps];
-			[_model setMax_mbps:max_mbps];
-			[_model setSamplingIntervalLast:last_interval];
+			[self.model setTotal_pkts:pkts];
+			[self.model setMbps:mbps];
+			[self.model setMax_mbps:max_mbps];
+			[self.model setSamplingIntervalLast:last_interval];
 			bytes = 0;
 		}
 	}
@@ -256,17 +252,6 @@
 	return TRUE;
 }
 
-- (void)sendNotify:(TrafficData *)sample
-{
-    if (!sample)
-        return;
-
-	[_model
-	 performSelectorOnMainThread:@selector(samplingNotify:)
-	 withObject:sample
-	 waitUntilDone:NO];
-}
-
 - (void)sendError:(NSString *)message
 {
     if (message && last_error) {
@@ -277,7 +262,7 @@
         message = last_error;
     }
 	[_model
-	 performSelectorOnMainThread:@selector(samplingError:)
+	 performSelectorOnMainThread:@selector(recvError:)
 	 withObject:message
 	 waitUntilDone:NO];
 }
@@ -285,7 +270,7 @@
 - (void)sendFinish
 {
 	[_model
-	 performSelectorOnMainThread:@selector(samplingFinish:)
+	 performSelectorOnMainThread:@selector(recvFinish:)
 	 withObject:self
 	 waitUntilDone:NO];
 }

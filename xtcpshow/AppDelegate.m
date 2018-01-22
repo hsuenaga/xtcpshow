@@ -224,7 +224,7 @@ static NSString *const PREFER_DEVICE=@"en";
 		[_graphView setShowPacketMarker:NO];
 
 	[_graphView purgeData];
-	[_graphView importData:[_model data] withIndex:[_model index]];
+	[_graphView importData:self.model.dataBase];
 	[_graphView setNeedsDisplay:YES];
 }
 
@@ -242,7 +242,7 @@ static NSString *const PREFER_DEVICE=@"en";
 }
 
 - (IBAction)copyGraphView:(id)sender {
-	[_graphView saveFile:[_model data]];
+	[_graphView saveFile:self.model.dataBase];
 }
 
 - (void)closeNofity:(id)sender
@@ -254,7 +254,7 @@ static NSString *const PREFER_DEVICE=@"en";
 
 - (void)animationNotify:(id)sender
 {
-    [_graphView importData:[_model data] withIndex:[_model index]];
+    [_graphView importData:self.model.dataBase];
 	[_graphView setNeedsDisplay:YES];
 
 	[self updateUserInterface];

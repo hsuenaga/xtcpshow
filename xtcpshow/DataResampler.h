@@ -35,7 +35,7 @@
 @class Queue;
 @class ComputeQueue;
 @class FIR;
-@class TrafficIndex;
+@class TrafficDB;
 
 @interface DataResampler : NSObject {
 	BOOL write_protect;
@@ -46,7 +46,6 @@
 }
 @property (strong) FIR *FIR;
 @property (strong, readonly) ComputeQueue *output;
-@property (weak, readonly) Queue *lastInput;
 @property (assign) NSUInteger outputSamples;
 @property (assign) NSTimeInterval outputTimeLength;
 @property (assign) NSTimeInterval outputTimeOffset;
@@ -59,7 +58,6 @@
 // public
 - (void)updateParams;
 - (void)purgeData;
-- (void)resampleData:(Queue *)input;
-- (void)resampleDataWithIndex:(TrafficIndex *)input atDate:(NSDate *)date;
+- (void)resampleDataBase:(TrafficDB *)dataBase atDate:(NSDate *)date;
 
 @end

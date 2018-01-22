@@ -34,7 +34,7 @@
 #import <Foundation/Foundation.h>
 
 #import "AppDelegate.h"
-#import "TrafficIndex.h"
+#import "TrafficDB.h"
 
 #define TIMESLOT (0.10f) // [sec] (= 100[ms])
 #define HOLDSLOT (1.0f)  // [sec]
@@ -64,10 +64,10 @@
 	int pkts;
 	int bytes;
 }
-@property (weak) CaptureModel *model;
-@property (weak) BPFControl *bpfControl;
-@property (strong) ComputeQueue *peak_hold_queue;
-@property (weak, nonatomic) TrafficIndex *index;
+@property (weak, nonatomic) CaptureModel *model;
+@property (weak, nonatomic) BPFControl *bpfControl;
+@property (strong, atomic) ComputeQueue *peak_hold_queue;
+@property (weak, nonatomic) TrafficDB *dataBase;
 
 - (CaptureOperation *)init;
 - (void)dealloc;
@@ -77,7 +77,6 @@
 
 - (float)elapsedFrom:(struct timeval *)last;
 - (BOOL)tick_expired;
-- (void)sendNotify:(TrafficData *)sample;
 - (void)sendError:(NSString *)message;
 - (void)sendFinish;
 - (BOOL)attachFilter;

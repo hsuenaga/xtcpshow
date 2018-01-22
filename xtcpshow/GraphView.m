@@ -37,6 +37,7 @@
 #import "DataResampler.h"
 #import "DerivedData.h"
 #import "TrafficIndex.h"
+#import "TrafficDB.h"
 
 //
 // string resources
@@ -69,10 +70,10 @@ float const scroll_sensitivity = 10.0f;
 	if (!self)
 		return nil;
 
-	_data = nil;
-	_showPacketMarker = TRUE;
-	_magnifySense = magnify_sensitivity;
-	_scrollSense = scroll_sensitivity;
+	self.data = nil;
+	self.showPacketMarker = TRUE;
+	self.magnifySense = magnify_sensitivity;
+	self.scrollSense = scroll_sensitivity;
 
 	graph_gradient = [[NSGradient alloc]
 			  initWithStartingColor:[NSColor clearColor]
@@ -499,7 +500,7 @@ float const scroll_sensitivity = 10.0f;
 	[NSGraphicsContext restoreGraphicsState];
 }
 
-- (void)resampleData:(Queue *)data withIndex:(TrafficIndex *)index inRect:(NSRect)rect
+- (void)resampleData:(TrafficDB *)dataBase inRect:(NSRect)rect
 {
 	NSDate *end;
 
@@ -509,14 +510,14 @@ float const scroll_sensitivity = 10.0f;
     }
     
 	// fix up _viewTimeOffset
-	end = [data last_used];
+	end = [dataBase lastDate];
     if (end == nil) {
         NSLog(@"No timestamp");
         return;
     }
 	end = [end dateByAddingTimeInterval:_viewTimeOffset];
-	if ([end laterDate:[data firstDate]] != end) {
-		_viewTimeOffset = [[data firstDate] timeIntervalSinceDate:[data last_used]];
+	if ([end laterDate:[dataBase firstDate]] != end) {
+        _viewTimeOffset = [[dataBase firstDate] timeIntervalSinceDate:[dataBase lastDate]];
 	}
 
 	resampler.outputTimeLength = _viewTimeLength;
@@ -524,10 +525,7 @@ float const scroll_sensitivity = 10.0f;
 	resampler.outputSamples = rect.size.width;
 	resampler.MATimeLength = _MATimeLength;
 
-    if (index)
-        [resampler resampleDataWithIndex:index atDate:end];
-    else
-        [resampler resampleData:data];
+    [resampler resampleDataBase:dataBase atDate:end];
 
 	_data = [resampler output];
 	_maxSamples = [_data maxSamples];
@@ -538,9 +536,9 @@ float const scroll_sensitivity = 10.0f;
 	XmarkOffset = [resampler overSample] / 2;
 }
 
-- (void)importData:(Queue *)data withIndex:(TrafficIndex *)index
+- (void)importData:(TrafficDB *)dataBase
 {
-    [self resampleData:data withIndex:index inRect:_bounds];
+    [self resampleData:dataBase inRect:_bounds];
 }
 
 - (void)purgeData
@@ -548,7 +546,7 @@ float const scroll_sensitivity = 10.0f;
 	[resampler purgeData];
 }
 
-- (void)saveFile:(Queue *)data;
+- (void)saveFile:(TrafficDB *)dataBase;
 {
 	NSSize image_size = NSMakeSize(640, 480);
 	NSRect image_rect;
@@ -564,7 +562,7 @@ float const scroll_sensitivity = 10.0f;
 	image_rect.origin.y = 0;
 	NSLog(@"create PNG image");
 	[self purgeData];
-    [self resampleData:data withIndex:nil inRect:image_rect];
+    [self resampleData:dataBase inRect:image_rect];
 	[self drawAllWithSize:image_rect OffScreen:YES];
 	[NSGraphicsContext restoreGraphicsState];
 
@@ -585,7 +583,7 @@ float const scroll_sensitivity = 10.0f;
 
 	// restore data for display
 	[self purgeData];
-    [self resampleData:data withIndex:nil inRect:_bounds];
+    [self resampleData:dataBase inRect:_bounds];
 }
 
 - (void)drawRect:(NSRect)dirty_rect
