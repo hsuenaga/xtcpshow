@@ -11,7 +11,7 @@
 		4605414020172738008DC910 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4696050F17CDD2EC00798814 /* Security.framework */; };
 		460541412017280F008DC910 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 4696054D17CDFC9200798814 /* main.m */; };
 		4605414220172816008DC910 /* BPFService.m in Sources */ = {isa = PBXBuildFile; fileRef = 46DE97A817D2D15B009E0A16 /* BPFService.m */; };
-		4605414520172853008DC910 /* OpenBPF in CopyFiles */ = {isa = PBXBuildFile; fileRef = 4605413820172706008DC910 /* OpenBPF */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		4605414520172853008DC910 /* com.mac.hiroki.suenaga.OpenBPF in CopyFiles */ = {isa = PBXBuildFile; fileRef = 4605413820172706008DC910 /* com.mac.hiroki.suenaga.OpenBPF */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		46129EFD1FE90039004C6130 /* SecurityFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 46129EFC1FE90039004C6130 /* SecurityFoundation.framework */; };
 		462081201FECEA00003B3C74 /* TrafficIndex.m in Sources */ = {isa = PBXBuildFile; fileRef = 4620811F1FECEA00003B3C74 /* TrafficIndex.m */; };
 		46219ABB17B1C6EC00740A80 /* xtcpshow.iconset in Resources */ = {isa = PBXBuildFile; fileRef = 46219ABA17B1C6EC00740A80 /* xtcpshow.iconset */; };
@@ -66,14 +66,14 @@
 			dstPath = Contents/Library/LaunchServices;
 			dstSubfolderSpec = 1;
 			files = (
-				4605414520172853008DC910 /* OpenBPF in CopyFiles */,
+				4605414520172853008DC910 /* com.mac.hiroki.suenaga.OpenBPF in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		4605413820172706008DC910 /* OpenBPF */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = OpenBPF; sourceTree = BUILT_PRODUCTS_DIR; };
+		4605413820172706008DC910 /* com.mac.hiroki.suenaga.OpenBPF */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = com.mac.hiroki.suenaga.OpenBPF; sourceTree = BUILT_PRODUCTS_DIR; };
 		46129EFC1FE90039004C6130 /* SecurityFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SecurityFoundation.framework; path = System/Library/Frameworks/SecurityFoundation.framework; sourceTree = SDKROOT; };
 		4620811D1FECE93C003B3C74 /* TimeConverter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeConverter.h; sourceTree = "<group>"; };
 		4620811E1FECEA00003B3C74 /* TrafficIndex.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TrafficIndex.h; sourceTree = "<group>"; };
@@ -172,7 +172,7 @@
 			isa = PBXGroup;
 			children = (
 				4639F8211798BA9700E59491 /* xtcpshow.app */,
-				4605413820172706008DC910 /* OpenBPF */,
+				4605413820172706008DC910 /* com.mac.hiroki.suenaga.OpenBPF */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -307,7 +307,7 @@
 			);
 			name = Helper;
 			productName = Helper;
-			productReference = 4605413820172706008DC910 /* OpenBPF */;
+			productReference = 4605413820172706008DC910 /* com.mac.hiroki.suenaga.OpenBPF */;
 			productType = "com.apple.product-type.tool";
 		};
 		4639F8201798BA9700E59491 /* xtcpshow */ = {
@@ -464,6 +464,7 @@
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				CODE_SIGN_STYLE = Automatic;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = BSVYLYB6S2;
@@ -483,7 +484,7 @@
 					OpenBPF/Launchd.plist,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.mac.hiroki.suenaga.OpenBPF;
-				PRODUCT_NAME = OpenBPF;
+				PRODUCT_NAME = "$(PRODUCT_BUNDLE_IDENTIFIER)";
 				SKIP_INSTALL = YES;
 			};
 			name = Debug;
@@ -499,6 +500,7 @@
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = BSVYLYB6S2;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -518,7 +520,7 @@
 					OpenBPF/Launchd.plist,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.mac.hiroki.suenaga.OpenBPF;
-				PRODUCT_NAME = OpenBPF;
+				PRODUCT_NAME = "$(PRODUCT_BUNDLE_IDENTIFIER)";
 				SKIP_INSTALL = YES;
 			};
 			name = Release;
@@ -545,8 +547,9 @@
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_IDENTITY = "Developer ID Application";
 				COPY_PHASE_STRIP = NO;
+				DEVELOPMENT_TEAM = BSVYLYB6S2;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
@@ -595,9 +598,10 @@
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_IDENTITY = "Developer ID Application";
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = BSVYLYB6S2;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
