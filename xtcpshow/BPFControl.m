@@ -187,7 +187,8 @@ struct auth_cmsg {
     int socks[2] = {-1, -1};
     BOOL result = false;
     
-    [self getFileHandle];
+    if ([self getFileHandle])
+        return true;
     
     if (!device) {
         NSLog(@"No device specified");
@@ -489,9 +490,32 @@ err:
     return;
 }
 
-- (void)getFileHandle
+- (BOOL)getFileHandle
 {
-    NSLog(@"XPC Service: %@", [self checkXPC] ? @"Running" : @"Not Found");
+    if ([self checkXPC] == FALSE) {
+        NSLog(@"XPC Service is not found");
+        return FALSE;
+    }
+    
+    [xpc resume];
+    self.fd = -1;
+    xpcRunning = YES;
+    [proxy getFileHandle:^(BOOL status, NSFileHandle *handle){
+        xpcResult = status;
+        NSLog(@"getFileHandle: => %d (%@)", status, handle);
+        xpcRunning = NO;
+        if (status == TRUE)
+            self.fd = [handle fileDescriptor];
+    }];
+    [self waitReply];
+    if (xpc) {
+        [xpc suspend];
+    }
+    if (self.fd < 0)
+        return FALSE;
+    
+    NSLog(@"messaging done: fd=%d", self.fd);
+    return TRUE;
 }
 
 - (void)waitReply
