@@ -10,7 +10,25 @@
 #import "TrafficIndex.h"
 #import "Queue.h"
 
+@interface TrafficDB ()
+@property (assign, nonatomic, readwrite) uint64_t numberOfSamples;
+@property (assign, nonatomic, readwrite) uint64_t bytesReceived;
+@property (strong, nonatomic, readwrite) NSDate *Start;
+@property (strong, nonatomic, readwrite) NSDate *End;
+@property (strong, nonatomic, readwrite) id parent;
+@property (strong, atomic, readwrite) NSDate *lastDate;
+@property (assign, nonatomic, readwrite) NSTimeInterval Resolution;
+@end
+
 @implementation TrafficDB
+@synthesize numberOfSamples;
+@synthesize bytesReceived;
+@synthesize Start;
+@synthesize End;
+@synthesize parent;
+@synthesize lastDate;
+@synthesize Resolution;
+
 - (TrafficDB *)initWithHistorySize:(size_t)size withResolution:(NSTimeInterval)resolution startAt:(NSDate *)start endAt:(NSDate *)end
 {
     self = [super initWithResolution:resolution startAt:start endAt:end];
@@ -63,6 +81,13 @@
     }
 
     return date;
+}
+
+- (void)updateLastDate:(NSDate *)timestamp
+{
+    @synchronized(self) {
+        self.lastDate = timestamp;
+    }
 }
 
 // NSCopying protocol

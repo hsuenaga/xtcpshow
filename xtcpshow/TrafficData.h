@@ -39,34 +39,25 @@
 @interface TrafficData : NSObject<NSCopying>
 @property (assign, readonly, class) int newID;
 @property (strong, nonatomic, class) NSFileHandle *debugHandle;
-@property (assign, nonatomic) int objectID;
-@property (strong, nonatomic) id parent;
-@property (strong, nonatomic) id next;
-@property (assign, nonatomic) uint64_t numberOfSamples;
-@property (assign, nonatomic) uint64_t bytesReceived;
-@property (strong, nonatomic) NSDate *Start;
-@property (strong, nonatomic) NSDate *End;
-@property (strong, nonatomic) id aux;
+
+@property (assign, nonatomic, readonly) int objectID;
+@property (strong, nonatomic, readonly) id parent;
+@property (strong, nonatomic, readonly) id next;
+@property (assign, nonatomic, readonly) uint64_t numberOfSamples;
+@property (assign, nonatomic, readonly) uint64_t bytesReceived;
+@property (strong, nonatomic, readonly) NSDate *Start;
+@property (strong, nonatomic, readonly) NSDate *End;
+@property (strong, nonatomic, readonly) id aux;
 #pragma mark - initializer
-+ (id)sampleOf:(id)parent atTimeval:(struct timeval *)tv withPacketLength:(uint64_t)length auxData:(id)aux;
++ (TrafficData *)sampleOf:(id)parent atTimeval:(struct timeval *)tv withPacketLength:(uint64_t)length auxData:(id)aux;
 
 #pragma mark - basic acessor
-- (NSDate *)timestamp;
+- (TrafficData *)addSampleAtTimeval:(struct timeval *)tv withBytes:(NSUInteger)bytes auxData:(id)aux;
 - (BOOL)dataAtDate:(NSDate *)date withBytes:(NSUInteger *)bytes withSamples:(NSUInteger *)samples;
 - (NSUInteger)bitsAtDate:(NSDate *)date;
 - (NSUInteger)bytesAtDate:(NSDate *)date;
 - (NSUInteger)samplesAtDate:(NSDate *)date;
-
-#pragma mark - simple scaled acsessor
-- (NSUInteger)bytes;
-- (double)kbytes;
-- (double)Mbytes;
-- (double)Gbytes;
-
-- (NSUInteger)bits;
-- (double)kbits;
-- (double)Mbits;
-- (double)Gbits;
+- (NSDate *)timestamp;
 
 #pragma mark - smart string representations
 - (NSString *)bytesString;

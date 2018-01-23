@@ -36,11 +36,10 @@
 #define NBRANCH 10
 
 @interface TrafficIndex : TrafficData
-@property (strong, atomic) NSDate *lastDate;
-@property (assign, nonatomic) uint64_t bytesMin;
-@property (assign, nonatomic) uint64_t samplesMin;
-@property (assign, nonatomic) NSTimeInterval Resolution;
-@property (assign, nonatomic) NSTimeInterval nextResolution;
+@property (strong, atomic, readonly) NSDate *lastDate;
+@property (assign, nonatomic, readonly) uint64_t bytesBefore;
+@property (assign, nonatomic, readonly) uint64_t samplesBefore;
+@property (assign, nonatomic, readonly) NSTimeInterval Resolution;
 
 #pragma mark - initializer
 - (id)initWithResolution:(NSTimeInterval)resolusion startAt:(NSDate *)start endAt:(NSDate *)end;
@@ -49,15 +48,9 @@
          startAt:(struct timeval *)tvStart endAt:(struct timeval *)tvEnd;
 
 #pragma mark - operator
-- (BOOL)acceptableTimeval:(struct timeval *)tv;
 - (TrafficData *)addSampleAtTimeval:(struct timeval *)tv withBytes:(NSUInteger)bytes auxData:(id)aux;
 - (TrafficData *)addSampleAtTimevalExtend:(struct timeval *)tv withBytes:(NSUInteger)bytes auxData:(id)aux;
 
 #pragma mark - NSCopying protocol
 - (id)copyWithZone:(NSZone *)zone;
-
-#pragma mark - utility
-- (NSUInteger)msResolution;
-- (NSUInteger)slotFromTimeval:(struct timeval *)tv;
-- (void)updateResolution:(NSTimeInterval)resolution;
 @end

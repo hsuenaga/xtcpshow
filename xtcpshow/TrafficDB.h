@@ -16,8 +16,13 @@
 }
 @property (assign, readonly) size_t hitorySize;
 
+#pragma mark - initializer
 - (TrafficDB *)initWithHistorySize:(size_t)size withResolution:(NSTimeInterval)resolution startAt:(NSDate *)start endAt:(NSDate *)end;
 + (TrafficDB *)TrafficDBWithHistorySize:(size_t)size withResolution:(NSTimeInterval)resolution startAt:(NSDate *)start endAt:(NSDate *)end;
 
+#pragma mark - operator
+- (void)updateLastDate:(NSDate *)timestamp;
+
+#pragma mark - accsessor
 - (NSDate *)firstDate;
 @end

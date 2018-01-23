@@ -31,6 +31,13 @@
                             <menuItem isSeparatorItem="YES" id="143">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
+                            <menuItem title="Install Helper" id="pQD-Tr-id0">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="installHelper:" target="494" id="QjX-vM-aqU"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="tTw-RI-gWu"/>
                             <menuItem title="Services" id="131">
                                 <menu key="submenu" title="Services" systemMenu="services" id="130"/>
                             </menuItem>
@@ -647,7 +654,7 @@
                     </menu>
                 </menuItem>
             </items>
-            <point key="canvasLocation" x="54" y="481"/>
+            <point key="canvasLocation" x="-57" y="599"/>
         </menu>
         <window title="TCP Traffic Viewer" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" animationBehavior="default" id="371">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>

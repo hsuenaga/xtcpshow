@@ -146,7 +146,7 @@
                 // BPF timeout.
                 // there is no samples received. this means
                 // we confirmed there is no traffic until now.
-                self.dataBase.lastDate = [NSDate date];
+                [self.dataBase updateLastDate:[NSDate date]];
             }
 
 			// timer update

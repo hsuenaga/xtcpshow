@@ -39,13 +39,34 @@
 // Traffic Data Container
 //
 @interface TrafficIndex ()
+@property (assign, nonatomic, readwrite) uint64_t numberOfSamples;
+@property (assign, nonatomic, readwrite) uint64_t bytesReceived;
+@property (strong, nonatomic, readwrite) NSDate *Start;
+@property (strong, nonatomic, readwrite) NSDate *End;
+@property (strong, nonatomic, readwrite) id parent;
+
+@property (strong, atomic, readwrite) NSDate *lastDate;
+@property (assign, nonatomic, readwrite) uint64_t bytesBefore;
+@property (assign, nonatomic, readwrite) uint64_t samplesBefore;
+@property (assign, nonatomic, readwrite) NSTimeInterval Resolution;
+@property (assign, nonatomic, readwrite) NSTimeInterval nextResolution;
+
 - (id)init;
 - (TrafficData *)addToChildNode:(struct timeval *)tv withBytes:(NSUInteger)bytes auxData:(id)aux;
+- (BOOL)acceptableTimeval:(struct timeval *)tv;
+- (NSUInteger)msResolution;
+- (NSUInteger)slotFromTimeval:(struct timeval *)tv;
+- (void)updateResolution:(NSTimeInterval)resolution;
 @end
 
 @implementation TrafficIndex {
     NSPointerArray *dataRef; // child nodes
 };
+@synthesize numberOfSamples;
+@synthesize bytesReceived;
+@synthesize Start;
+@synthesize End;
+@synthesize parent;
 @synthesize Resolution;
 @synthesize nextResolution;
 @synthesize lastDate;
@@ -120,9 +141,9 @@
     date2tv(date, &tv);
     if ([date earlierDate:self.Start] == date) {
         if (bytes)
-            *bytes = self.bytesMin;
+            *bytes = self.bytesBefore;
         if (samples)
-            *samples = self.samplesMin;
+            *samples = self.samplesBefore;
         return FALSE; // out of range
     }
     if ([date isEqual:self.End] ||
@@ -162,9 +183,9 @@
             }
         }
         if (bytes)
-            *bytes = self.bytesMin;
+            *bytes = self.bytesBefore;
         if (samples)
-            *samples = self.samplesMin;
+            *samples = self.samplesBefore;
         return TRUE;
     }
     return [child dataAtDate:date withBytes:bytes withSamples:samples];
@@ -224,7 +245,16 @@
         [self msResolution] <= 1 ||
         NBRANCH < 2) {
         // We have traffic sample directly.
-        TrafficData *child = [TrafficData sampleOf:self atTimeval:tv withPacketLength:bytes auxData:aux];
+
+        TrafficData *child;
+        if ([dataRef count] > 0) {
+            child = [dataRef pointerAtIndex:0];
+            if (child) {
+                [child addSampleAtTimeval:tv withBytes:bytes auxData:aux];
+                return nil;
+            }
+        }
+        child = [TrafficData sampleOf:self atTimeval:tv withPacketLength:bytes auxData:aux];
         [dataRef addPointer:(__bridge void * _Nullable)child];
         return child;
     }
@@ -274,8 +304,8 @@
                        withResolution:self.nextResolution
                                 startAt:start
                                   endAt:end];
-        child.bytesMin = self.bytesReceived - bytes;
-        child.samplesMin = self.numberOfSamples - 1;
+        child.bytesBefore = self.bytesReceived - bytes;
+        child.samplesBefore = self.numberOfSamples - 1;
         [dataRef replacePointerAtIndex:slot
                            withPointer:(__bridge void * _Nullable)child];
     }
@@ -292,9 +322,8 @@
         NSLog(@"obj%d request is not acceptable", self.objectID);
         return nil;
     }
+    [super addSampleAtTimeval:tv withBytes:bytes auxData:aux];
     self.lastDate = tv2date(tv);
-    self.numberOfSamples++;
-    self.bytesReceived += bytes;
     return [self addToChildNode:tv withBytes:bytes auxData:aux];
 }
 
@@ -456,7 +485,7 @@
 
     // create record def
     [self writeDebug:@"node%d [shape=record label=\"{<obj%d> obj%d\\n%lu[msec]\\n%llu [pkts]\\n%llu [bytes]\\n%llu [bytes]|{",
-     self.objectID, self.objectID, self.objectID, [self msResolution], self.numberOfSamples, self.bytesMin, self.bytesReceived];
+     self.objectID, self.objectID, self.objectID, [self msResolution], self.numberOfSamples, self.bytesBefore, self.bytesReceived];
     __block BOOL delim = false;
     [node
      enumerateObjectsUsingBlock:^(TrafficData *ptr, NSUInteger idx, BOOL *stop) {

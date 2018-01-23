@@ -39,8 +39,16 @@ static NSFileHandle *debugHandle = nil;
 // base class of traffic data
 //
 @interface TrafficData ()
-@property (weak,atomic) TrafficData *newerSample;
-@property (weak,atomic) TrafficData *olderSample;
+@property (assign, nonatomic, readwrite) int objectID;
+@property (strong, nonatomic, readwrite) id parent;
+@property (strong, nonatomic, readwrite) id next;
+@property (assign, nonatomic, readwrite) uint64_t numberOfSamples;
+@property (assign, nonatomic, readwrite) uint64_t bytesReceived;
+@property (strong, nonatomic, readwrite) NSDate *Start;
+@property (strong, nonatomic, readwrite) NSDate *End;
+@property (strong, nonatomic, readwrite) id aux;
+@property (weak, nonatomic) TrafficData *newerSample;
+@property (weak, nonatomic) TrafficData *olderSample;
 - (id)init;
 - (id)initAtTimeval:(struct timeval *)tv withPacketLength:(uint64_t)lengh;
 @end
@@ -83,7 +91,7 @@ static NSFileHandle *debugHandle = nil;
 //  the container class doesn't have 'strong' reference to the allocated object.
 //  the allocated object must be held by some other object.
 //
-+ (id)sampleOf:(id)parent atTimeval:(struct timeval *)tv withPacketLength:(uint64_t)length auxData:(id)aux
++ (TrafficData *)sampleOf:(id)parent atTimeval:(struct timeval *)tv withPacketLength:(uint64_t)length auxData:(id)aux
 {
     TrafficData *new;
     
@@ -116,6 +124,13 @@ static NSFileHandle *debugHandle = nil;
 //
 // basic acsessor
 //
+- (TrafficData *)addSampleAtTimeval:(struct timeval *)tv withBytes:(NSUInteger)bytes auxData:(id)aux
+{
+    self.bytesReceived += bytes;
+    self.numberOfSamples++;
+    return self;
+}
+
 -(BOOL)dataAtDate:(NSDate *)date withBytes:(NSUInteger *)bytes withSamples:(NSUInteger *)samples
 {
     if (!date || !self.Start) {
@@ -125,13 +140,14 @@ static NSFileHandle *debugHandle = nil;
     
     if ([date isEqual:date] ||
         ([date laterDate:self.Start] == date && [date earlierDate:self.End] == date)) {
-        *bytes = self.bytes;
+        *bytes = self.bytesReceived;
         *samples = self.numberOfSamples;
         return TRUE;
     }
         
     return FALSE;
 }
+
 -(NSUInteger)bitsAtDate:(NSDate *)date
 {
     
@@ -160,61 +176,22 @@ static NSFileHandle *debugHandle = nil;
 }
 
 //
-// simple scaled acsessor
-//
-- (NSUInteger)bytes
-{
-    return self.bytesReceived;
-}
-
-- (double)kbytes
-{
-    return ((double)[self bytes]) * 1.0E-3;
-}
-
-- (double)Mbytes
-{
-    return ((double)[self bytes]) * 1.0E-6;
-}
-
-- (double)Gbytes
-{
-    return ((double)[self bytes]) * 1.0E-9;
-}
-
-- (NSUInteger)bits
-{
-    return (self.bytesReceived * 8);
-}
-
-- (double)kbits
-{
-    return ((double)[self bits]) * 1.0E-3;
-}
-
-- (double)Mbits
-{
-    return ((double)[self bits]) * 1.0E-6;
-}
-
-- (double)Gbits
-{
-    return ((double)[self bits]) * 1.0E-9;
-}
-
-//
 // smart string representations
 //
 - (NSString *)bytesString
 {
     if (self.bytesReceived < 1000)
-        return [NSString stringWithFormat:@"%3lu [bytes]", [self bytes]];
+        return [NSString stringWithFormat:@"%3llu [bytes]",
+                self.bytesReceived];
     else if (self.bytesReceived < 1000000)
-        return [NSString stringWithFormat:@"%4.1f [kbytes]", [self kbytes]];
+        return [NSString stringWithFormat:@"%4.1f [kbytes]",
+                (double)self.bytesReceived * 1.0E-3];
     else if (self.bytesReceived < 1000000000)
-        return [NSString stringWithFormat:@"%4.1f [Mbytes]", [self Mbytes]];
+        return [NSString stringWithFormat:@"%4.1f [Mbytes]",
+                (double)self.bytesReceived * 1.0E-6];
     
-    return [NSString stringWithFormat:@"%.1f [Gbytes]", [self Gbytes]];
+    return [NSString stringWithFormat:@"%.1f [Gbytes]",
+            (double)self.bytesReceived * 1.0E-9];
 }
 
 //

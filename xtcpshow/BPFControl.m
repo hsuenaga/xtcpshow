@@ -464,4 +464,9 @@ err:
 
     return [[BPFPacket alloc] initWithData:&tv capLen:caplen pktLen:pktlen];
 }
+
++ (void)installHelper
+{
+    return;
+}
 @end

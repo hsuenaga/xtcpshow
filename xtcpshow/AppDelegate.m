@@ -88,6 +88,10 @@ static NSString *const PREFER_DEVICE=@"en";
 	[self updateUserInterface];
 }
 
+- (IBAction)installHelper:(id)sender {
+    [BPFControl installHelper];
+}
+
 - (IBAction)startCapture:(id)sender {
 	BOOL input_enabled;
 

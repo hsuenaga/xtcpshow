@@ -76,4 +76,6 @@
 - (BOOL)setFilter:(NSString *)filter;
 - (BOOL)next: (struct timeval *)tv withCaplen:(uint32_t *)caplen withPktlen:(uint32_t *)pktlen;
 - (BPFPacket *)nextPacket;
+
++ (void)installHelper;
 @end
