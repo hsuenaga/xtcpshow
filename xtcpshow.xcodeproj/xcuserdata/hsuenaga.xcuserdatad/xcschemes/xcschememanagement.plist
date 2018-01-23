@@ -9,10 +9,20 @@
 			<key>orderHint</key>
 			<integer>1</integer>
 		</dict>
+		<key>Helper.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>3</integer>
+		</dict>
 		<key>OpenBPF 2.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>3</integer>
+		</dict>
+		<key>OpenBPF copy.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>2</integer>
 		</dict>
 		<key>OpenBPF.xcscheme</key>
 		<dict>

@@ -7,11 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		46054117201703EB008DC910 /* com.mac.hiroki.suenaga.OpenBPF.xpc in Embed XPC Services */ = {isa = PBXBuildFile; fileRef = 4605410C201703EB008DC910 /* com.mac.hiroki.suenaga.OpenBPF.xpc */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		4605411C201705C9008DC910 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 4696054D17CDFC9200798814 /* main.m */; };
-		4605411D201705D5008DC910 /* BPFService.m in Sources */ = {isa = PBXBuildFile; fileRef = 46DE97A817D2D15B009E0A16 /* BPFService.m */; };
-		4605411E201705E1008DC910 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 46D1634017CE117C009418DF /* Info.plist */; };
-		4605411F201705EA008DC910 /* Launchd.plist in Resources */ = {isa = PBXBuildFile; fileRef = 46D1634117CE117C009418DF /* Launchd.plist */; };
+		4605413F2017272A008DC910 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4639F8291798BA9700E59491 /* Foundation.framework */; };
+		4605414020172738008DC910 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4696050F17CDD2EC00798814 /* Security.framework */; };
+		460541412017280F008DC910 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 4696054D17CDFC9200798814 /* main.m */; };
+		4605414220172816008DC910 /* BPFService.m in Sources */ = {isa = PBXBuildFile; fileRef = 46DE97A817D2D15B009E0A16 /* BPFService.m */; };
+		4605414520172853008DC910 /* OpenBPF in CopyFiles */ = {isa = PBXBuildFile; fileRef = 4605413820172706008DC910 /* OpenBPF */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		46129EFD1FE90039004C6130 /* SecurityFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 46129EFC1FE90039004C6130 /* SecurityFoundation.framework */; };
 		462081201FECEA00003B3C74 /* TrafficIndex.m in Sources */ = {isa = PBXBuildFile; fileRef = 4620811F1FECEA00003B3C74 /* TrafficIndex.m */; };
 		46219ABB17B1C6EC00740A80 /* xtcpshow.iconset in Resources */ = {isa = PBXBuildFile; fileRef = 46219ABA17B1C6EC00740A80 /* xtcpshow.iconset */; };
@@ -41,40 +41,39 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		46054115201703EB008DC910 /* PBXContainerItemProxy */ = {
+		4605414320172848008DC910 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 4639F8191798BA9700E59491 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 4605410B201703EB008DC910;
-			remoteInfo = OpenBPF;
+			remoteGlobalIDString = 4605413720172706008DC910;
+			remoteInfo = Helper;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		4605411B201703EB008DC910 /* Embed XPC Services */ = {
+		4605413620172706008DC910 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
-			dstPath = "$(CONTENTS_FOLDER_PATH)/XPCServices";
-			dstSubfolderSpec = 16;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
 			files = (
-				46054117201703EB008DC910 /* com.mac.hiroki.suenaga.OpenBPF.xpc in Embed XPC Services */,
 			);
-			name = "Embed XPC Services";
-			runOnlyForDeploymentPostprocessing = 0;
+			runOnlyForDeploymentPostprocessing = 1;
 		};
 		4696051117CDD64E00798814 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
+			buildActionMask = 12;
 			dstPath = Contents/Library/LaunchServices;
 			dstSubfolderSpec = 1;
 			files = (
+				4605414520172853008DC910 /* OpenBPF in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		4605410C201703EB008DC910 /* com.mac.hiroki.suenaga.OpenBPF.xpc */ = {isa = PBXFileReference; explicitFileType = "wrapper.xpc-service"; includeInIndex = 0; path = com.mac.hiroki.suenaga.OpenBPF.xpc; sourceTree = BUILT_PRODUCTS_DIR; };
+		4605413820172706008DC910 /* OpenBPF */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = OpenBPF; sourceTree = BUILT_PRODUCTS_DIR; };
 		46129EFC1FE90039004C6130 /* SecurityFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SecurityFoundation.framework; path = System/Library/Frameworks/SecurityFoundation.framework; sourceTree = SDKROOT; };
 		4620811D1FECE93C003B3C74 /* TimeConverter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeConverter.h; sourceTree = "<group>"; };
 		4620811E1FECEA00003B3C74 /* TrafficIndex.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TrafficIndex.h; sourceTree = "<group>"; };
@@ -133,10 +132,12 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		46054109201703EB008DC910 /* Frameworks */ = {
+		4605413520172706008DC910 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4605414020172738008DC910 /* Security.framework in Frameworks */,
+				4605413F2017272A008DC910 /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -171,7 +172,7 @@
 			isa = PBXGroup;
 			children = (
 				4639F8211798BA9700E59491 /* xtcpshow.app */,
-				4605410C201703EB008DC910 /* com.mac.hiroki.suenaga.OpenBPF.xpc */,
+				4605413820172706008DC910 /* OpenBPF */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -292,22 +293,22 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		4605410B201703EB008DC910 /* OpenBPF */ = {
+		4605413720172706008DC910 /* Helper */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 46054118201703EB008DC910 /* Build configuration list for PBXNativeTarget "OpenBPF" */;
+			buildConfigurationList = 4605413C20172706008DC910 /* Build configuration list for PBXNativeTarget "Helper" */;
 			buildPhases = (
-				46054108201703EB008DC910 /* Sources */,
-				46054109201703EB008DC910 /* Frameworks */,
-				4605410A201703EB008DC910 /* Resources */,
+				4605413420172706008DC910 /* Sources */,
+				4605413520172706008DC910 /* Frameworks */,
+				4605413620172706008DC910 /* CopyFiles */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
-			name = OpenBPF;
-			productName = OpenBPF;
-			productReference = 4605410C201703EB008DC910 /* com.mac.hiroki.suenaga.OpenBPF.xpc */;
-			productType = "com.apple.product-type.xpc-service";
+			name = Helper;
+			productName = Helper;
+			productReference = 4605413820172706008DC910 /* OpenBPF */;
+			productType = "com.apple.product-type.tool";
 		};
 		4639F8201798BA9700E59491 /* xtcpshow */ = {
 			isa = PBXNativeTarget;
@@ -317,12 +318,11 @@
 				4639F81E1798BA9700E59491 /* Frameworks */,
 				4639F81F1798BA9700E59491 /* Resources */,
 				4696051117CDD64E00798814 /* CopyFiles */,
-				4605411B201703EB008DC910 /* Embed XPC Services */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				46054116201703EB008DC910 /* PBXTargetDependency */,
+				4605414420172848008DC910 /* PBXTargetDependency */,
 			);
 			name = xtcpshow;
 			productName = xtcpshow;
@@ -338,7 +338,7 @@
 				LastUpgradeCheck = 0920;
 				ORGANIZATIONNAME = "SUENAGA Hiroki";
 				TargetAttributes = {
-					4605410B201703EB008DC910 = {
+					4605413720172706008DC910 = {
 						CreatedOnToolsVersion = 9.2;
 						DevelopmentTeam = BSVYLYB6S2;
 						ProvisioningStyle = Automatic;
@@ -362,21 +362,12 @@
 			projectRoot = "";
 			targets = (
 				4639F8201798BA9700E59491 /* xtcpshow */,
-				4605410B201703EB008DC910 /* OpenBPF */,
+				4605413720172706008DC910 /* Helper */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		4605410A201703EB008DC910 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				4605411F201705EA008DC910 /* Launchd.plist in Resources */,
-				4605411E201705E1008DC910 /* Info.plist in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		4639F81F1798BA9700E59491 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -393,12 +384,12 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		46054108201703EB008DC910 /* Sources */ = {
+		4605413420172706008DC910 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4605411D201705D5008DC910 /* BPFService.m in Sources */,
-				4605411C201705C9008DC910 /* main.m in Sources */,
+				4605414220172816008DC910 /* BPFService.m in Sources */,
+				460541412017280F008DC910 /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -427,10 +418,10 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		46054116201703EB008DC910 /* PBXTargetDependency */ = {
+		4605414420172848008DC910 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 4605410B201703EB008DC910 /* OpenBPF */;
-			targetProxy = 46054115201703EB008DC910 /* PBXContainerItemProxy */;
+			target = 4605413720172706008DC910 /* Helper */;
+			targetProxy = 4605414320172848008DC910 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -462,7 +453,7 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
-		46054119201703EB008DC910 /* Debug */ = {
+		4605413D20172706008DC910 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ANALYZER_NONNULL = YES;
@@ -473,19 +464,13 @@
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CODE_SIGN_IDENTITY = "Mac Developer";
 				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
-				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = BSVYLYB6S2;
-				EMBED_ASSET_PACKS_IN_PRODUCT_BUNDLE = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				INFOPLIST_FILE = OpenBPF/Info.plist;
-				INFOPLIST_OUTPUT_FORMAT = "same-as-input";
-				INFOPLIST_PREPROCESS = NO;
+				INFOPLIST_FILE = "$(SRCROOT)/OpenBPF/Info.plist";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				OTHER_LDFLAGS = (
 					"-sectcreate",
@@ -497,14 +482,13 @@
 					__launchd_plist,
 					OpenBPF/Launchd.plist,
 				);
-				PLIST_FILE_OUTPUT_FORMAT = "same-as-input";
 				PRODUCT_BUNDLE_IDENTIFIER = com.mac.hiroki.suenaga.OpenBPF;
-				PRODUCT_NAME = com.mac.hiroki.suenaga.OpenBPF;
+				PRODUCT_NAME = OpenBPF;
 				SKIP_INSTALL = YES;
 			};
 			name = Debug;
 		};
-		4605411A201703EB008DC910 /* Release */ = {
+		4605413E20172706008DC910 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ANALYZER_NONNULL = YES;
@@ -515,19 +499,13 @@
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CODE_SIGN_IDENTITY = "Mac Developer";
 				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
-				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
 				DEVELOPMENT_TEAM = BSVYLYB6S2;
-				EMBED_ASSET_PACKS_IN_PRODUCT_BUNDLE = NO;
 				ENABLE_NS_ASSERTIONS = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				INFOPLIST_FILE = OpenBPF/Info.plist;
-				INFOPLIST_OUTPUT_FORMAT = "same-as-input";
-				INFOPLIST_PREPROCESS = NO;
+				INFOPLIST_FILE = "$(SRCROOT)/OpenBPF/Info.plist";
 				MTL_ENABLE_DEBUG_INFO = NO;
 				OTHER_LDFLAGS = (
 					"-sectcreate",
@@ -539,9 +517,8 @@
 					__launchd_plist,
 					OpenBPF/Launchd.plist,
 				);
-				PLIST_FILE_OUTPUT_FORMAT = "same-as-input";
 				PRODUCT_BUNDLE_IDENTIFIER = com.mac.hiroki.suenaga.OpenBPF;
-				PRODUCT_NAME = com.mac.hiroki.suenaga.OpenBPF;
+				PRODUCT_NAME = OpenBPF;
 				SKIP_INSTALL = YES;
 			};
 			name = Release;
@@ -681,11 +658,11 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		46054118201703EB008DC910 /* Build configuration list for PBXNativeTarget "OpenBPF" */ = {
+		4605413C20172706008DC910 /* Build configuration list for PBXNativeTarget "Helper" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				46054119201703EB008DC910 /* Debug */,
-				4605411A201703EB008DC910 /* Release */,
+				4605413D20172706008DC910 /* Debug */,
+				4605413E20172706008DC910 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
