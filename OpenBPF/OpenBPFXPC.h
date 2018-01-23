@@ -39,6 +39,7 @@
 @protocol OpenBPFXPC
 - (void)alive:(void(^)(int, NSString *))block;
 - (void)chown:(int)uid reply:(void(^)(BOOL, NSString *))block;
+- (void)getFileHandle:(void(^)(BOOL, NSFileHandle *))block;
 @end
 
 #endif

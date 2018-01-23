@@ -53,12 +53,13 @@ static const char *const BPF_DEV="/dev/bpf*";
 {
 	glob_t gl;
 	
-	syslog(LOG_NOTICE, "groupReadble:reply:");
+    syslog(LOG_NOTICE, "chown:reply:");
 	
 	memset(&gl, 0, sizeof(gl));
 	glob(BPF_DEV, GLOB_NOCHECK, NULL, &gl);
 	if (gl.gl_matchc <= 0) {
 		block(NO, @"No bpf device found.");
+        globfree(&gl);
 		return;
 	}
 	
@@ -81,7 +82,39 @@ static const char *const BPF_DEV="/dev/bpf*";
 	}
 	syslog(LOG_NOTICE, "/dev/bpf* are owned by UID:%d", uid);
 	block(YES, @"success");
-	
+    globfree(&gl);
 	return;
+}
+
+- (void)getFileHandle:(void (^)(BOOL, NSFileHandle *))block
+{
+    glob_t gl;
+    syslog(LOG_NOTICE, "getFileHandle:");
+    memset(&gl, 0, sizeof(gl));
+    glob(BPF_DEV, GLOB_NOCHECK, NULL, &gl);
+    if (gl.gl_matchc <= 0) {
+        block(FALSE, nil);
+        return;
+    }
+    
+    for (int i = 0; i < gl.gl_pathc; i++) {
+        NSString *path = [NSString stringWithFormat:@"%s", gl.gl_pathv[i]];
+        NSFileHandle *handle;
+        
+        syslog(LOG_NOTICE, "open device: %s", [path cStringUsingEncoding:NSUTF8StringEncoding]);
+        handle = [NSFileHandle fileHandleForReadingAtPath:path];
+        if (!handle) {
+            syslog(LOG_NOTICE, "cannot open device: %s", [path cStringUsingEncoding:NSUTF8StringEncoding]);
+            continue;
+        }
+        if (handle) {
+            block(TRUE, handle);
+            globfree(&gl);
+            return;
+        }
+    }
+    globfree(&gl);
+    block(FALSE, nil);
+    return;
 }
 @end

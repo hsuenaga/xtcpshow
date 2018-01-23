@@ -92,7 +92,13 @@ struct auth_cmsg {
 }
 @end
 
-@implementation BPFControl
+@implementation BPFControl {
+    BOOL xpcInvalid;
+    BOOL xpcRunning;
+    BOOL xpcResult;
+    NSXPCConnection *xpc;
+    id proxy;
+}
 @synthesize fd;
 @synthesize bs_recv;
 @synthesize bs_drop;
@@ -100,6 +106,10 @@ struct auth_cmsg {
 - (id)initWithDevice: (NSString *)device
 {
     self = [super init];
+    xpcInvalid = FALSE;
+    xpcRunning = FALSE;
+    xpcResult = FALSE;
+    xpc = nil;
     fd = -1;
     if ([self _openBpf:device] < 0) {
         NSLog(@"Failed to open BPF.");
@@ -169,38 +179,6 @@ struct auth_cmsg {
     return fd;
 }
 
-#if 0
-- (bool)_obtain_rights: (NSString *)device
-{
-    // Configure requested authorization.
-    char auth_spec[PATH_MAX + strlen("sys.openfile.readwritecreate.")];
-    
-    sprintf(auth_spec, "sys.openfile.readonly.%s", [device UTF8String]);
-    AuthorizationFlags auth_flags = kAuthorizationFlagInteractionAllowed |
-    kAuthorizationFlagExtendRights |
-    kAuthorizationFlagPreAuthorize;
-    
-    // Show Authentication dialog
-    NSError *error = nil;
-    self->_authObj = [SFAuthorization authorization];
-    if (![self->_authObj obtainWithRight:auth_spec
-                                   flags:auth_flags
-                                   error:&error]) {
-        NSLog(@"Failed to obtain Right");
-        return false;
-    }
-    
-    // Serialize the right object
-    self->_authRef = [self->_authObj authorizationRef];
-    OSStatus result = AuthorizationMakeExternalForm(self->_authRef, &self->_authRefExt);
-    if (result != errAuthorizationSuccess) {
-        NSLog(@"Failed to serialize AuthorizationRef (%d)", result);
-        return false;
-    }
-    return true;
-}
-#endif
-
 - (bool)_obtain_fd: (NSString *)device
 {
     pid_t pid;
@@ -208,6 +186,8 @@ struct auth_cmsg {
     const char *cdev;
     int socks[2] = {-1, -1};
     BOOL result = false;
+    
+    [self getFileHandle];
     
     if (!device) {
         NSLog(@"No device specified");
@@ -507,5 +487,141 @@ err:
     }
     
     return;
+}
+
+- (void)getFileHandle
+{
+    NSLog(@"XPC Service: %@", [self checkXPC] ? @"Running" : @"Not Found");
+}
+
+- (void)waitReply
+{
+    // XXX: use NSLock and condition variable?
+    while (xpcInvalid == NO && xpcRunning == YES) {
+        [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.5]];
+    }
+}
+
+- (BOOL)openXPC
+{
+    if (!xpc || xpcInvalid)
+    xpc = [[NSXPCConnection alloc] initWithMachServiceName:BPFControlServiceID options:NSXPCConnectionPrivileged];
+    if (!xpc)
+    return NO;
+    
+    xpcResult = NO;
+    xpcInvalid = NO;
+    xpcRunning = NO;
+    
+    xpc.remoteObjectInterface = [NSXPCInterface interfaceWithProtocol:@protocol(OpenBPFXPC)];
+    xpc.exportedInterface = nil;
+    xpc.exportedObject = nil;
+    xpc.interruptionHandler = ^(void) {
+        NSLog(@"connection interrupted.");
+        xpcRunning = NO;
+    };
+    xpc.invalidationHandler = ^(void) {
+        NSLog(@"connection invalidated.");
+        xpcRunning = NO;
+        xpcInvalid = YES;
+    };
+    proxy = [xpc remoteObjectProxyWithErrorHandler:^(NSError *e) {
+        NSLog(@"proxy error:%@", [e description]);
+        xpcRunning = NO;
+    }];
+    if (proxy == nil) {
+        NSLog(@"cannot get proxy");
+        [xpc invalidate];
+        xpc = nil;
+        return NO;
+    }
+    
+    [xpc resume];
+    xpcRunning = YES;
+    [proxy alive:^(int version, NSString *m) {
+        NSLog(@"Helper livness: version %d (%@)", version, m);
+        if (version == OpenBPF_VERSION)
+        xpcResult = YES;
+        else
+        xpcResult = NO;
+        xpcRunning = NO;
+    }];
+    [self waitReply];
+    if (!xpc || xpcInvalid)
+    return NO;
+    [xpc suspend];
+    
+    if (!xpcResult) {
+        [xpc invalidate];
+        xpc = nil;
+    }
+    return xpcResult;
+}
+
+- (BOOL)checkXPC
+{
+    if (![self openXPC]) {
+        NSLog(@"No valid helper found.");
+        return NO;
+    }
+    
+    return YES;
+}
+
+- (void)closeXPC
+{
+    if (!xpc)
+    return;
+    
+    [xpc invalidate];
+    [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.5]];
+    xpc = nil;
+    xpcRunning = NO;
+}
+
+- (BOOL)secure
+{
+    NSLog(@"Secure the BPF device");
+    if (![self checkXPC]) {
+        NSLog(@"cannot open XPC");
+        return NO;
+    }
+    [xpc resume];
+    xpcRunning = YES;
+    [proxy chown:0 reply:^(BOOL reply, NSString *m){
+        xpcResult = reply;
+        NSLog(@"secure BPF => %d (%@)", xpcResult, m);
+        xpcRunning = NO;
+    }];
+    [self waitReply];
+    if (xpc) {
+        [xpc suspend];
+    }
+    NSLog(@"messaging done");
+    
+    return xpcResult;
+}
+
+- (BOOL)insecure
+{
+    NSLog(@"Insecure the BPF device");
+    if (![self checkXPC]) {
+        NSLog(@"cannot open XPC");
+        return NO;
+    }
+    [xpc resume];
+    xpcRunning = YES;
+    [proxy chown:getuid() reply:^(BOOL reply, NSString *m) {
+        xpcResult = reply;
+        NSLog(@"insecure BPF => %d (%@)", xpcResult, m);
+        xpcRunning = NO;
+    }];
+    [self waitReply];
+    if (xpc) {
+        [xpc suspend];
+    }
+    NSLog(@"messaging done");
+    
+    return xpcResult;
 }
 @end
