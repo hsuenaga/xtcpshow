@@ -126,7 +126,10 @@ static NSString *const PREFER_DEVICE=@"en";
 		[[NSRunLoop currentRunLoop] addTimer:_timer
 					     forMode:NSRunLoopCommonModes];
 
-		[_model startCapture];
+        if ([_model startCapture] == FALSE) {
+            [self samplingError:@"Cannot start capture thread"];
+            return;
+        }
 	}
 
 	[_deviceSelector setEnabled:input_enabled];

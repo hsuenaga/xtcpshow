@@ -51,7 +51,7 @@
 	// pcap
 	self.device = NULL;
 	self.filter = "tcp";
-    self.bpfc = [[BPFControl alloc] init];
+    self.bpfc = nil;
 
 	// data size
     self.dataBase = [TrafficDB TrafficDBWithHistorySize:DEF_HISTORY withResolution:(1000 * 1000) startAt:NULL endAt:NULL];
@@ -65,8 +65,13 @@
 	return self;
 }
 
-- (void) startCapture
+- (BOOL) startCapture
 {
+    NSLog(@"OpenBPF device");
+    self.bpfc = [[BPFControl alloc] init];
+    if (self.bpfc == nil)
+        return FALSE;
+    
 	CaptureOperation *op = [[CaptureOperation alloc] init];
 
 	NSLog(@"Start capture thread");
@@ -79,6 +84,7 @@
 	[op setQueuePriority:NSOperationQueuePriorityHigh];
 	[capture_cue addOperation:op];
 	running = TRUE;
+    return TRUE;
 }
 
 - (void) stopCapture

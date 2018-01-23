@@ -45,6 +45,7 @@
 #import <Security/Security.h>
 
 #import "BPFControl.h"
+#import "OpenBPFXPC.h"
 
 struct auth_cmsg {
     struct cmsghdr hdr;
@@ -467,6 +468,44 @@ err:
 
 + (void)installHelper
 {
+    AuthorizationRef authref;
+    OSStatus status;
+    
+    status = AuthorizationCreate(NULL, kAuthorizationEmptyEnvironment, kAuthorizationFlagDefaults, &authref);
+    if (status != errAuthorizationSuccess) {
+        NSLog(@"AuthorizationCreate failed.");
+        return;
+    }
+    
+    //
+    // Acquire Rights
+    //
+    AuthorizationItem authItem = {kSMRightBlessPrivilegedHelper, 0, NULL, 0};
+    AuthorizationRights authRights = {1, &authItem};
+    AuthorizationFlags flags = kAuthorizationFlagDefaults |
+    kAuthorizationFlagInteractionAllowed |
+    kAuthorizationFlagPreAuthorize |
+    kAuthorizationFlagExtendRights;
+    
+    status = AuthorizationCopyRights(authref, &authRights, kAuthorizationEmptyEnvironment, flags, NULL);
+    if (status != errAuthorizationSuccess) {
+        NSLog(@"AuthorizationCopyRights() failed.");
+        return;
+    }
+    
+    //
+    // Bless helper
+    //
+    CFErrorRef cfError;
+    BOOL result;
+    result = (BOOL)SMJobBless(kSMDomainUserLaunchd,
+                              (CFStringRef)CFBridgingRetain(BPFControlServiceID),
+                              authref, &cfError);
+    if (!result) {
+        NSError *error = CFBridgingRelease(cfError);
+        NSLog(@"SMJobBless failed: %@", [error description]);
+    }
+    
     return;
 }
 @end

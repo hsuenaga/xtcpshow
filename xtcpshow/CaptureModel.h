@@ -65,7 +65,7 @@
 @property (weak) AppDelegate *controller;
 
 - (CaptureModel *)init;
-- (void)startCapture;
+- (BOOL)startCapture;
 - (void)stopCapture;
 - (BOOL)captureEnabled;
 
