@@ -49,51 +49,14 @@ static const char *const BPF_DEV="/dev/bpf*";
 	return;
 }
 
-- (void)chown:(int)uid reply:(void (^)(BOOL, NSString *))block
-{
-	glob_t gl;
-	
-    syslog(LOG_NOTICE, "chown:reply:");
-	
-	memset(&gl, 0, sizeof(gl));
-	glob(BPF_DEV, GLOB_NOCHECK, NULL, &gl);
-	if (gl.gl_matchc <= 0) {
-		block(NO, @"No bpf device found.");
-        globfree(&gl);
-		return;
-	}
-	
-	for (int i = 0; i < gl.gl_pathc; i++) {
-		struct stat st;
-		const char *path = gl.gl_pathv[i];
-		
-		if (path == NULL)
-			break;
-		
-		syslog(LOG_NOTICE, "device: %s", path);
-		memset(&st, 0, sizeof(st));
-		if (stat(path, &st) < 0)
-			continue;
-		if ((st.st_mode & S_IFCHR) == 0)
-			continue;
-		
-		chown(path, uid, st.st_gid);
-		chmod(path, st.st_mode | (S_IRUSR | S_IWUSR));
-	}
-	syslog(LOG_NOTICE, "/dev/bpf* are owned by UID:%d", uid);
-	block(YES, @"success");
-    globfree(&gl);
-	return;
-}
-
-- (void)getFileHandle:(void (^)(BOOL, NSFileHandle *))block
+- (void)getFileHandle:(void (^)(BOOL, NSString *, NSFileHandle *))block
 {
     glob_t gl;
     syslog(LOG_NOTICE, "getFileHandle:");
     memset(&gl, 0, sizeof(gl));
     glob(BPF_DEV, GLOB_NOCHECK, NULL, &gl);
     if (gl.gl_matchc <= 0) {
-        block(FALSE, nil);
+        block(FALSE, nil, nil);
         return;
     }
     
@@ -108,13 +71,13 @@ static const char *const BPF_DEV="/dev/bpf*";
             continue;
         }
         if (handle) {
-            block(TRUE, handle);
+            block(TRUE, path, handle);
             globfree(&gl);
             return;
         }
     }
     globfree(&gl);
-    block(FALSE, nil);
+    block(FALSE, nil, nil);
     return;
 }
 @end

@@ -33,13 +33,12 @@
 #ifndef xtcpshow_OpenBPFXPC_h
 #define xtcpshow_OpenBPFXPC_h
 
-#define OpenBPF_VERSION 1
+#define OpenBPF_VERSION 2
 #define BPFControlServiceID @"com.mac.hiroki.suenaga.OpenBPF"
 
 @protocol OpenBPFXPC
 - (void)alive:(void(^)(int, NSString *))block;
-- (void)chown:(int)uid reply:(void(^)(BOOL, NSString *))block;
-- (void)getFileHandle:(void(^)(BOOL, NSFileHandle *))block;
+- (void)getFileHandle:(void(^)(BOOL, NSString *, NSFileHandle *))block;
 @end
 
 #endif

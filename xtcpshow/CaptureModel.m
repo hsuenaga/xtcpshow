@@ -68,10 +68,11 @@
 - (BOOL) startCapture
 {
     NSLog(@"OpenBPF device");
-    self.bpfc = [[BPFControl alloc] init];
-    if (self.bpfc == nil)
-        return FALSE;
-    
+    if (self.bpfc == nil) {
+        self.bpfc = [[BPFControl alloc] init];
+        if (self.bpfc == nil)
+            return FALSE;
+    }
 	CaptureOperation *op = [[CaptureOperation alloc] init];
 
 	NSLog(@"Start capture thread");

@@ -76,7 +76,7 @@
 	NSLog(@"caputer thread: interval %f [sec]", TIMESLOT);
 	[_model setSamplingInterval:TIMESLOT];
 
-	// initialize libpcap
+	// initialize bpf
 	if (!bpfControl) {
 		NSLog(@"cannot initialize bpfControl module.");
 		[self sendError:@"bpfControl is not found."];

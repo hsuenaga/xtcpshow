@@ -36,6 +36,7 @@
 #import <net/if.h>
 #import <net/bpf.h>
 #import <pcap/pcap.h>
+#import <glob.h>
 #import <string.h>
 #import <errno.h>
 
@@ -52,102 +53,98 @@ struct auth_cmsg {
     int fd;
 };
 
-@implementation BPFPacket
-@synthesize timeout;
-@synthesize ts;
-@synthesize caplen;
-@synthesize pktlen;
+@interface BPFControl ()
+@property (assign, readwrite) uint32_t bs_recv;
+@property (assign, readwrite) uint32_t bs_drop;
+@property (assign, readwrite) uint32_t bs_ifdrop; // XXX: no implementation
 
-- (id)initWithData: (const struct timeval *)tstamp capLen:(uint32_t)clen pktLen:(uint32_t)plen
-{
-    self = [super init];
-    if (tstamp == NULL) {
-        memset(&ts, 0, sizeof(ts));
-        caplen = 0;
-        pktlen = 0;
-        timeout = true;
-    }
-    else {
-        memcpy(&ts, tstamp, sizeof(ts));
-        caplen = clen;
-        pktlen = plen;
-        timeout = false;
-    }
-    return self;
-}
+- (BOOL)openDevice;
+- (BOOL)initDevice;
 
-- (id)initWithoutData
-{
-    return [self initWithData:NULL capLen:0 pktLen:0];
-}
+// Open BPF via /usr/libexec/authopen
+- (int)executeAuthopen:(NSString *)device;
 
-- (id)init
-{
-    return [self initWithoutData];
-}
-
-- (const struct timeval *)ts_ref
-{
-    return (const struct timeval *)&ts;
-}
+// Open BPF via helper application.
+- (BOOL)openXPC;
+- (void)closeXPC;
+- (BOOL)checkXPC;
+- (void)waitXPCReply;
+- (BOOL)getFileHandleXPC;
 @end
 
 @implementation BPFControl {
+    // BPF device description
+    NSFileHandle *deviceHandle;
+    NSString *deviceName;
+    int fd;
+    
+    // capture parameters.
+    struct timeval timeout;
+    uint32_t snapLen;
+    BOOL promisc;
+
+    // PCAP library
+    pcap_t *pcap;
+    NSString *filter_source;
+    struct bpf_program filter;
+    
+    // XPC Helper
     BOOL xpcInvalid;
     BOOL xpcRunning;
     BOOL xpcResult;
     NSXPCConnection *xpc;
     id proxy;
+    
+    // packet buffer
+    char *recv_buf;
+    ssize_t recv_maxlen;
+    char *recv_ptr;
+    ssize_t recv_len;
 }
-@synthesize fd;
 @synthesize bs_recv;
 @synthesize bs_drop;
+@synthesize bs_ifdrop;
 
-- (id)initWithDevice: (NSString *)device
+- (id)init
 {
     self = [super init];
-    xpcInvalid = FALSE;
-    xpcRunning = FALSE;
-    xpcResult = FALSE;
-    xpc = nil;
+
+    // BPF device description
+    deviceHandle = nil;
+    deviceName = nil;
     fd = -1;
-    if ([self _openBpf:device] < 0) {
-        NSLog(@"Failed to open BPF.");
-        return nil;
-    }
+
+    // capture parameters.
+    timeout.tv_sec = timeout.tv_usec = 0;
+    snapLen = 64;
+    promisc = FALSE;
     
-    // allocate dummy pcap for filter progaram compilation.
-    // we cannot use live caputure mode due to permission.
+    // PCAP library
     pcap = pcap_open_dead(DLT_EN10MB, 1500);
     if (pcap == NULL) {
         NSLog(@"Failed to create pcap instance");
         return nil;
     }
-    
-    if (fd >= 0) {
-        // setup BPF buffer.
-        int off = 0;
-        recv_maxlen = BPF_MAXBUFSIZE;
-        if (ioctl(fd, BIOCSBLEN, &recv_maxlen) < 0) {
-            NSLog(@"ioctl(BIOCSBLEN) failed: %s", strerror(errno));
-        }
-        if (ioctl(fd, BIOCGBLEN, &recv_maxlen) < 0) {
-            NSLog(@"ioctl(BIOCGBLEN) failed: %s", strerror(errno));
-        }
-        if (ioctl(fd, BIOCIMMEDIATE, &off) < 0) {
-            NSLog(@"ioctl(BIOCIMMEDIATE) failed: %s", strerror(errno));
-        }
-        recv_buf = (char *)malloc(recv_maxlen);
-        recv_ptr = NULL;
-        recv_len = 0;
-    }
-    filter_source = NULL;
-	return self;
-}
+    filter_source = @"tcp";
+    memset(&filter, 0, sizeof(filter));
 
-- (id)init
-{
-    return [self initWithDevice:nil];
+    // XPC Helper
+    xpcInvalid = FALSE;
+    xpcRunning = FALSE;
+    xpcResult = FALSE;
+    xpc = nil;
+    proxy = nil;
+
+    // packet buffer
+    recv_buf = recv_ptr = NULL;
+    recv_maxlen = recv_len = 0;
+
+    // public properties.
+    self.bs_recv = 0;
+    self.bs_drop = 0;
+    self.bs_ifdrop = 0;
+
+	return self;
 }
 
 - (void)dealloc
@@ -162,180 +159,84 @@ struct auth_cmsg {
         free(recv_buf);
 }
 
-- (int)_openBpf: (NSString *)device
-{
-    if (device) {
-        //    if (![self _obtain_rights:device])
-        //        return -1;
-        [self _obtain_fd:device];
-      }
-    else {
-        for (int idx = 4; idx >= 0; idx--) {
-            device = [[NSString alloc] initWithFormat:@"/dev/bpf%d", idx];
-            if ([self _obtain_fd:device])
-                break;
-        }
-    }
-    return fd;
-}
-
-- (bool)_obtain_fd: (NSString *)device
-{
-    pid_t pid;
-    int st;
-    const char *cdev;
-    int socks[2] = {-1, -1};
-    BOOL result = false;
-    
-    if ([self getFileHandle])
-        return true;
-    
-    if (!device) {
-        NSLog(@"No device specified");
-        return false;
-    }
-    cdev = [device UTF8String];
-    NSLog(@"Open BPF device: %s", cdev);
-    if (socketpair(AF_LOCAL, SOCK_STREAM, 0, socks) < 0) {
-        NSLog(@"socketpair() failed: %s", strerror(errno));
-        return false;
-    }
-
-    pid = fork();
-    if (pid < 0) {
-        NSLog(@"fork() failed: %s", strerror(errno));
-        close(socks[0]);
-        close(socks[1]);
-        return false;
-    }
-    else if (pid == 0) {
-        // Child
-        close(socks[0]);
-        dup2(socks[1], STDOUT_FILENO);
-        execl("/usr/libexec/authopen", "/usr/libexec/authopen", "-stdoutpipe", cdev, NULL);
-        exit(EXIT_SUCCESS); // not reached
-    }
-    else {
-        // Parent
-        close(socks[1]);
-        socks[1] = -1;
-    }
-
-    // Recv fd
-    char msgbuf[BUFSIZ];
-    struct iovec msgiov = {
-        .iov_base = msgbuf,
-        .iov_len = sizeof(msgbuf)
-    };
-    struct auth_cmsg cmsg;
-    struct auth_cmsg *cmsgp;
-    struct msghdr msg = {
-        .msg_name = NULL,
-        .msg_namelen = 0,
-        .msg_iov = &msgiov,
-        .msg_iovlen = 1,
-        .msg_control = &cmsg,
-        .msg_controllen = sizeof(cmsg),
-        .msg_flags = MSG_WAITALL
-    };
-    ssize_t plen;
-    
-    NSLog(@"Wait for response from authopen...");
-    for (;;) {
-        plen = recvmsg(socks[0], &msg, 0);
-        if (plen < 0) {
-            if (errno == EINTR)
-                continue;
-            NSLog(@"recvmsg() failed: %s", strerror(errno));
-            goto err;
-        }
-        break;
-    }
-    char *bufp;
-    for (bufp = msgbuf; bufp < &msgbuf[plen];) {
-        if (*bufp++ == 0x00) {
-            unsigned char code = *bufp;
-            
-            if (bufp != &msgbuf[plen -1]) {
-                NSLog(@"Unexpected '0x00' received, invalid protocol.");
-                goto err;
-            }
-            if (code) {
-                NSLog(@"authopen: code=%u(%s)", code, strerror(code));
-                NSLog(@"Communication error: msg=\"%s\"", msgbuf);
-                goto err;
-            }
-            break;
-        }
-    }
-    
-    cmsgp = (struct auth_cmsg *)CMSG_FIRSTHDR(&msg);
-    if (cmsgp == NULL) {
-        NSLog(@"No control message reveiced.");
-        goto err;
-    }
-    if (cmsgp->hdr.cmsg_len != sizeof(cmsg)) {
-        NSLog(@"Unexpcted Controll message. len=%d", cmsgp->hdr.cmsg_len);
-        goto err;
-    }
-    if (cmsgp->hdr.cmsg_level != SOL_SOCKET) {
-        NSLog(@"Unexpcted Controll message. type=%d", cmsgp->hdr.cmsg_type);
-        goto err;
-    }
-    if (cmsgp->hdr.cmsg_type != SCM_RIGHTS) {
-        NSLog(@"Unexpcted Controll message. type=%d", cmsgp->hdr.cmsg_type);
-        goto err;
-    }
-    fd = cmsgp->fd;
-    NSLog(@"BPF file descriptor received: fd=%d", fd);
-    result = true;
-err:
-    if (pid > 0) {
-        while ((waitpid(pid, &st, 0) < 0)) {
-            if (errno == EINTR)
-                continue;
-            NSLog(@"waitpid(%d) failed: %s", pid, strerror(errno));
-        }
-    }
-    if (socks[0] >= 0)
-        close(socks[0]);
-    return result;
-}
-
 - (BOOL)promiscus:(BOOL)flag
 {
+    promisc = flag;
+
+    if (fd < 0)
+        return TRUE;
+    
     if (flag == true) {
         NSLog(@"Entering Promiscus mode");
         if (ioctl(fd, BIOCPROMISC, NULL) < 0) {
             NSLog(@"ioctl(BIOCPROMISC) failed: %s", strerror(errno));
-            return false;
+            return FALSE;
         }
     }
-    return true;
+    return TRUE;
 }
 
 - (BOOL)timeout:(const struct timeval *)interval
 {
-    if (ioctl(fd, BIOCSRTIMEOUT, interval) < 0) {
+    if (interval == NULL)
+        return FALSE;
+    
+    timeout = *interval;
+    if (fd < 0)
+        return TRUE;
+    if (ioctl(fd, BIOCSRTIMEOUT, &timeout) < 0) {
         NSLog(@"ioctl(BIOCSRTIMEOUT) failed: %s", strerror(errno));
-        return false;
+        return FALSE;
     }
-    return true;
+    return TRUE;
 }
 
-- (BOOL)setSnapLen:(uint32_t) len
+- (BOOL)setSnapLen:(uint32_t)len
 {
     // snaplen is a part of filter program.
+    snapLen = len;
     if (pcap)
-        pcap_set_snaplen(pcap, len);
+        pcap_set_snaplen(pcap, snapLen);
     
-    return true;
+    return TRUE;
+}
+
+- (BOOL)setFilter:(NSString *)nsprog
+{
+    const char *prog = [nsprog UTF8String];
+    
+    if (filter_source) {
+        pcap_freecode(&filter);
+        filter_source = nil;
+    }
+    if (pcap_compile(pcap, &filter, prog, 1, PCAP_NETMASK_UNKNOWN) < 0) {
+        NSLog(@"pcap_compile failed: %s", prog);
+        NSLog(@"pcap_compile error: %s", pcap_geterr(pcap));
+        return false;
+    }
+    filter_source = nsprog;
+    
+    if (fd < 0)
+        return TRUE;
+    if (ioctl(fd, BIOCSETFNR, &filter) < 0) {
+        NSLog(@"ioctl(%d, BIOCSETFNR) failed: %s", fd, strerror(errno));
+        return FALSE;
+    }
+    return TRUE;
 }
 
 - (BOOL)start:(const char *)source_interface
 {
     struct ifreq ifr;
 
+    if (fd < 0) {
+        if (![self openDevice]) {
+            NSLog(@"Cannot start capture");
+            deviceName = nil;
+            fd = -1;
+            return false;
+        }
+    }
     memset(&ifr, 0, sizeof(ifr));
     if (!source_interface)
         source_interface = "pktap";
@@ -346,7 +247,7 @@ err:
         NSLog(@"ioctl(BIOCSETIF) failed: %s", strerror(errno));
         return false;
     }
-    
+    NSLog(@"BPF enabled: %@ (fd=%d)", deviceName, fd);
     return true;
 }
 
@@ -354,33 +255,19 @@ err:
 {
     struct bpf_stat stat;
     
+    if (fd < 0) {
+        NSLog(@"No capture device");
+        return false;
+    }
     if (ioctl(fd, BIOCGSTATS, &stat) < 0) {
         NSLog(@"ioctl(BIOCGSTATS) failed: %s", strerror(errno));
         return false;
     }
     bs_recv = stat.bs_recv;
     bs_drop = stat.bs_drop;
-    return true;
-}
-
-- (BOOL)setFilter:(NSString *)nsprog
-{
-    const char *prog = [nsprog UTF8String];
-
-    if (filter_source) {
-        pcap_freecode(&filter);
-        filter_source = nil;
-    }
-    if (pcap_compile(pcap, &filter, prog, 1, PCAP_NETMASK_UNKNOWN) < 0) {
-        NSLog(@"pcap_compile failed: %s", prog);
-        NSLog(@"pcap_compile error: %s", pcap_geterr(pcap));
-        return false;
-    }
-    if (ioctl(fd, BIOCSETFNR, &filter) < 0) {
-        NSLog(@"ioctl(%d, BIOCSETFNR) failed: %s", fd, strerror(errno));
-        return false;
-    }
-    filter_source = nsprog;
+    memset(recv_buf, 0, recv_maxlen);
+    recv_ptr = NULL;
+    recv_len = 0;
     return true;
 }
 
@@ -436,17 +323,6 @@ err:
     return true;
 }
 
-- (BPFPacket *)nextPacket
-{
-    struct timeval tv;
-    uint32_t caplen, pktlen;
-
-    if ([self next:&tv withCaplen:&caplen withPktlen:&pktlen])
-        return [[BPFPacket alloc] initWithoutData];
-
-    return [[BPFPacket alloc] initWithData:&tv capLen:caplen pktLen:pktlen];
-}
-
 + (void)installHelper
 {
     AuthorizationRef authref;
@@ -490,40 +366,216 @@ err:
     return;
 }
 
-- (BOOL)getFileHandle
+- (BOOL)openDevice
 {
-    if ([self checkXPC] == FALSE) {
-        NSLog(@"XPC Service is not found");
-        return FALSE;
+    // close old handle
+    if (fd >= 0) {
+        close(fd);
+        fd = -1;
+        deviceName = nil;
     }
     
-    [xpc resume];
-    self.fd = -1;
-    xpcRunning = YES;
-    [proxy getFileHandle:^(BOOL status, NSFileHandle *handle){
-        xpcResult = status;
-        NSLog(@"getFileHandle: => %d (%@)", status, handle);
-        xpcRunning = NO;
-        if (status == TRUE)
-            self.fd = [handle fileDescriptor];
-    }];
-    [self waitReply];
-    if (xpc) {
-        [xpc suspend];
+    // try helper
+    if ([self getFileHandleXPC]) {
+        NSLog(@"BPF Deivce is opened by Helper Module");
+        return [self initDevice];
     }
-    if (self.fd < 0)
+    
+    // try authopen
+    glob_t gl;
+    memset(&gl, 0, sizeof(gl));
+    glob("/dev/bpf*", GLOB_NOCHECK, NULL, &gl);
+    if (gl.gl_matchc <= 0) {
+        NSLog(@"No BPF device found");
+        globfree(&gl);
+        return FALSE;
+    }
+    for (int i = ((int)gl.gl_pathc - 1); i >= 0; i--) {
+        if (gl.gl_pathv[i] == NULL)
+            continue;
+        
+        int result;
+        NSString *path = [NSString stringWithUTF8String:gl.gl_pathv[i]];
+        NSLog(@"Open BPF deivce via authopen: %@", path);
+        result = [self executeAuthopen:path];
+        switch (result) {
+            case 0:
+                NSLog(@"BPF Deivice opened successfully.");
+                return [self initDevice];
+            case ECANCELED:
+                NSLog(@"Operation is canseled by user");
+                return FALSE;
+            default:
+                break;
+        }
+    }
+    
+    NSLog(@"No BPF Deivce opened.");
+    return FALSE;
+}
+
+- (BOOL)initDevice
+{
+    if (fd < 0) {
+        NSLog(@"No BPF device opened.");
+        return FALSE;
+    }
+    recv_maxlen = BPF_MAXBUFSIZE;
+    if (ioctl(fd, BIOCSBLEN, &recv_maxlen) < 0) {
+        NSLog(@"ioctl(BIOCSBLEN) failed: %s", strerror(errno));
+        return FALSE;
+    }
+    recv_maxlen = 0;
+    if (ioctl(fd, BIOCGBLEN, &recv_maxlen) < 0) {
+        NSLog(@"ioctl(BIOCGBLEN) failed: %s", strerror(errno));
+        return FALSE;
+    }
+    int param = 0;
+    if (ioctl(fd, BIOCIMMEDIATE, &param) < 0) {
+        NSLog(@"ioctl(BIOCIMMEDIATE) failed: %s", strerror(errno));
+        return FALSE;
+    }
+    recv_buf = (char*)malloc(recv_maxlen);
+    if (recv_buf == NULL) {
+        NSLog(@"Cannot allocate receive buffer: %s", strerror(errno));
+        return FALSE;
+    }
+    recv_ptr = NULL;
+    recv_len = 0;
+    
+    // setup params.
+    if (![self promiscus:promisc])
+        return FALSE;
+    if (![self timeout:&timeout])
+        return FALSE;
+    if (![self setSnapLen:snapLen])
+        return FALSE;
+    if (![self setFilter:filter_source])
         return FALSE;
     
-    NSLog(@"messaging done: fd=%d", self.fd);
     return TRUE;
 }
 
-- (void)waitReply
+- (int)executeAuthopen: (NSString *)device
 {
-    // XXX: use NSLock and condition variable?
-    while (xpcInvalid == NO && xpcRunning == YES) {
-        [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.5]];
+    pid_t pid;
+    int st;
+    const char *cdev;
+    int socks[2] = {-1, -1};
+    int result = -1;
+    
+    if (!device) {
+        NSLog(@"No device specified");
+        return -1;
     }
+    cdev = [device UTF8String];
+    NSLog(@"Open BPF device: %s", cdev);
+    if (socketpair(AF_LOCAL, SOCK_STREAM, 0, socks) < 0) {
+        NSLog(@"socketpair() failed: %s", strerror(errno));
+        return -1;
+    }
+    
+    pid = fork();
+    if (pid < 0) {
+        NSLog(@"fork() failed: %s", strerror(errno));
+        close(socks[0]);
+        close(socks[1]);
+        return -1;
+    }
+    else if (pid == 0) {
+        // Child
+        close(socks[0]);
+        dup2(socks[1], STDOUT_FILENO);
+        execl("/usr/libexec/authopen", "/usr/libexec/authopen", "-stdoutpipe", cdev, NULL);
+        exit(EXIT_SUCCESS); // not reached
+    }
+    else {
+        // Parent
+        close(socks[1]);
+        socks[1] = -1;
+    }
+    
+    // Recv fd
+    char msgbuf[BUFSIZ];
+    struct iovec msgiov = {
+        .iov_base = msgbuf,
+        .iov_len = sizeof(msgbuf)
+    };
+    struct auth_cmsg cmsg;
+    struct auth_cmsg *cmsgp;
+    struct msghdr msg = {
+        .msg_name = NULL,
+        .msg_namelen = 0,
+        .msg_iov = &msgiov,
+        .msg_iovlen = 1,
+        .msg_control = &cmsg,
+        .msg_controllen = sizeof(cmsg),
+        .msg_flags = MSG_WAITALL
+    };
+    ssize_t plen;
+    
+    NSLog(@"Wait for response from authopen...");
+    for (;;) {
+        plen = recvmsg(socks[0], &msg, 0);
+        if (plen < 0) {
+            if (errno == EINTR)
+                continue;
+            NSLog(@"recvmsg() failed: %s", strerror(errno));
+            goto err;
+        }
+        break;
+    }
+    char *bufp;
+    for (bufp = msgbuf; bufp < &msgbuf[plen];) {
+        if (*bufp++ == 0x00) {
+            unsigned char code = *bufp;
+            
+            if (bufp != &msgbuf[plen -1]) {
+                NSLog(@"Unexpected '0x00' received, invalid protocol.");
+                goto err;
+            }
+            if (code) {
+                NSLog(@"authopen: code=%u(%s)", code, strerror(code));
+                NSLog(@"Communication error: msg=\"%s\"", msgbuf);
+                result = (int)code;
+                goto err;
+            }
+            break;
+        }
+    }
+    
+    cmsgp = (struct auth_cmsg *)CMSG_FIRSTHDR(&msg);
+    if (cmsgp == NULL) {
+        NSLog(@"No control message reveiced.");
+        goto err;
+    }
+    if (cmsgp->hdr.cmsg_len != sizeof(cmsg)) {
+        NSLog(@"Unexpcted Controll message. len=%d", cmsgp->hdr.cmsg_len);
+        goto err;
+    }
+    if (cmsgp->hdr.cmsg_level != SOL_SOCKET) {
+        NSLog(@"Unexpcted Controll message. type=%d", cmsgp->hdr.cmsg_type);
+        goto err;
+    }
+    if (cmsgp->hdr.cmsg_type != SCM_RIGHTS) {
+        NSLog(@"Unexpcted Controll message. type=%d", cmsgp->hdr.cmsg_type);
+        goto err;
+    }
+    deviceName = device;
+    fd = cmsgp->fd;
+    NSLog(@"BPF file descriptor received: fd=%d", fd);
+    result = 0;
+err:
+    if (pid > 0) {
+        while ((waitpid(pid, &st, 0) < 0)) {
+            if (errno == EINTR)
+                continue;
+            NSLog(@"waitpid(%d) failed: %s", pid, strerror(errno));
+        }
+    }
+    if (socks[0] >= 0)
+        close(socks[0]);
+    return result;
 }
 
 - (BOOL)openXPC
@@ -559,20 +611,18 @@ err:
         xpc = nil;
         return NO;
     }
-    
+
     [xpc resume];
     xpcRunning = YES;
     [proxy alive:^(int version, NSString *m) {
-        NSLog(@"Helper livness: version %d (%@)", version, m);
-        if (version == OpenBPF_VERSION)
-        xpcResult = YES;
-        else
-        xpcResult = NO;
+        NSLog(@"Helper livness: version %d (%@), expcted version %d",
+              version, m, OpenBPF_VERSION);
+        xpcResult = (version == OpenBPF_VERSION) ? YES : NO;
         xpcRunning = NO;
     }];
-    [self waitReply];
+    [self waitXPCReply];
     if (!xpc || xpcInvalid)
-    return NO;
+        return NO;
     [xpc suspend];
     
     if (!xpcResult) {
@@ -580,16 +630,6 @@ err:
         xpc = nil;
     }
     return xpcResult;
-}
-
-- (BOOL)checkXPC
-{
-    if (![self openXPC]) {
-        NSLog(@"No valid helper found.");
-        return NO;
-    }
-    
-    return YES;
 }
 
 - (void)closeXPC
@@ -603,49 +643,52 @@ err:
     xpcRunning = NO;
 }
 
-- (BOOL)secure
+- (BOOL)checkXPC
 {
-    NSLog(@"Secure the BPF device");
-    if (![self checkXPC]) {
-        NSLog(@"cannot open XPC");
+    if (![self openXPC]) {
+        NSLog(@"No valid helper found.");
         return NO;
     }
-    [xpc resume];
-    xpcRunning = YES;
-    [proxy chown:0 reply:^(BOOL reply, NSString *m){
-        xpcResult = reply;
-        NSLog(@"secure BPF => %d (%@)", xpcResult, m);
-        xpcRunning = NO;
-    }];
-    [self waitReply];
-    if (xpc) {
-        [xpc suspend];
-    }
-    NSLog(@"messaging done");
     
-    return xpcResult;
+    return YES;
 }
 
-- (BOOL)insecure
+- (void)waitXPCReply
 {
-    NSLog(@"Insecure the BPF device");
-    if (![self checkXPC]) {
-        NSLog(@"cannot open XPC");
-        return NO;
+    // XXX: use NSLock and condition variable?
+    while (xpcInvalid == NO && xpcRunning == YES) {
+        [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.5]];
     }
+}
+
+- (BOOL)getFileHandleXPC
+{
+    if ([self checkXPC] == FALSE) {
+        NSLog(@"XPC Service is not found");
+        return FALSE;
+    }
+    
     [xpc resume];
+    fd = -1;
     xpcRunning = YES;
-    [proxy chown:getuid() reply:^(BOOL reply, NSString *m) {
-        xpcResult = reply;
-        NSLog(@"insecure BPF => %d (%@)", xpcResult, m);
+    [proxy getFileHandle:^(BOOL status, NSString *name, NSFileHandle *handle){
+        xpcResult = status;
+        NSLog(@"getFileHandle: => %d (%@)", status, handle);
         xpcRunning = NO;
+        if (status == TRUE) {
+            deviceHandle = handle;
+            deviceName = name;
+            fd = [handle fileDescriptor];
+        }
     }];
-    [self waitReply];
+    [self waitXPCReply];
     if (xpc) {
         [xpc suspend];
     }
-    NSLog(@"messaging done");
+    if (fd < 0)
+        return FALSE;
     
-    return xpcResult;
+    NSLog(@"messaging done: fd=%d", fd);
+    return TRUE;
 }
 @end

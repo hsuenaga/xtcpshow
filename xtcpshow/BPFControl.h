@@ -37,45 +37,24 @@
 #import <SecurityFoundation/SecurityFoundation.h>
 #import "OpenBPFXPC.h"
 
-@interface BPFPacket : NSObject
-@property (readonly) BOOL timeout;
-@property (readonly) struct timeval ts;
-@property (readonly) uint32_t caplen;
-@property (readonly) uint32_t pktlen;
-- (id)initWithData:(const struct timeval *)tstamp capLen:(uint32_t)clen pktLen:(uint32_t)plen;
-- (id)initWithoutData;
-- (const struct timeval *)ts_ref;
-@end
+@interface BPFControl : NSObject
+@property (assign, readonly) uint32_t bs_recv;
+@property (assign, readonly) uint32_t bs_drop;
+@property (assign, readonly) uint32_t bs_ifdrop; // XXX: no implementation
 
-@interface BPFControl : NSObject {
-	@protected
-    SFAuthorization *_authObj;
-	AuthorizationRef _authRef;
-    AuthorizationExternalForm _authRefExt;
-    
-    pcap_t *pcap;
-    NSString *filter_source;
-    struct bpf_program filter;
-    
-    // packet buffer
-    char *recv_buf;
-    ssize_t recv_maxlen;
-    char *recv_ptr;
-    ssize_t recv_len;
-}
-@property (assign) int fd;
-@property (assign) uint32_t bs_recv;
-@property (assign) uint32_t bs_drop;
-@property (assign) uint32_t bs_ifdrop;
-
-- (id)initWithDevice: (NSString *)device;
+#pragma mark - set params
 - (BOOL)promiscus:(BOOL)flag;
 - (BOOL)timeout:(const struct timeval *)interval;
+- (BOOL)setSnapLen:(uint32_t)len;
+- (BOOL)setFilter:(NSString *)filter;
+
+#pragma mark - start/stop
 - (BOOL)start:(const char *)source_interface;
 - (BOOL)stop;
-- (BOOL)setFilter:(NSString *)filter;
-- (BOOL)next: (struct timeval *)tv withCaplen:(uint32_t *)caplen withPktlen:(uint32_t *)pktlen;
-- (BPFPacket *)nextPacket;
 
+#pragma mark - read received packet
+- (BOOL)next: (struct timeval *)tv withCaplen:(uint32_t *)caplen withPktlen:(uint32_t *)pktlen;
+
+#pragma mark - install priviledged helper.
 + (void)installHelper;
 @end
