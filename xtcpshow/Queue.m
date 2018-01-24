@@ -34,9 +34,7 @@
 #import <sys/types.h>
 #import "Queue.h"
 
-#define DEBUG_COUNTER
-
-#ifdef DEBUG_COUNTER
+#ifdef DEBUG
 #define ASSERT_COUNTER(x) [(x) assertCounting]
 #else
 #define ASSERT_COUNTER(x) // nothing
