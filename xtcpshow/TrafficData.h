@@ -48,6 +48,7 @@
 @property (strong, nonatomic, readonly) NSDate *Start;
 @property (strong, nonatomic, readonly) NSDate *End;
 @property (strong, nonatomic, readonly) id aux;
+
 #pragma mark - initializer
 + (TrafficData *)sampleOf:(id)parent atTimeval:(struct timeval *)tv withPacketLength:(uint64_t)length auxData:(id)aux;
 

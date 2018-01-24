@@ -32,16 +32,17 @@
 
 #ifndef FIR_h
 #define FIR_h
+#import <Foundation/Foundation.h>
 
-@class DerivedData;
+#import "DerivedData.h"
 
 @interface FIR : NSObject
 - (id)init;
 + (id)FIRwithTap:(size_t)tap;
 - (DerivedData *)filter:(DerivedData *)sample;
 
-@property (nonatomic)NSUInteger tap;
-@property (nonatomic)NSArray *stage;
+@property (nonatomic, readonly)NSUInteger tap;
+@property (nonatomic, readonly)NSArray *stage;
 @end
 
 #endif /* FIR_h */

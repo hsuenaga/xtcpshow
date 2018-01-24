@@ -489,7 +489,7 @@
     __block BOOL delim = false;
     [node
      enumerateObjectsUsingBlock:^(TrafficData *ptr, NSUInteger idx, BOOL *stop) {
-         if ([ptr isMemberOfClass:[self class]]) {
+         if ([ptr isKindOfClass:[self class]]) {
              if (delim)
                  [self writeDebug:@"|"];
              [self writeDebug:@"<obj%d> slot%lu", ptr.objectID, idx];
@@ -505,7 +505,7 @@
     // create record link
     [node
      enumerateObjectsUsingBlock:^(TrafficData *ptr, NSUInteger idx, BOOL *stop) {
-         if ([ptr isMemberOfClass:[self class]]) {
+         if ([ptr isKindOfClass:[self class]]) {
              [self writeDebug:@"node%d:obj%d -> node%d:obj%d;\n",
               self.objectID, ptr.objectID, ptr.objectID, ptr.objectID];
          }

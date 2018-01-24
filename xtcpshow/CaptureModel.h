@@ -30,51 +30,44 @@
 //  Copyright (c) 2013 SUENAGA Hiroki. All rights reserved.
 //
 #import <Foundation/Foundation.h>
-#import "ComputeQueue.h"
-#import "AppDelegate.h"
+
 #import "CaptureBPF.h"
 #import "TrafficDB.h"
+#import "AppDelegate.h"
 
 #define DEF_HISTORY 50000 // packets
 
 @class TrafficIndex;
 
-@interface CaptureModel : NSObject {
-	NSOperationQueue *capture_cue;
-	BOOL running;
-}
-
+@interface CaptureModel : NSObject
 // pcap binding
-@property (assign) const char *device;
-@property (assign) const char *filter;
-@property (assign) BOOL promisc;
-@property (strong) CaptureBPF *bpfc;
+@property (assign, nonatomic) const char *device;
+@property (assign, nonatomic) const char *filter;
+@property (assign, nonatomic) BOOL promisc;
+@property (strong, nonatomic) CaptureBPF *bpfc;
 
 // data base
-@property (strong, nonatomic) TrafficDB *dataBase;
+@property (strong, nonatomic, readonly) TrafficDB *dataBase;
 
 // traffic data reported by capture thread
-@property (atomic, assign) uint32_t total_pkts;
-@property (atomic, assign) float mbps;
-@property (atomic, assign) float max_mbps;
-@property (atomic, assign) float peek_hold_mbps;
-@property (atomic, assign) float samplingIntervalLast; // [sec]
-@property (atomic, assign) float samplingInterval; // [sec]
+@property (assign, atomic) uint64_t totalPkts;
+@property (assign, atomic) double mbps;
+@property (assign, atomic) double max_mbps;
+@property (assign, atomic) double average_mbps;
+@property (assign, atomic) double samplingInterval; // [sec]
+@property (assign, atomic) double samplingIntervalLast; // [sec]
 
 // data processing (don't acccess from other thread)
-@property (weak) AppDelegate *controller;
+@property (weak, nonatomic) AppDelegate *controller;
 
 - (CaptureModel *)init;
 - (BOOL)startCapture;
 - (void)stopCapture;
 - (BOOL)captureEnabled;
-
 - (void)resetCounter;
 
-- (void)setSamplingInterval:(float)interval;
-- (float)samplingInterval;
-- (float)samplingIntervalMS;
-- (float)samplingIntervalLastMS;
+- (double)samplingIntervalMS;
+- (double)samplingIntervalLastMS;
 
 - (void)recvError:(NSString *)message;
 - (void)recvFinish:(id)sender;

@@ -274,6 +274,7 @@ static NSString *const PREFER_DEVICE=@"en";
 	[_startButton setTitle:LBL_START];
 	[_deviceSelector setEnabled:YES];
 	[_filterField setEnabled:YES];
+    [_promiscCheck setEnabled:YES];
     NSLog(@"alert: %@", message);
     alert = [[NSAlert alloc] init];
     [alert addButtonWithTitle:@"OK"];
@@ -290,8 +291,8 @@ static NSString *const PREFER_DEVICE=@"en";
 - (void)updateUserInterface {
 	[_snapshotField	 setFloatValue:_model.mbps];
 	[_maxField setFloatValue:_model.max_mbps];
-	[_trendField setFloatValue:_model.peek_hold_mbps];
-	[_totalpktField setIntegerValue:_model.total_pkts];
+	[_averageField setFloatValue:_model.average_mbps];
+	[_totalpktField setIntegerValue:_model.totalPkts];
 
 	[_samplingTargetField
 	 setFloatValue:_model.samplingIntervalMS];

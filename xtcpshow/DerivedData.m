@@ -32,11 +32,21 @@
 
 #import "DerivedData.h"
 
-@implementation DerivedData
+@interface DerivedData ()
+- (id)copyWithZone:(NSZone *)zone;
+- (void)invalidTimeException;
+@end
+
+@implementation DerivedData {
+    NSNumber *number;
+}
+@synthesize timestamp;
+@synthesize numberOfSamples;
+
 + (id)dataWithoutSample
 {
 	DerivedData *new = [[[self class] alloc] init];
-	new->_timestamp = [NSDate date];
+	new->timestamp = [NSDate date];
 
 	return new;
 }
@@ -45,9 +55,9 @@
 {
 	DerivedData *new = [[[self class] alloc] init];
 
-	new->_number = [NSNumber numberWithDouble:data];
-	new->_timestamp = [NSDate date];
-	new->_numberOfSamples = 1;
+	new->number = [NSNumber numberWithDouble:data];
+	new->timestamp = [NSDate date];
+	new->numberOfSamples = 1;
 
 	return new;
 }
@@ -56,9 +66,9 @@
 {
 	DerivedData *new = [[[self class] alloc] init];
 
-	new->_number = [NSNumber numberWithInt:data];
-	new->_timestamp = [NSDate date];
-	new->_numberOfSamples = 1;
+	new->number = [NSNumber numberWithInt:data];
+	new->timestamp = [NSDate date];
+	new->numberOfSamples = 1;
 
 	return new;
 }
@@ -67,9 +77,9 @@
 {
 	DerivedData *new = [[[self class] alloc] init];
 
-    new->_number = [NSNumber numberWithDouble:data];
-	new->_timestamp = [date copy];
-	new->_numberOfSamples = samples;
+    new->number = [NSNumber numberWithDouble:data];
+	new->timestamp = [date copy];
+	new->numberOfSamples = samples;
 
 	return new;
 }
@@ -78,9 +88,9 @@
 {
 	DerivedData *new = [[[self class] alloc] init];
 
-	new->_number = [NSNumber numberWithInt:data];
-	new->_timestamp = date;
-	new->_numberOfSamples = samples;
+	new->number = [NSNumber numberWithInt:data];
+	new->timestamp = [date copy];
+	new->numberOfSamples = samples;
 
 	return new;
 }
@@ -89,30 +99,30 @@
 {
 	DerivedData *new = [[[self class] alloc] init];
 
-	new->_number = number;
-	new->_timestamp = date;
-	new->_numberOfSamples = samples;
+	new->number = [number copy];
+	new->timestamp = [date copy];
+	new->numberOfSamples = samples;
 
 	return new;
 }
 
 - (double)doubleValue
 {
-	return [_number floatValue];
+	return [number floatValue];
 }
 
 - (int)intValue
 {
-	return [_number intValue];
+	return [number intValue];
 }
 
 - (id)copyWithZone:(NSZone *)zone
 {
 	DerivedData *new = [[DerivedData alloc] init];
 
-	new->_number = [_number copy];
-	new->_timestamp = [_timestamp copy];
-	new->_numberOfSamples = _numberOfSamples;
+	new->number = [number copy];
+	new->timestamp = [timestamp copy];
+	new->numberOfSamples = numberOfSamples;
 
 	return new;
 }

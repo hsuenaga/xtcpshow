@@ -32,30 +32,19 @@
 
 #import <Foundation/Foundation.h>
 
-@class Queue;
-@class ComputeQueue;
-@class FIR;
-@class TrafficDB;
+#import "TrafficDB.h"
+#import "ComputeQueue.h"
 
-@interface DataResampler : NSObject {
-	BOOL write_protect;
-    BOOL running;
-    double tick;
-    double bytes2mbps;
-    NSTimeInterval dataLength;
-}
-@property (strong) FIR *FIR;
-@property (strong, readonly) ComputeQueue *output;
-@property (assign) NSUInteger outputSamples;
-@property (assign) NSTimeInterval outputTimeLength;
-@property (assign) NSTimeInterval outputTimeOffset;
-@property (assign) NSTimeInterval MATimeLength;
-@property (assign, readonly) NSUInteger overSample;
-
-// protected
-- (void)invalidValueException;
+@interface DataResampler : NSObject
+@property (strong, nonatomic, readonly) ComputeQueue *output;
+@property (assign, nonatomic) NSUInteger outputSamples;
+@property (assign, nonatomic) NSTimeInterval outputTimeLength;
+@property (assign, nonatomic) NSTimeInterval outputTimeOffset;
+@property (assign, nonatomic) NSTimeInterval FIRTimeLength;
+@property (assign, nonatomic, readonly) NSUInteger overSample;
 
 // public
+- (DataResampler *)init;
 - (void)updateParams;
 - (void)purgeData;
 - (void)resampleDataBase:(TrafficDB *)dataBase atDate:(NSDate *)date;

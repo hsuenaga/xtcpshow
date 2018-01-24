@@ -11,10 +11,7 @@
 
 @class Queue;
 
-@interface TrafficDB : TrafficIndex {
-    Queue *queue;
-}
-@property (assign, readonly) size_t hitorySize;
+@interface TrafficDB : TrafficIndex
 
 #pragma mark - initializer
 - (TrafficDB *)initWithHistorySize:(size_t)size withResolution:(NSTimeInterval)resolution startAt:(NSDate *)start endAt:(NSDate *)end;

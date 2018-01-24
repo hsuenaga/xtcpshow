@@ -30,13 +30,12 @@
 //  Copyright © 2018年 SUENAGA Hiroki. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
 #import "FIR.h"
 #import "ComputeQueue.h"
-#import "DerivedData.h"
 
 @implementation FIR
 @synthesize tap;
+@synthesize stage;
 
 #define KZ_STAGE 3
 
@@ -54,14 +53,14 @@
     if (tapStage <= 0) {
         tapStage = 1;
     }
-    new.tap = tapStage * KZ_STAGE;
+    new->tap = tapStage * KZ_STAGE;
 
     NSMutableArray *FIR_Factory = [[NSMutableArray alloc] init];
     for (int i = 0; i < KZ_STAGE; i++) {
         ComputeQueue *stage = [ComputeQueue queueWithZero:tapStage];
         [FIR_Factory addObject:stage];
     }
-    new.stage = [NSArray arrayWithArray:FIR_Factory];
+    new->stage = [NSArray arrayWithArray:FIR_Factory];
     
     return new;
 }

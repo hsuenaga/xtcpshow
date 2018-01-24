@@ -17,17 +17,17 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>2.51</string>
+	<string>3.00</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>1</string>
+	<string>3.00</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.utilities</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>${MACOSX_DEPLOYMENT_TARGET}</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>Copyright © 2017 SUENAGA Hiroki. All rights reserved.</string>
+	<string>Copyright © 2018 SUENAGA Hiroki. All rights reserved.</string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
@@ -35,7 +35,7 @@
 	<key>SMPrivilegedExecutables</key>
 	<dict>
 		<key>com.mac.hiroki.suenaga.OpenBPF</key>
-		<string>identifier "com.mac.hiroki.suenaga.OpenBPF" and anchor apple generic and certificate leaf[subject.CN] = "Mac Developer: Hiroki SUENAGA (478DWQ4RTP)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
+		<string>identifier &quot;com.mac.hiroki.suenaga.OpenBPF&quot; and anchor apple generic and certificate leaf[subject.CN] = &quot;Mac Developer: Hiroki SUENAGA (478DWQ4RTP)&quot; and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 	</dict>
 </dict>
 </plist>

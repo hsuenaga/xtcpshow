@@ -523,7 +523,7 @@ float const scroll_sensitivity = 10.0f;
 	resampler.outputTimeLength = _viewTimeLength;
 	resampler.outputTimeOffset = _viewTimeOffset;
 	resampler.outputSamples = rect.size.width;
-	resampler.MATimeLength = _MATimeLength;
+	resampler.FIRTimeLength = _MATimeLength;
 
     [resampler resampleDataBase:dataBase atDate:end];
 

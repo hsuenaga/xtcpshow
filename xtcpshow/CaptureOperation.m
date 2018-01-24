@@ -29,22 +29,41 @@
 //  Created by SUENAGA Hiroki on 2013/07/19.
 //  Copyright (c) 2013 SUENAGA Hiroki. All rights reserved.
 //
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#import "CaptureBPF.h"
 #import "CaptureOperation.h"
-#import "CaptureModel.h"
-#import "ComputeQueue.h"
-#import "DerivedData.h"
 
 /*
  * Capture thread
  */
-@implementation CaptureOperation
+@interface CaptureOperation ()
+- (void)dealloc;
+- (BOOL)attachFilter;
+- (double)elapsedFrom:(struct timeval *)last;
+- (BOOL)tick_expired;
+- (void)sendError:(NSString *)message;
+- (void)sendFinish;
+@end
+
+@implementation CaptureOperation {
+    NSString *last_error;
+    
+    char *source_interface;
+    char *filter_program;
+    
+    struct timeval tv_start;
+    struct timeval tv_next_tick;
+    struct timeval tv_last_tick;
+    double last_interval; // [sec]
+    double total_elapsed; // [sec]
+    BOOL terminate;
+    
+    // counter
+    uint64_t totalBytes;
+    uint64_t totalPkts;
+    int bytes;
+    double max_mbps;
+}
+@synthesize model;
 @synthesize bpfControl;
-@synthesize peak_hold_queue;
 @synthesize dataBase;
 
 - (CaptureOperation *)init
@@ -73,9 +92,14 @@
 
 - (void) main
 {
-	NSLog(@"caputer thread: interval %f [sec]", TIMESLOT);
-	[_model setSamplingInterval:TIMESLOT];
+    if (dataBase == nil) {
+        NSLog(@"no packet data base");
+        return;
+    }
 
+	NSLog(@"caputer thread: interval %f [sec]", TIMESLOT);
+    model.samplingInterval = TIMESLOT;
+    
 	// initialize bpf
 	if (!bpfControl) {
 		NSLog(@"cannot initialize bpfControl module.");
@@ -83,54 +107,53 @@
 		return;
 	}
 
-	// set filter
-	if (![self attachFilter]) {
-		NSLog(@"libpcap filter error");
-		[self sendError:@"Syntax erorr in filter statement"];
-		return;
-	}
-    
-    if (self.dataBase == nil) {
-        NSLog(@"no packet data base");
-        return;
-    }
-	
 	// reset timer
-	gettimeofday(&tv_next_tick, NULL);
-	gettimeofday(&tv_last_tick, NULL);
+    gettimeofday(&tv_start, NULL);
+    tv_next_tick = tv_last_tick = tv_start;
+    
+    // set timeout
     struct timeval tick = {
         .tv_sec = 0,
-        .tv_usec = CAP_TICK * 1000, // [msec]
+        .tv_usec = BPF_TIMEOUT * 1000, // [msec]
     };
-    [bpfControl timeout:&tick];
-
-	// reset counter
-	max_mbps = peak_mbps = 0.0;
-	bytes = pkts = 0;
-
-    if (![bpfControl promiscus:[_model promisc]]) {
+    if (![bpfControl timeout:&tick]) {
+        NSLog(@"Cannot set timeout to BPF.");
+        [self sendError:@"Cannot set timeout"];
+        return;
+    }
+    
+    // set filter
+    if (![self attachFilter]) {
+        NSLog(@"libpcap filter error");
+        [self sendError:@"Syntax erorr in filter statement"];
+        return;
+    }
+    
+    // Promiscus mode
+    if (![bpfControl promiscus:[model promisc]]) {
         NSLog(@"Cannot initizlize BPF.");
         [self sendError:@"Cannot enable promiscus mode"];
         return;
     }
+    
+    // Enable caputuring
     if (![bpfControl start:source_interface]) {
         NSLog(@"Cannot Initiaize BPF.");
         [self sendError:@"Cannot attach interface"];
         return;
     }
-
+    
+    // receive packets.
+    max_mbps = 0.0;
+    totalBytes = bytes = totalPkts = 0;
     terminate = FALSE;
     while (!terminate) {
 		@autoreleasepool {
+			if ([self isCancelled] == YES || self.model == nil)
+				break;
+            
             struct timeval tv;
             uint32_t pktlen;
-			float mbps;
-
-			if ([self isCancelled] == YES)
-				break;
-
-			if (self.model == nil)
-				break;
             if (![bpfControl next:&tv withCaplen:NULL withPktlen:&pktlen]) {
                 NSLog(@"bpfControl error.");
                 [self sendError:@"Failed to read from BPF"];
@@ -138,32 +161,38 @@
             }
             else if (tv.tv_sec || tv.tv_usec) {
                 TrafficData *sample;
-                pkts++;
+                totalPkts++;
+                totalBytes += pktlen;
                 bytes += pktlen;
-                sample = [self.dataBase addSampleAtTimevalExtend:&tv withBytes:pktlen auxData:nil];
+                sample = [dataBase addSampleAtTimevalExtend:&tv withBytes:pktlen auxData:nil];
 			}
             else {
                 // BPF timeout.
                 // there is no samples received. this means
                 // we confirmed there is no traffic until now.
-                [self.dataBase updateLastDate:[NSDate date]];
+                [dataBase updateLastDate:[NSDate date]];
             }
 
-			// timer update
+			// timer update for measure
 			if ([self tick_expired] == FALSE)
 				continue;
             
 			// update max
-			mbps = (float)(bytes * 8) / last_interval; // [bps]
-			mbps = mbps / (1000.0f * 1000.0f); // [mbps]
+			double bps = (double)(bytes * 8) / last_interval; // [bps]
+			double mbps = bps * 1.0E-6; // [mbps]
 			if (max_mbps < mbps)
 				max_mbps = mbps;
 
+            // update average
+            double avgbps = (double)(totalBytes * 8) / total_elapsed;
+            double avgmbps = avgbps * 1.0E-6;
+            
 			// update model
-			[self.model setTotal_pkts:pkts];
-			[self.model setMbps:mbps];
-			[self.model setMax_mbps:max_mbps];
-			[self.model setSamplingIntervalLast:last_interval];
+            model.totalPkts = totalPkts;
+            model.average_mbps = avgmbps;
+            model.mbps = mbps;
+            model.max_mbps = max_mbps;
+            model.samplingIntervalLast = last_interval;
 			bytes = 0;
 		}
 	}
@@ -173,7 +202,7 @@
 	NSLog(@"%d packets recieved by pcap", [bpfControl bs_recv]);
 	NSLog(@"%d packets dropped by pcap", [bpfControl bs_drop]);
 	NSLog(@"%d packets dropped by device", [bpfControl bs_ifdrop]);
-	NSLog(@"%d packets proccessed.", pkts);
+	NSLog(@"%llu packets proccessed.", totalPkts);
 	NSLog(@"done thread");
 	[self sendFinish];
 }
@@ -198,23 +227,34 @@
 		filter_program = strdup(filter);
 }
 
-- (float)elapsedFrom:(struct timeval *)last
+- (BOOL)attachFilter
+{
+    if (filter_program == NULL) {
+        NSLog(@"No filter program");
+        return FALSE;
+    }
+    [bpfControl setFilter:[[NSString alloc] initWithUTF8String:filter_program]];
+    
+    return TRUE;
+}
+
+- (double)elapsedFrom:(struct timeval *)last
 {
 	struct timeval now, delta;
 	float elapsed;
 
 	gettimeofday(&now, NULL);
 	timersub(&now, last, &delta);
-	elapsed = (float)delta.tv_sec;
-	elapsed += (float)delta.tv_usec / (1000.0f * 1000.0f);
+	elapsed = (double)delta.tv_sec;
+    elapsed += (double)delta.tv_usec * 1.0E-6;
 
 	return elapsed;
 }
 
-- (void)addSecond:(float)second toTimeval:(struct timeval *)tv
+- (void)addSecond:(double)second toTimeval:(struct timeval *)tv
 {
 	struct timeval delta;
-	float usecond;
+	double usecond;
 	int add = TRUE;
 
 	if (isnan(second) || isinf(second))
@@ -222,12 +262,11 @@
 
 	if (second < 0.0) {
 		add = FALSE;
-		second = fabsf(second);
+		second = fabs(second);
 	}
 
 	delta.tv_sec = floor(second);
-	usecond = second - (float)delta.tv_sec;
-	usecond = usecond * (1000.0f * 1000.0f);
+	usecond = (second - (double)delta.tv_sec) * 1.0E6;
 	delta.tv_usec = floor(usecond);
 
 	if (add)
@@ -238,17 +277,14 @@
 
 - (BOOL)tick_expired
 {
-	float expired, elapsed;
-
-	expired = [self elapsedFrom:&tv_next_tick];
-	if (expired < TIMESLOT)
+	if ([self elapsedFrom:&tv_next_tick] < TIMESLOT)
 		return FALSE;
-	
-	elapsed = [self elapsedFrom:&tv_last_tick];
-	last_interval = elapsed;
-
+    
+	last_interval = [self elapsedFrom:&tv_last_tick];
+    total_elapsed = [self elapsedFrom:&tv_start];
 	[self addSecond:TIMESLOT toTimeval:&tv_next_tick];
-	gettimeofday(&tv_last_tick, NULL);
+
+    gettimeofday(&tv_last_tick, NULL);
 	return TRUE;
 }
 
@@ -261,7 +297,7 @@
     else if (last_error) {
         message = last_error;
     }
-	[_model
+	[model
 	 performSelectorOnMainThread:@selector(recvError:)
 	 withObject:message
 	 waitUntilDone:NO];
@@ -269,20 +305,10 @@
 
 - (void)sendFinish
 {
-	[_model
+	[model
 	 performSelectorOnMainThread:@selector(recvFinish:)
 	 withObject:self
 	 waitUntilDone:NO];
 }
 
-- (BOOL)attachFilter
-{
-	if (filter_program == NULL) {
-		NSLog(@"No filter program");
-		return FALSE;
-	}
-    [bpfControl setFilter:[[NSString alloc] initWithUTF8String:filter_program]];
-
-	return TRUE;
-}
 @end

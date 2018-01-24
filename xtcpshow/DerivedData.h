@@ -32,12 +32,11 @@
 #include <sys/queue.h>
 #import <Foundation/Foundation.h>
 
-@interface DerivedData : NSObject<NSCopying> {
-	NSNumber *_number;
-}
+@interface DerivedData : NSObject<NSCopying>
 @property (strong, readonly) NSDate *timestamp;
 @property (assign, readonly) NSUInteger numberOfSamples;
 
+#pragma mark - allocator
 + (id)dataWithoutSample;
 + (id)dataWithSingleDouble:(double)data;
 + (id)dataWithSingleInt:(int)data;
@@ -45,11 +44,7 @@
 + (id)dataWithInt:(int)data atDate:(NSDate *)date fromSamples:(NSUInteger)samples;
 + (id)dataWithNumber:(NSNumber *)number atDate:(NSDate *)date fromSamples:(NSUInteger)samples;
 
+#pragma mark - accessor
 - (double)doubleValue;
 - (int)intValue;
-
-// Pr: NSCopying
-- (id)copyWithZone:(NSZone *)zone;
-
-- (void)invalidTimeException;
 @end

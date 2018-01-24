@@ -20,7 +20,9 @@
 @property (assign, nonatomic, readwrite) NSTimeInterval Resolution;
 @end
 
-@implementation TrafficDB
+@implementation TrafficDB {
+    Queue *queue;
+}
 @synthesize numberOfSamples;
 @synthesize bytesReceived;
 @synthesize Start;

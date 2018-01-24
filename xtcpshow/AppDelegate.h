@@ -55,7 +55,7 @@
 /* Status TAB */
 @property (weak) IBOutlet NSTextField *snapshotField;
 @property (weak) IBOutlet NSTextField *maxField;
-@property (weak) IBOutlet NSTextField *trendField;
+@property (weak) IBOutlet NSTextField *averageField;
 @property (weak) IBOutlet NSTextField *totalpktField;
 @property (weak) IBOutlet NSTextField *samplingField;
 @property (weak) IBOutlet NSTextField *samplingTargetField;

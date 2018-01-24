@@ -29,55 +29,22 @@
 //  Created by SUENAGA Hiroki on 2013/07/19.
 //  Copyright (c) 2013 SUENAGA Hiroki. All rights reserved.
 //
-#include <pcap/pcap.h>
-
 #import <Foundation/Foundation.h>
 
-#import "AppDelegate.h"
+#import "CaptureModel.h"
+#import "CaptureBPF.h"
 #import "TrafficDB.h"
 
-#define TIMESLOT (0.10f) // [sec] (= 100[ms])
-#define HOLDSLOT (1.0f)  // [sec]
+#define TIMESLOT (1.000)  // [s]
+#define BPF_TIMEOUT 100   // [ms]
 
-#define CAP_TICK 100      // 50 [ms]
-#define CAP_SNAPLEN 64
-#define CAP_BUFSIZ (CAP_SNAPLEN * 128)
-
-@class CaptureModel;
-@class ComputeQueue;
-@class CaptureBPF;
-
-@interface CaptureOperation : NSOperation {
-	NSString *last_error;
-
-	char *source_interface;
-	char *filter_program;
-
-	struct timeval tv_next_tick;
-	struct timeval tv_last_tick;
-	float last_interval; // [ms]
-	BOOL terminate;
-
-	// counter
-	float max_mbps;
-	float peak_mbps;
-	int pkts;
-	int bytes;
-}
+@interface CaptureOperation : NSOperation
 @property (weak, nonatomic) CaptureModel *model;
 @property (weak, nonatomic) CaptureBPF *bpfControl;
-@property (strong, atomic) ComputeQueue *peak_hold_queue;
 @property (weak, nonatomic) TrafficDB *dataBase;
 
 - (CaptureOperation *)init;
-- (void)dealloc;
 - (void)main;
 - (void)setSource:(const char *)source;
 - (void)setFilter:(const char *)filter;
-
-- (float)elapsedFrom:(struct timeval *)last;
-- (BOOL)tick_expired;
-- (void)sendError:(NSString *)message;
-- (void)sendFinish;
-- (BOOL)attachFilter;
 @end

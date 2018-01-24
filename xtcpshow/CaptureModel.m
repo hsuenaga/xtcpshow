@@ -28,18 +28,29 @@
 //  Created by SUENAGA Hiroki on 2013/07/19.
 //  Copyright (c) 2013 SUENAGA Hiroki. All rights reserved.
 //
-#include "math.h"
-
-#import "CaptureBPF.h"
 #import "CaptureModel.h"
 #import "CaptureOperation.h"
-#import "ComputeQueue.h"
-#import "DerivedData.h"
 
 /*
  * Model object: almost values are updated by operation thread.
  */
-@implementation CaptureModel
+@implementation CaptureModel {
+    NSOperationQueue *capture_cue;
+    BOOL running;
+}
+@synthesize device;
+@synthesize filter;
+@synthesize promisc;
+@synthesize bpfc;
+@synthesize dataBase;
+@synthesize totalPkts;
+@synthesize mbps;
+@synthesize max_mbps;
+@synthesize average_mbps;
+@synthesize samplingInterval;
+@synthesize samplingIntervalLast;
+@synthesize controller;
+
 - (CaptureModel *) init
 {
 	self = [super init];
@@ -49,34 +60,35 @@
 	running = FALSE;
 
 	// pcap
-	self.device = NULL;
-	self.filter = "tcp";
-    self.bpfc = nil;
+	device = NULL;
+	filter = "tcp";
+    bpfc = nil;
 
 	// data size
-    self.dataBase = [TrafficDB TrafficDBWithHistorySize:DEF_HISTORY withResolution:(1000 * 1000) startAt:NULL endAt:NULL];
+    dataBase = [TrafficDB TrafficDBWithHistorySize:DEF_HISTORY withResolution:(1000 * 1000) startAt:NULL endAt:NULL];
 
 	// traffic data
 	[self resetCounter];
 
 	// outlets
-	_controller = nil;
+	controller = nil;
 
 	return self;
 }
 
 - (BOOL) startCapture
 {
-    NSLog(@"OpenBPF device");
-    if (self.bpfc == nil) {
-        self.bpfc = [[CaptureBPF alloc] init];
-        if (self.bpfc == nil)
+    if (bpfc == nil) {
+        NSLog(@"OpenBPF device");
+        bpfc = [[CaptureBPF alloc] init];
+        if (bpfc == nil)
             return FALSE;
     }
+    
+    [self resetCounter];
+    
+    NSLog(@"Start capture thread");
 	CaptureOperation *op = [[CaptureOperation alloc] init];
-
-	NSLog(@"Start capture thread");
-	[self resetCounter];
 	[op setModel:self];
     [op setDataBase:self.dataBase];
     [op setBpfControl:self.bpfc];
@@ -94,10 +106,9 @@
 	[capture_cue cancelAllOperations];
 	[capture_cue waitUntilAllOperationsAreFinished];
 #ifdef DEBUG
-    [self.dataBase openDebugFile:@"debug_tree.dot"];
-    [self.dataBase dumpTree:TRUE];
+    [dataBase openDebugFile:@"debug_tree.dot"];
+    [dataBase dumpTree:TRUE];
 #endif
-
 }
 
 - (BOOL) captureEnabled
@@ -107,21 +118,22 @@
 
 - (void) resetCounter
 {
-	self.total_pkts = 0;
-	self.mbps = 0.0f;
-	self.max_mbps = 0.0f;
-	self.peek_hold_mbps = 0.0f;
-	self.samplingIntervalLast = 0.0f;
+	totalPkts = 0;
+	mbps = 0.0;
+	max_mbps = 0.0;
+	average_mbps = 0.0;
+    samplingInterval = 0.0;
+	samplingIntervalLast = 0.0;
 }
 
-- (float) samplingIntervalMS
+- (double) samplingIntervalMS
 {
-	return (self.samplingInterval * 1000.0f);
+	return (samplingInterval * 1.0E3);
 }
 
-- (float) samplingIntervalLastMS
+- (double) samplingIntervalLastMS
 {
-	return (self.samplingIntervalLast * 1000.0f);
+	return (samplingIntervalLast * 1.0E3);
 }
 
 //
@@ -129,7 +141,7 @@
 //
 - (void) recvError:(NSString *)message
 {
-	[self.controller samplingError:message];
+	[controller samplingError:message];
 	running = FALSE;
 }
 
