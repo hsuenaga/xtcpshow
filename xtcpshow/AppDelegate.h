@@ -37,7 +37,7 @@
 
 @class CaptureModel;
 @class GraphView;
-@class BPFControl;
+@class CaptureBPF;
 
 @interface AppDelegate : NSObject <NSApplicationDelegate>
 

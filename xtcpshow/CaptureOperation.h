@@ -45,7 +45,7 @@
 
 @class CaptureModel;
 @class ComputeQueue;
-@class BPFControl;
+@class CaptureBPF;
 
 @interface CaptureOperation : NSOperation {
 	NSString *last_error;
@@ -65,7 +65,7 @@
 	int bytes;
 }
 @property (weak, nonatomic) CaptureModel *model;
-@property (weak, nonatomic) BPFControl *bpfControl;
+@property (weak, nonatomic) CaptureBPF *bpfControl;
 @property (strong, atomic) ComputeQueue *peak_hold_queue;
 @property (weak, nonatomic) TrafficDB *dataBase;
 

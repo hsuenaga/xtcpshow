@@ -41,7 +41,7 @@
 #import "CaptureModel.h"
 #import "GraphView.h"
 #import "DataResampler.h"
-#import "BPFControl.h"
+#import "CaptureBPF.h"
 
 static NSString *const LBL_START=@"START";
 static NSString *const LBL_STOP=@"STOP";
@@ -89,7 +89,7 @@ static NSString *const PREFER_DEVICE=@"en";
 }
 
 - (IBAction)installHelper:(id)sender {
-    [BPFControl installHelper];
+    [CaptureBPF installHelper];
 }
 
 - (IBAction)startCapture:(id)sender {

@@ -23,7 +23,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 //
-//  BPFControl.m
+//  CaptureBPF.m
 //  xtcpshow
 //
 //  Created by SUENAGA Hiroki on 2013/08/29.
@@ -45,7 +45,7 @@
 #import <SecurityFoundation/SecurityFoundation.h>
 #import <Security/Security.h>
 
-#import "BPFControl.h"
+#import "CaptureBPF.h"
 #import "OpenBPFXPC.h"
 
 struct auth_cmsg {
@@ -53,7 +53,7 @@ struct auth_cmsg {
     int fd;
 };
 
-@interface BPFControl ()
+@interface CaptureBPF ()
 @property (assign, readwrite) uint32_t bs_recv;
 @property (assign, readwrite) uint32_t bs_drop;
 @property (assign, readwrite) uint32_t bs_ifdrop; // XXX: no implementation
@@ -72,7 +72,7 @@ struct auth_cmsg {
 - (BOOL)getFileHandleXPC;
 @end
 
-@implementation BPFControl {
+@implementation CaptureBPF {
     // BPF device description
     NSFileHandle *deviceHandle;
     NSString *deviceName;

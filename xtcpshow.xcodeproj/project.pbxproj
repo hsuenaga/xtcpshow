@@ -31,7 +31,7 @@
 		4682948417B4634D008AC9D4 /* DerivedData.m in Sources */ = {isa = PBXBuildFile; fileRef = 4682948317B4634D008AC9D4 /* DerivedData.m */; };
 		4696050E17CDD2DB00798814 /* ServiceManagement.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4696050D17CDD2DB00798814 /* ServiceManagement.framework */; };
 		4696051017CDD2EC00798814 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4696050F17CDD2EC00798814 /* Security.framework */; };
-		46A10AD117CEF4A50011A9E8 /* BPFControl.m in Sources */ = {isa = PBXBuildFile; fileRef = 46A10AD017CEF4A50011A9E8 /* BPFControl.m */; };
+		46A10AD117CEF4A50011A9E8 /* CaptureBPF.m in Sources */ = {isa = PBXBuildFile; fileRef = 46A10AD017CEF4A50011A9E8 /* CaptureBPF.m */; };
 		46B19D9520157E7A009F2ECD /* TrafficDB.m in Sources */ = {isa = PBXBuildFile; fileRef = 46B19D9420157E7A009F2ECD /* TrafficDB.m */; };
 		46C08CBC200875200006E8D5 /* Queue.m in Sources */ = {isa = PBXBuildFile; fileRef = 46C08CBB200875200006E8D5 /* Queue.m */; };
 		46C08CBF20089CB00006E8D5 /* FIR.m in Sources */ = {isa = PBXBuildFile; fileRef = 46C08CBE20089CB00006E8D5 /* FIR.m */; };
@@ -112,8 +112,8 @@
 		4696050F17CDD2EC00798814 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		4696054D17CDFC9200798814 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		4696055017CDFC9200798814 /* OpenBPF-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "OpenBPF-Prefix.pch"; sourceTree = "<group>"; };
-		46A10ACF17CEF4A50011A9E8 /* BPFControl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BPFControl.h; sourceTree = "<group>"; };
-		46A10AD017CEF4A50011A9E8 /* BPFControl.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BPFControl.m; sourceTree = "<group>"; };
+		46A10ACF17CEF4A50011A9E8 /* CaptureBPF.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CaptureBPF.h; sourceTree = "<group>"; };
+		46A10AD017CEF4A50011A9E8 /* CaptureBPF.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CaptureBPF.m; sourceTree = "<group>"; };
 		46A10AD217CEF8DA0011A9E8 /* OpenBPFXPC.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OpenBPFXPC.h; sourceTree = "<group>"; };
 		46A9207E17D836050083CC8D /* README.md */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.md; sourceTree = "<group>"; };
 		46A9208117D837D40083CC8D /* xtcpshow_screen.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = xtcpshow_screen.png; sourceTree = "<group>"; };
@@ -206,8 +206,8 @@
 			children = (
 				4639F8361798BA9700E59491 /* AppDelegate.h */,
 				4639F8371798BA9700E59491 /* AppDelegate.m */,
-				46A10ACF17CEF4A50011A9E8 /* BPFControl.h */,
-				46A10AD017CEF4A50011A9E8 /* BPFControl.m */,
+				46A10ACF17CEF4A50011A9E8 /* CaptureBPF.h */,
+				46A10AD017CEF4A50011A9E8 /* CaptureBPF.m */,
 				4639F8411799095A00E59491 /* CaptureModel.h */,
 				4639F8421799095A00E59491 /* CaptureModel.m */,
 				46583CB817A0D187007B6572 /* CaptureOperation.h */,
@@ -410,7 +410,7 @@
 				46C08CBF20089CB00006E8D5 /* FIR.m in Sources */,
 				466E550A17AB491800C978C9 /* DataResampler.m in Sources */,
 				4682948417B4634D008AC9D4 /* DerivedData.m in Sources */,
-				46A10AD117CEF4A50011A9E8 /* BPFControl.m in Sources */,
+				46A10AD117CEF4A50011A9E8 /* CaptureBPF.m in Sources */,
 				46DE97A917D2D15B009E0A16 /* BPFService.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

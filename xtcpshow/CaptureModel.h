@@ -32,7 +32,7 @@
 #import <Foundation/Foundation.h>
 #import "ComputeQueue.h"
 #import "AppDelegate.h"
-#import "BPFControl.h"
+#import "CaptureBPF.h"
 #import "TrafficDB.h"
 
 #define DEF_HISTORY 50000 // packets
@@ -48,7 +48,7 @@
 @property (assign) const char *device;
 @property (assign) const char *filter;
 @property (assign) BOOL promisc;
-@property (strong) BPFControl *bpfc;
+@property (strong) CaptureBPF *bpfc;
 
 // data base
 @property (strong, nonatomic) TrafficDB *dataBase;

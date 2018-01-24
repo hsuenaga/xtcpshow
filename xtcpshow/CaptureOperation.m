@@ -33,7 +33,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#import "BPFControl.h"
+#import "CaptureBPF.h"
 #import "CaptureOperation.h"
 #import "CaptureModel.h"
 #import "ComputeQueue.h"

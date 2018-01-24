@@ -23,7 +23,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 //
-//  BPFControl.h
+//  CaptureBPF.h
 //  xtcpshow
 //
 //  Created by SUENAGA Hiroki on 2013/08/29.
@@ -37,7 +37,7 @@
 #import <SecurityFoundation/SecurityFoundation.h>
 #import "OpenBPFXPC.h"
 
-@interface BPFControl : NSObject
+@interface CaptureBPF : NSObject
 @property (assign, readonly) uint32_t bs_recv;
 @property (assign, readonly) uint32_t bs_drop;
 @property (assign, readonly) uint32_t bs_ifdrop; // XXX: no implementation

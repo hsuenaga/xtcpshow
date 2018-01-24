@@ -30,7 +30,7 @@
 //
 #include "math.h"
 
-#import "BPFControl.h"
+#import "CaptureBPF.h"
 #import "CaptureModel.h"
 #import "CaptureOperation.h"
 #import "ComputeQueue.h"
@@ -69,7 +69,7 @@
 {
     NSLog(@"OpenBPF device");
     if (self.bpfc == nil) {
-        self.bpfc = [[BPFControl alloc] init];
+        self.bpfc = [[CaptureBPF alloc] init];
         if (self.bpfc == nil)
             return FALSE;
     }
