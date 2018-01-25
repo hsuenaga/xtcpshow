@@ -25,8 +25,8 @@
 		4639F847179D0D0900E59491 /* libpcap.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4639F846179D0D0900E59491 /* libpcap.dylib */; };
 		46583CB617A0CA41007B6572 /* GraphView.m in Sources */ = {isa = PBXBuildFile; fileRef = 46583CB517A0CA41007B6572 /* GraphView.m */; };
 		46583CBA17A0D192007B6572 /* CaptureOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 46583CB917A0D192007B6572 /* CaptureOperation.m */; };
-		4664DA87201977C900438512 /* xtcpshowDebug-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 4664DA86201977C900438512 /* xtcpshowDebug-Info.plist */; };
-		4664DA89201977F300438512 /* OpenBPF-DebugInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 4664DA88201977F300438512 /* OpenBPF-DebugInfo.plist */; };
+		4664DA8C2019794000438512 /* OpenBPFService.m in Sources */ = {isa = PBXBuildFile; fileRef = 4664DA8B2019794000438512 /* OpenBPFService.m */; };
+		4664DA8F2019A3CC00438512 /* authopenBPF.m in Sources */ = {isa = PBXBuildFile; fileRef = 4664DA8E2019A3CC00438512 /* authopenBPF.m */; };
 		466DD1731FEB6D8300A58CB1 /* TrafficData.m in Sources */ = {isa = PBXBuildFile; fileRef = 466DD1721FEB6D8300A58CB1 /* TrafficData.m */; };
 		466E550717AB2AA500C978C9 /* ComputeQueue.m in Sources */ = {isa = PBXBuildFile; fileRef = 466E550617AB2AA500C978C9 /* ComputeQueue.m */; };
 		466E550A17AB491800C978C9 /* DataResampler.m in Sources */ = {isa = PBXBuildFile; fileRef = 466E550917AB491800C978C9 /* DataResampler.m */; };
@@ -37,8 +37,6 @@
 		46B19D9520157E7A009F2ECD /* TrafficDB.m in Sources */ = {isa = PBXBuildFile; fileRef = 46B19D9420157E7A009F2ECD /* TrafficDB.m */; };
 		46C08CBC200875200006E8D5 /* Queue.m in Sources */ = {isa = PBXBuildFile; fileRef = 46C08CBB200875200006E8D5 /* Queue.m */; };
 		46C08CBF20089CB00006E8D5 /* FIR.m in Sources */ = {isa = PBXBuildFile; fileRef = 46C08CBE20089CB00006E8D5 /* FIR.m */; };
-		46D1634217CE117C009418DF /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 46D1634017CE117C009418DF /* Info.plist */; };
-		46D1634317CE117C009418DF /* Launchd.plist in Resources */ = {isa = PBXBuildFile; fileRef = 46D1634117CE117C009418DF /* Launchd.plist */; };
 		46DE97A917D2D15B009E0A16 /* BPFService.m in Sources */ = {isa = PBXBuildFile; fileRef = 46DE97A817D2D15B009E0A16 /* BPFService.m */; };
 /* End PBXBuildFile section */
 
@@ -103,6 +101,10 @@
 		46583CB917A0D192007B6572 /* CaptureOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CaptureOperation.m; sourceTree = "<group>"; };
 		4664DA86201977C900438512 /* xtcpshowDebug-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "xtcpshowDebug-Info.plist"; sourceTree = "<group>"; };
 		4664DA88201977F300438512 /* OpenBPF-DebugInfo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "OpenBPF-DebugInfo.plist"; sourceTree = "<group>"; };
+		4664DA8A2019794000438512 /* OpenBPFService.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OpenBPFService.h; sourceTree = "<group>"; };
+		4664DA8B2019794000438512 /* OpenBPFService.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OpenBPFService.m; sourceTree = "<group>"; };
+		4664DA8D2019A3CC00438512 /* authopenBPF.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = authopenBPF.h; sourceTree = "<group>"; };
+		4664DA8E2019A3CC00438512 /* authopenBPF.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = authopenBPF.m; sourceTree = "<group>"; };
 		466DD1711FEB6D8300A58CB1 /* TrafficData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TrafficData.h; sourceTree = "<group>"; };
 		466DD1721FEB6D8300A58CB1 /* TrafficData.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TrafficData.m; sourceTree = "<group>"; };
 		466E550517AB2AA500C978C9 /* ComputeQueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ComputeQueue.h; sourceTree = "<group>"; };
@@ -210,6 +212,10 @@
 			children = (
 				4639F8361798BA9700E59491 /* AppDelegate.h */,
 				4639F8371798BA9700E59491 /* AppDelegate.m */,
+				4664DA8D2019A3CC00438512 /* authopenBPF.h */,
+				4664DA8E2019A3CC00438512 /* authopenBPF.m */,
+				4664DA8A2019794000438512 /* OpenBPFService.h */,
+				4664DA8B2019794000438512 /* OpenBPFService.m */,
 				46A10ACF17CEF4A50011A9E8 /* CaptureBPF.h */,
 				46A10AD017CEF4A50011A9E8 /* CaptureBPF.m */,
 				4639F8411799095A00E59491 /* CaptureModel.h */,
@@ -378,14 +384,10 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4664DA87201977C900438512 /* xtcpshowDebug-Info.plist in Resources */,
 				4639F82F1798BA9700E59491 /* InfoPlist.strings in Resources */,
 				4639F8351798BA9700E59491 /* Credits.rtf in Resources */,
-				4664DA89201977F300438512 /* OpenBPF-DebugInfo.plist in Resources */,
 				4639F83B1798BA9700E59491 /* MainMenu.xib in Resources */,
 				46219ABB17B1C6EC00740A80 /* xtcpshow.iconset in Resources */,
-				46D1634217CE117C009418DF /* Info.plist in Resources */,
-				46D1634317CE117C009418DF /* Launchd.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -411,9 +413,11 @@
 				4639F8381798BA9700E59491 /* AppDelegate.m in Sources */,
 				4639F8431799095A00E59491 /* CaptureModel.m in Sources */,
 				46583CB617A0CA41007B6572 /* GraphView.m in Sources */,
+				4664DA8C2019794000438512 /* OpenBPFService.m in Sources */,
 				462081201FECEA00003B3C74 /* TrafficIndex.m in Sources */,
 				46583CBA17A0D192007B6572 /* CaptureOperation.m in Sources */,
 				46C08CBC200875200006E8D5 /* Queue.m in Sources */,
+				4664DA8F2019A3CC00438512 /* authopenBPF.m in Sources */,
 				466E550717AB2AA500C978C9 /* ComputeQueue.m in Sources */,
 				46C08CBF20089CB00006E8D5 /* FIR.m in Sources */,
 				466E550A17AB491800C978C9 /* DataResampler.m in Sources */,
@@ -485,7 +489,7 @@
 					"-sectcreate",
 					__TEXT,
 					__info_plist,
-					OpenBPF/Info.plist,
+					"OpenBPF/OpenBPF-DebugInfo.plist",
 					"-sectcreate",
 					__TEXT,
 					__launchd_plist,

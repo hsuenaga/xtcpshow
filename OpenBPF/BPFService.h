@@ -34,5 +34,5 @@
 #import "OpenBPFXPC.h"
 
 @interface BPFService : NSObject<OpenBPFXPC>
-@property (strong) NSXPCConnection *xpcConnection;
+@property (weak) NSXPCConnection *xpcConnection;
 @end

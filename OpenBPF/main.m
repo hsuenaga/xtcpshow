@@ -39,10 +39,10 @@
 #import "OpenBPFXPC.h"
 #import "BPFService.h"
 
-@interface OpenBPFDelete : NSObject <NSXPCListenerDelegate>
+@interface OpenBPFDelegate : NSObject <NSXPCListenerDelegate>
 @end
 
-@implementation OpenBPFDelete
+@implementation OpenBPFDelegate
 - (BOOL)listener:(NSXPCListener *)listener
 shouldAcceptNewConnection:(NSXPCConnection *)newConnection
 {
@@ -61,22 +61,18 @@ shouldAcceptNewConnection:(NSXPCConnection *)newConnection
 
 int main(int argc, const char * argv[])
 {
-	NSXPCListener *xpc;
-	OpenBPFDelete *handler = [[OpenBPFDelete alloc] init];
+	NSXPCListener *serviceListener;
+    OpenBPFDelegate *serviceDelegate;
 
-	syslog(LOG_NOTICE, "OpenBPF launchd.");
-	xpc = [[NSXPCListener alloc] initWithMachServiceName:BPFControlServiceID];
-	if (xpc == nil) {
-		syslog(LOG_NOTICE, "cannot setup XPC");
-		return 0;
-	}
-	
-	syslog(LOG_NOTICE, "resuming XPC");
-	[xpc setDelegate:handler];
-	[xpc resume];
-	[[NSRunLoop currentRunLoop] run];
-	syslog(LOG_NOTICE, "end XPC");
+    openlog([BPFControlServiceID cStringUsingEncoding:NSUTF8StringEncoding],
+            LOG_PID | LOG_NDELAY, LOG_DAEMON);
+	syslog(LOG_NOTICE, "OpenBPF service is started.");
+    
+	serviceListener = [[NSXPCListener alloc] initWithMachServiceName:BPFControlServiceID];
+    serviceDelegate = [OpenBPFDelegate new];
+    serviceListener.delegate = serviceDelegate;
+	[serviceListener resume];
 
-	// not reached
+    [[NSRunLoop currentRunLoop] run];
 	return 0;
 }

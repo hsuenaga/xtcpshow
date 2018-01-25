@@ -42,6 +42,7 @@
 #import "GraphView.h"
 #import "DataResampler.h"
 #import "CaptureBPF.h"
+#import "OpenBPFService.h"
 
 static NSString *const LBL_START=@"START";
 static NSString *const LBL_STOP=@"STOP";
@@ -89,7 +90,10 @@ static NSString *const PREFER_DEVICE=@"en";
 }
 
 - (IBAction)installHelper:(id)sender {
-    [CaptureBPF installHelper];
+    [OpenBPFService installHelper];
+    if (_model) {
+        [_model openDevice];
+    }
 }
 
 - (IBAction)startCapture:(id)sender {

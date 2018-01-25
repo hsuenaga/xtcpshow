@@ -49,12 +49,11 @@
 - (BOOL)setFilter:(NSString *)filter;
 
 #pragma mark - start/stop
+- (BOOL)openDevice;
+- (void)closeDevice;
 - (BOOL)start:(const char *)source_interface;
 - (BOOL)stop;
 
 #pragma mark - read received packet
 - (BOOL)next: (struct timeval *)tv withCaplen:(uint32_t *)caplen withPktlen:(uint32_t *)pktlen;
-
-#pragma mark - install priviledged helper.
-+ (void)installHelper;
 @end

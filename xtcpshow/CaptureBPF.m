@@ -46,36 +46,21 @@
 #import <Security/Security.h>
 
 #import "CaptureBPF.h"
-#import "OpenBPFXPC.h"
-
-struct auth_cmsg {
-    struct cmsghdr hdr;
-    int fd;
-};
+#import "OpenBPFService.h"
+#import "authopenBPF.h"
 
 @interface CaptureBPF ()
 @property (assign, readwrite) uint32_t bs_recv;
 @property (assign, readwrite) uint32_t bs_drop;
 @property (assign, readwrite) uint32_t bs_ifdrop; // XXX: no implementation
 
-- (BOOL)openDevice;
 - (BOOL)initDevice;
-
-// Open BPF via /usr/libexec/authopen
-- (int)executeAuthopen:(NSString *)device;
-
-// Open BPF via helper application.
-- (BOOL)openXPC;
-- (void)closeXPC;
-- (BOOL)checkXPC;
-- (void)waitXPCReply;
-- (BOOL)getFileHandleXPC;
 @end
 
 @implementation CaptureBPF {
     // BPF device description
-    NSFileHandle *deviceHandle;
-    NSString *deviceName;
+    OpenBPFService *bpfService;
+    authopenBPF *bpfAuthopen;
     int fd;
     
     // capture parameters.
@@ -87,13 +72,6 @@ struct auth_cmsg {
     pcap_t *pcap;
     NSString *filter_source;
     struct bpf_program filter;
-    
-    // XPC Helper
-    BOOL xpcInvalid;
-    BOOL xpcRunning;
-    BOOL xpcResult;
-    NSXPCConnection *xpc;
-    id proxy;
     
     // packet buffer
     char *recv_buf;
@@ -110,8 +88,8 @@ struct auth_cmsg {
     self = [super init];
 
     // BPF device description
-    deviceHandle = nil;
-    deviceName = nil;
+    bpfService = [[OpenBPFService alloc] init];
+    bpfAuthopen = [[authopenBPF alloc] init];
     fd = -1;
 
     // capture parameters.
@@ -127,13 +105,6 @@ struct auth_cmsg {
     }
     filter_source = @"tcp";
     memset(&filter, 0, sizeof(filter));
-
-    // XPC Helper
-    xpcInvalid = FALSE;
-    xpcRunning = FALSE;
-    xpcResult = FALSE;
-    xpc = nil;
-    proxy = nil;
 
     // packet buffer
     recv_buf = recv_ptr = NULL;
@@ -230,12 +201,8 @@ struct auth_cmsg {
     struct ifreq ifr;
 
     if (fd < 0) {
-        if (![self openDevice]) {
-            NSLog(@"Cannot start capture");
-            deviceName = nil;
-            fd = -1;
-            return false;
-        }
+        NSLog(@"BPF device is not initialized.");
+        return false;
     }
     memset(&ifr, 0, sizeof(ifr));
     if (!source_interface)
@@ -247,7 +214,7 @@ struct auth_cmsg {
         NSLog(@"ioctl(BIOCSETIF) failed: %s", strerror(errno));
         return false;
     }
-    NSLog(@"BPF enabled: %@ (fd=%d)", deviceName, fd);
+    NSLog(@"BPF enabled: (fd=%d)", fd);
     return true;
 }
 
@@ -323,95 +290,41 @@ struct auth_cmsg {
     return true;
 }
 
-+ (void)installHelper
-{
-    AuthorizationRef authref;
-    OSStatus status;
-    
-    status = AuthorizationCreate(NULL, kAuthorizationEmptyEnvironment, kAuthorizationFlagDefaults, &authref);
-    if (status != errAuthorizationSuccess) {
-        NSLog(@"AuthorizationCreate failed.");
-        return;
-    }
-    
-    //
-    // Acquire Rights
-    //
-    AuthorizationItem authItem = {kSMRightBlessPrivilegedHelper, 0, NULL, 0};
-    AuthorizationRights authRights = {1, &authItem};
-    AuthorizationFlags flags = kAuthorizationFlagDefaults |
-    kAuthorizationFlagInteractionAllowed |
-    kAuthorizationFlagPreAuthorize |
-    kAuthorizationFlagExtendRights;
-    
-    status = AuthorizationCopyRights(authref, &authRights, kAuthorizationEmptyEnvironment, flags, NULL);
-    if (status != errAuthorizationSuccess) {
-        NSLog(@"AuthorizationCopyRights() failed.");
-        return;
-    }
-    
-    //
-    // Bless helper
-    //
-    CFErrorRef cfError;
-    BOOL result;
-    result = (BOOL)SMJobBless(kSMDomainUserLaunchd,
-                              (CFStringRef)CFBridgingRetain(BPFControlServiceID),
-                              authref, &cfError);
-    if (!result) {
-        NSError *error = CFBridgingRelease(cfError);
-        NSLog(@"SMJobBless failed: %@", [error description]);
-    }
-    
-    return;
-}
-
 - (BOOL)openDevice
 {
     // close old handle
     if (fd >= 0) {
-        close(fd);
+        [bpfService closeDevice];
+        [bpfAuthopen closeDevice];
         fd = -1;
-        deviceName = nil;
     }
     
     // try helper
-    if ([self getFileHandleXPC]) {
-        NSLog(@"BPF Deivce is opened by Helper Module");
+    if ([bpfService openDevice]) {
+        NSLog(@"BPF Device is opened by Helper Module");
+        fd = [bpfService fileDescriptor];
         return [self initDevice];
     }
     
     // try authopen
-    glob_t gl;
-    memset(&gl, 0, sizeof(gl));
-    glob("/dev/bpf*", GLOB_NOCHECK, NULL, &gl);
-    if (gl.gl_matchc <= 0) {
-        NSLog(@"No BPF device found");
-        globfree(&gl);
-        return FALSE;
-    }
-    for (int i = ((int)gl.gl_pathc - 1); i >= 0; i--) {
-        if (gl.gl_pathv[i] == NULL)
-            continue;
-        
-        int result;
-        NSString *path = [NSString stringWithUTF8String:gl.gl_pathv[i]];
-        NSLog(@"Open BPF deivce via authopen: %@", path);
-        result = [self executeAuthopen:path];
-        switch (result) {
-            case 0:
-                NSLog(@"BPF Deivice opened successfully.");
-                return [self initDevice];
-            case ECANCELED:
-                NSLog(@"Operation is canseled by user");
-                return FALSE;
-            default:
-                break;
-        }
+    if ([bpfAuthopen openDevice]) {
+        NSLog(@"BPF Device is opened by authopen");
+        fd = [bpfAuthopen fileDescriptor];
+        return [self initDevice];
     }
     
     NSLog(@"No BPF Deivce opened.");
     return FALSE;
+}
+
+- (void)closeDevice
+{
+    if (fd < 0)
+        return;
+    [bpfService closeDevice];
+    [bpfAuthopen closeDevice];
+    fd = -1;
+    return;
 }
 
 - (BOOL)initDevice
@@ -456,239 +369,4 @@ struct auth_cmsg {
     return TRUE;
 }
 
-- (int)executeAuthopen: (NSString *)device
-{
-    pid_t pid;
-    int st;
-    const char *cdev;
-    int socks[2] = {-1, -1};
-    int result = -1;
-    
-    if (!device) {
-        NSLog(@"No device specified");
-        return -1;
-    }
-    cdev = [device UTF8String];
-    NSLog(@"Open BPF device: %s", cdev);
-    if (socketpair(AF_LOCAL, SOCK_STREAM, 0, socks) < 0) {
-        NSLog(@"socketpair() failed: %s", strerror(errno));
-        return -1;
-    }
-    
-    pid = fork();
-    if (pid < 0) {
-        NSLog(@"fork() failed: %s", strerror(errno));
-        close(socks[0]);
-        close(socks[1]);
-        return -1;
-    }
-    else if (pid == 0) {
-        // Child
-        close(socks[0]);
-        dup2(socks[1], STDOUT_FILENO);
-        execl("/usr/libexec/authopen", "/usr/libexec/authopen", "-stdoutpipe", cdev, NULL);
-        exit(EXIT_SUCCESS); // not reached
-    }
-    else {
-        // Parent
-        close(socks[1]);
-        socks[1] = -1;
-    }
-    
-    // Recv fd
-    char msgbuf[BUFSIZ];
-    struct iovec msgiov = {
-        .iov_base = msgbuf,
-        .iov_len = sizeof(msgbuf)
-    };
-    struct auth_cmsg cmsg;
-    struct auth_cmsg *cmsgp;
-    struct msghdr msg = {
-        .msg_name = NULL,
-        .msg_namelen = 0,
-        .msg_iov = &msgiov,
-        .msg_iovlen = 1,
-        .msg_control = &cmsg,
-        .msg_controllen = sizeof(cmsg),
-        .msg_flags = MSG_WAITALL
-    };
-    ssize_t plen;
-    
-    NSLog(@"Wait for response from authopen...");
-    for (;;) {
-        plen = recvmsg(socks[0], &msg, 0);
-        if (plen < 0) {
-            if (errno == EINTR)
-                continue;
-            NSLog(@"recvmsg() failed: %s", strerror(errno));
-            goto err;
-        }
-        break;
-    }
-    char *bufp;
-    for (bufp = msgbuf; bufp < &msgbuf[plen];) {
-        if (*bufp++ == 0x00) {
-            unsigned char code = *bufp;
-            
-            if (bufp != &msgbuf[plen -1]) {
-                NSLog(@"Unexpected '0x00' received, invalid protocol.");
-                goto err;
-            }
-            if (code) {
-                NSLog(@"authopen: code=%u(%s)", code, strerror(code));
-                NSLog(@"Communication error: msg=\"%s\"", msgbuf);
-                result = (int)code;
-                goto err;
-            }
-            break;
-        }
-    }
-    
-    cmsgp = (struct auth_cmsg *)CMSG_FIRSTHDR(&msg);
-    if (cmsgp == NULL) {
-        NSLog(@"No control message reveiced.");
-        goto err;
-    }
-    if (cmsgp->hdr.cmsg_len != sizeof(cmsg)) {
-        NSLog(@"Unexpcted Controll message. len=%d", cmsgp->hdr.cmsg_len);
-        goto err;
-    }
-    if (cmsgp->hdr.cmsg_level != SOL_SOCKET) {
-        NSLog(@"Unexpcted Controll message. type=%d", cmsgp->hdr.cmsg_type);
-        goto err;
-    }
-    if (cmsgp->hdr.cmsg_type != SCM_RIGHTS) {
-        NSLog(@"Unexpcted Controll message. type=%d", cmsgp->hdr.cmsg_type);
-        goto err;
-    }
-    deviceName = device;
-    fd = cmsgp->fd;
-    NSLog(@"BPF file descriptor received: fd=%d", fd);
-    result = 0;
-err:
-    if (pid > 0) {
-        while ((waitpid(pid, &st, 0) < 0)) {
-            if (errno == EINTR)
-                continue;
-            NSLog(@"waitpid(%d) failed: %s", pid, strerror(errno));
-        }
-    }
-    if (socks[0] >= 0)
-        close(socks[0]);
-    return result;
-}
-
-- (BOOL)openXPC
-{
-    if (!xpc || xpcInvalid)
-    xpc = [[NSXPCConnection alloc] initWithMachServiceName:BPFControlServiceID options:NSXPCConnectionPrivileged];
-    if (!xpc)
-    return NO;
-    
-    xpcResult = NO;
-    xpcInvalid = NO;
-    xpcRunning = NO;
-    
-    xpc.remoteObjectInterface = [NSXPCInterface interfaceWithProtocol:@protocol(OpenBPFXPC)];
-    xpc.exportedInterface = nil;
-    xpc.exportedObject = nil;
-    xpc.interruptionHandler = ^(void) {
-        NSLog(@"connection interrupted.");
-        xpcRunning = NO;
-    };
-    xpc.invalidationHandler = ^(void) {
-        NSLog(@"connection invalidated.");
-        xpcRunning = NO;
-        xpcInvalid = YES;
-    };
-    proxy = [xpc remoteObjectProxyWithErrorHandler:^(NSError *e) {
-        NSLog(@"proxy error:%@", [e description]);
-        xpcRunning = NO;
-    }];
-    if (proxy == nil) {
-        NSLog(@"cannot get proxy");
-        [xpc invalidate];
-        xpc = nil;
-        return NO;
-    }
-
-    [xpc resume];
-    xpcRunning = YES;
-    [proxy alive:^(int version, NSString *m) {
-        NSLog(@"Helper livness: version %d (%@), expcted version %d",
-              version, m, OpenBPF_VERSION);
-        xpcResult = (version == OpenBPF_VERSION) ? YES : NO;
-        xpcRunning = NO;
-    }];
-    [self waitXPCReply];
-    if (!xpc || xpcInvalid)
-        return NO;
-    [xpc suspend];
-    
-    if (!xpcResult) {
-        [xpc invalidate];
-        xpc = nil;
-    }
-    return xpcResult;
-}
-
-- (void)closeXPC
-{
-    if (!xpc)
-    return;
-    
-    [xpc invalidate];
-    [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.5]];
-    xpc = nil;
-    xpcRunning = NO;
-}
-
-- (BOOL)checkXPC
-{
-    if (![self openXPC]) {
-        NSLog(@"No valid helper found.");
-        return NO;
-    }
-    
-    return YES;
-}
-
-- (void)waitXPCReply
-{
-    // XXX: use NSLock and condition variable?
-    while (xpcInvalid == NO && xpcRunning == YES) {
-        [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.5]];
-    }
-}
-
-- (BOOL)getFileHandleXPC
-{
-    if ([self checkXPC] == FALSE) {
-        NSLog(@"XPC Service is not found");
-        return FALSE;
-    }
-    
-    [xpc resume];
-    fd = -1;
-    xpcRunning = YES;
-    [proxy getFileHandle:^(BOOL status, NSString *name, NSFileHandle *handle){
-        xpcResult = status;
-        NSLog(@"getFileHandle: => %d (%@)", status, handle);
-        xpcRunning = NO;
-        if (status == TRUE) {
-            deviceHandle = handle;
-            deviceName = name;
-            fd = [handle fileDescriptor];
-        }
-    }];
-    [self waitXPCReply];
-    if (xpc) {
-        [xpc suspend];
-    }
-    if (fd < 0)
-        return FALSE;
-    
-    NSLog(@"messaging done: fd=%d", fd);
-    return TRUE;
-}
 @end

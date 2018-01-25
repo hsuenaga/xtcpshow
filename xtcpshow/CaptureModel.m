@@ -76,14 +76,23 @@
 	return self;
 }
 
+- (BOOL) openDevice
+{
+    NSLog(@"OpenBPF device");
+    if (bpfc) {
+        [bpfc closeDevice];
+        bpfc = nil;
+    }
+    bpfc = [[CaptureBPF alloc] init];
+    if (bpfc == nil)
+        return FALSE;
+    return [bpfc openDevice];
+}
+
 - (BOOL) startCapture
 {
-    if (bpfc == nil) {
-        NSLog(@"OpenBPF device");
-        bpfc = [[CaptureBPF alloc] init];
-        if (bpfc == nil)
-            return FALSE;
-    }
+    if (bpfc == nil)
+        [self openDevice];
     
     [self resetCounter];
     

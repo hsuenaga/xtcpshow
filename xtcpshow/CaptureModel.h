@@ -61,6 +61,7 @@
 @property (weak, nonatomic) AppDelegate *controller;
 
 - (CaptureModel *)init;
+- (BOOL)openDevice;
 - (BOOL)startCapture;
 - (void)stopCapture;
 - (BOOL)captureEnabled;
