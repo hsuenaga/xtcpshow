@@ -89,6 +89,7 @@ extern NSString *const RANGE_MANUAL;
 
 @property (assign) BOOL showPacketMarker;
 @property (assign) BOOL showDeviationBand;
+@property (assign) BOOL useHistgram;
 
 - (void)updateRange;
 
@@ -100,7 +101,8 @@ extern NSString *const RANGE_MANUAL;
 - (void)scrollWheel:(NSEvent *)event;
 
 // Drawing
-- (void)drawGraph:(NSRect)rect;
+- (void)drawGraphHistgram:(NSRect)rect;
+- (void)drawGraphBezier:(NSRect)rect;
 - (void)drawPPS:(NSRect)rect;
 - (void)drawText:(NSString *)text inRect:(NSRect)rect atPoint:(NSPoint)point;
 - (void)drawText:(NSString *)text inRect:(NSRect)rect alignRight:(CGFloat)y;

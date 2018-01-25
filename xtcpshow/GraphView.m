@@ -74,10 +74,19 @@ float const scroll_sensitivity = 10.0f;
 	self.showPacketMarker = TRUE;
 	self.magnifySense = magnify_sensitivity;
 	self.scrollSense = scroll_sensitivity;
+    self.useHistgram = FALSE;
 
+    NSColor *initColor = [NSColor colorWithRed:0.0
+                                         green:0.5
+                                          blue:0.0
+                                         alpha:0.3];
+    NSColor *endColor  = [NSColor colorWithRed:0.0
+                                         green:1.0
+                                          blue:0.0
+                                         alpha:1.0];
 	graph_gradient = [[NSGradient alloc]
-			  initWithStartingColor:[NSColor clearColor]
-			  endingColor:[NSColor greenColor]];
+			  initWithStartingColor:initColor
+			  endingColor:endColor];
 	resampler = [[DataResampler alloc] init];
 
 	text_attr = [[NSMutableDictionary alloc] init];
@@ -238,7 +247,7 @@ float const scroll_sensitivity = 10.0f;
 	[_controller scrollGesture:self];
 }
 
-- (void)drawGraph:(NSRect)rect
+- (void)drawGraphHistgram:(NSRect)rect
 {
 	[NSGraphicsContext saveGraphicsState];
 	[_data enumerateDataUsingBlock:^(DerivedData *data, NSUInteger idx, BOOL *stop) {
@@ -262,6 +271,78 @@ float const scroll_sensitivity = 10.0f;
 		[graph_gradient drawInRect:bar angle:90.0];
 	}];
 	[NSGraphicsContext restoreGraphicsState];
+}
+
+- (void)drawGraphBezier:(NSRect)rect
+{
+    [NSGraphicsContext saveGraphicsState];
+
+    double scaler = (double)rect.size.height / (double)y_range;
+    NSBezierPath __block *path = [NSBezierPath bezierPath];
+    NSPoint __block plot;
+    BOOL __block pathOpen = false;
+    
+
+    // start from (0.0)
+    plot.x = 0.0;
+    plot.y = 0.0;
+    [path moveToPoint:plot];
+    
+    // make path
+    [_data enumerateDataUsingBlock:^(DerivedData *data, NSUInteger idx, BOOL *stop) {
+        if (idx < GraphOffset)
+            return;
+        idx -= GraphOffset;
+        
+        if (idx > rect.size.width) {
+            *stop = YES;
+            return;
+        }
+        
+        CGFloat value = [data doubleValue] * scaler;
+        if ((int)(round(value)) == 0) {
+            value = 0.0;
+        }
+        else if (value > rect.size.height) {
+            value = rect.size.height;
+        }
+        
+        plot.x = (CGFloat)idx;
+        plot.y = (CGFloat)value;
+        if (!pathOpen) {
+            if (plot.y > 0.0) {
+                [path lineToPoint:plot];
+                pathOpen = true;
+                return;
+            }
+            [path moveToPoint:plot];
+            return;
+        }
+        else {
+            if (plot.y == 0.0) {
+                [path lineToPoint:plot];
+                [path closePath];
+                [graph_gradient drawInBezierPath:path angle:90.0];
+                [path removeAllPoints];
+                [path moveToPoint:plot];
+                pathOpen = false;
+                return;
+            }
+            [path lineToPoint:plot];
+            return;
+        }
+    }];
+    
+    // end at (width, 0)
+    if (pathOpen) {
+        plot.x = rect.size.width;
+        plot.y = 0;
+        [path lineToPoint:plot];
+        [path closePath];
+        [graph_gradient drawInBezierPath:path angle:90.0];
+    }
+    
+    [NSGraphicsContext restoreGraphicsState];
 }
 
 - (void)drawPPS:(NSRect)rect;
@@ -486,7 +567,10 @@ float const scroll_sensitivity = 10.0f;
 		[self drawPPS:rect];
 
 	/* plot bar graph */
-	[self drawGraph:rect];
+    if (self.useHistgram)
+        [self drawGraphHistgram:rect];
+    else
+        [self drawGraphBezier:rect];
 
 	/* plot guide line (max, average, ...) */
 	[self drawMaxGuide:rect];
