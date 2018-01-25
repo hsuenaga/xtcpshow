@@ -20,7 +20,7 @@ HOW TO USE
 
 ### launch the application
 
-Simply launch the application from Dock, Finder, etc. The application doen't need administrator priviledge on starting.
+Simply launch the application from Dock, Finder, etc. The application doen't need administrator priviledge on starting. The priviledge escalation proccess will be done when you press 'start' button later.
 
 ### select your network interface
 
@@ -31,8 +31,15 @@ Simply launch the application from Dock, Finder, etc. The application doen't nee
 ### press START button
 
 1. On START button cliked, the application try to open /dev/bpf, the Berkley Packet Filtering device.
-2. /dev/bpf has restrected premission to open. If your system configured to need administrator(root) privilege on /dev/bpf (this is factory default), the application prompt you to enter password to install priviledged helper tool into /Library/PrivilegedHelperTools. There are some applications that changes permission of /dev/bpf. For example, some version of wireshark create UNIX group 'access_bpf' and set /dev/bpf group readable/wriable. In such case, the application doen't prompt your password.
+2. /dev/bpf has restrected premission to open. If your system configured to need administrator(root) privilege on /dev/bpf (this is factory default), the application prompt you to enter password to open /dev/bpf using /usr/libexec/authopen command.
 3. If everythings OK, the application shows traffic graph.
+
+### Install Privileged Helper tool.
+This application contains priviledged helper tool to access /dev/bpf. The helper tool can be installed into /Library/PrivilegedHelperTools. Once you install the tool, this application will be able to open /dev/bpf without password prompt.
+
+1. Select 'xtcpshow' menu.
+2. Select Install Helper menu item.
+3. Enter your password. Then helper application will be installed.
 
 Configure the view
 ------------------
