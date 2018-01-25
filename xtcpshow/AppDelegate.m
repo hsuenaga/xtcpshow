@@ -266,7 +266,8 @@ static NSString *const PREFER_DEVICE=@"en";
 - (void)animationNotify:(id)sender
 {
     [_graphView importData:self.model.dataBase];
-	[_graphView setNeedsDisplay:YES];
+//	[_graphView setNeedsDisplay:YES];
+    [_graphView display];
 
 	[self updateUserInterface];
 }
