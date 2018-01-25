@@ -32,8 +32,8 @@
 
 #import <Cocoa/Cocoa.h>
 
-#define UPDATE_FPS (20.0f)
-#define UPDATE_INT (1.0f/UPDATE_FPS)
+#define UPDATE_FPS (10.0)
+#define UPDATE_INT (1.0/UPDATE_FPS)
 
 @class CaptureModel;
 @class GraphView;
