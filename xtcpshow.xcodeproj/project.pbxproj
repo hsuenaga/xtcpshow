@@ -25,6 +25,8 @@
 		4639F847179D0D0900E59491 /* libpcap.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4639F846179D0D0900E59491 /* libpcap.dylib */; };
 		46583CB617A0CA41007B6572 /* GraphView.m in Sources */ = {isa = PBXBuildFile; fileRef = 46583CB517A0CA41007B6572 /* GraphView.m */; };
 		46583CBA17A0D192007B6572 /* CaptureOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 46583CB917A0D192007B6572 /* CaptureOperation.m */; };
+		4664DA87201977C900438512 /* xtcpshowDebug-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 4664DA86201977C900438512 /* xtcpshowDebug-Info.plist */; };
+		4664DA89201977F300438512 /* OpenBPF-DebugInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 4664DA88201977F300438512 /* OpenBPF-DebugInfo.plist */; };
 		466DD1731FEB6D8300A58CB1 /* TrafficData.m in Sources */ = {isa = PBXBuildFile; fileRef = 466DD1721FEB6D8300A58CB1 /* TrafficData.m */; };
 		466E550717AB2AA500C978C9 /* ComputeQueue.m in Sources */ = {isa = PBXBuildFile; fileRef = 466E550617AB2AA500C978C9 /* ComputeQueue.m */; };
 		466E550A17AB491800C978C9 /* DataResampler.m in Sources */ = {isa = PBXBuildFile; fileRef = 466E550917AB491800C978C9 /* DataResampler.m */; };
@@ -99,6 +101,8 @@
 		46583CB717A0CA4D007B6572 /* GraphView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GraphView.h; sourceTree = "<group>"; };
 		46583CB817A0D187007B6572 /* CaptureOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CaptureOperation.h; sourceTree = "<group>"; };
 		46583CB917A0D192007B6572 /* CaptureOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CaptureOperation.m; sourceTree = "<group>"; };
+		4664DA86201977C900438512 /* xtcpshowDebug-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "xtcpshowDebug-Info.plist"; sourceTree = "<group>"; };
+		4664DA88201977F300438512 /* OpenBPF-DebugInfo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "OpenBPF-DebugInfo.plist"; sourceTree = "<group>"; };
 		466DD1711FEB6D8300A58CB1 /* TrafficData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TrafficData.h; sourceTree = "<group>"; };
 		466DD1721FEB6D8300A58CB1 /* TrafficData.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TrafficData.m; sourceTree = "<group>"; };
 		466E550517AB2AA500C978C9 /* ComputeQueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ComputeQueue.h; sourceTree = "<group>"; };
@@ -242,6 +246,7 @@
 			children = (
 				46219ABA17B1C6EC00740A80 /* xtcpshow.iconset */,
 				4639F82C1798BA9700E59491 /* xtcpshow-Info.plist */,
+				4664DA86201977C900438512 /* xtcpshowDebug-Info.plist */,
 				4639F82D1798BA9700E59491 /* InfoPlist.strings */,
 				4639F8301798BA9700E59491 /* main.m */,
 				4639F8321798BA9700E59491 /* xtcpshow-Prefix.pch */,
@@ -254,6 +259,7 @@
 			isa = PBXGroup;
 			children = (
 				46D1634017CE117C009418DF /* Info.plist */,
+				4664DA88201977F300438512 /* OpenBPF-DebugInfo.plist */,
 				46D1634117CE117C009418DF /* Launchd.plist */,
 				4696054D17CDFC9200798814 /* main.m */,
 				46DE97A717D2D15B009E0A16 /* BPFService.h */,
@@ -372,8 +378,10 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4664DA87201977C900438512 /* xtcpshowDebug-Info.plist in Resources */,
 				4639F82F1798BA9700E59491 /* InfoPlist.strings in Resources */,
 				4639F8351798BA9700E59491 /* Credits.rtf in Resources */,
+				4664DA89201977F300438512 /* OpenBPF-DebugInfo.plist in Resources */,
 				4639F83B1798BA9700E59491 /* MainMenu.xib in Resources */,
 				46219ABB17B1C6EC00740A80 /* xtcpshow.iconset in Resources */,
 				46D1634217CE117C009418DF /* Info.plist in Resources */,
@@ -471,7 +479,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				INFOPLIST_FILE = "$(SRCROOT)/OpenBPF/Info.plist";
+				INFOPLIST_FILE = "$(SRCROOT)/OpenBPF/OpenBPF-DebugInfo.plist";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				OTHER_LDFLAGS = (
 					"-sectcreate",
@@ -629,7 +637,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "xtcpshow/xtcpshow-Prefix.pch";
 				HEADER_SEARCH_PATHS = "";
-				INFOPLIST_FILE = "xtcpshow/xtcpshow-Info.plist";
+				INFOPLIST_FILE = "xtcpshow/xtcpshowDebug-Info.plist";
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				PRODUCT_BUNDLE_IDENTIFIER = com.mac.hiroki.suenaga.xtcpshow;
 				PRODUCT_NAME = "$(TARGET_NAME)";
