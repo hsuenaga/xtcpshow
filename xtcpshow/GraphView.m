@@ -43,6 +43,7 @@
 // Private Properties
 //
 @interface GraphView ()
+@property (readonly, nonatomic) NSGraphicsContext *layerContext;
 @property (readonly, nonatomic) NSMutableDictionary *textAttributes;
 @property (readonly, nonatomic) NSGradient *gradGraph;
 @property (readonly, nonatomic) NSBezierPath *pathSolid;
@@ -74,6 +75,8 @@
 - (void)drawRange:(NSRect)rect;
 - (void)drawDate:(NSRect)rect;
 - (void)drawAllWithSize:(NSRect)rect OffScreen:(BOOL)off;
+- (void)setLayerContextWithRect:(NSRect)rect;
+- (void)drawLayer;
 
 // Computing
 - (void)resampleData:(TrafficDB *)dataBase inRect:(NSRect) rect;
@@ -103,7 +106,13 @@ float const scroll_sensitivity = 10.0f;
 //
 // class
 //
-@implementation GraphView
+@implementation GraphView {
+    // CoreGraphics / Quartz2D
+    CGContextRef CGContext;
+    CGContextRef layerCGContext;
+    CGLayerRef layer;
+}
+@synthesize layerContext;
 @synthesize textAttributes;
 @synthesize gradGraph;
 @synthesize pathSolid;
@@ -120,7 +129,7 @@ float const scroll_sensitivity = 10.0f;
 @synthesize colorGRID;
 @synthesize dateFormatter;
 
-- (void)defineGraphicComponents
+- (void)defineGraphicComponentsWithFrame:(CGRect)rect
 {
     // Colors
     colorFG = [NSColor whiteColor];
@@ -158,7 +167,7 @@ float const scroll_sensitivity = 10.0f;
 	if (!self)
 		return nil;
 
-    [self defineGraphicComponents];
+    [self defineGraphicComponentsWithFrame:aRect];
 	self.data = nil;
 	self.showPacketMarker = TRUE;
 	self.magnifySense = magnify_sensitivity;
@@ -597,37 +606,57 @@ float const scroll_sensitivity = 10.0f;
 {
 	[NSGraphicsContext saveGraphicsState];
     
-	/* clear screen */
+    // create layer (back buffer)
+    [self setLayerContextWithRect:rect];
+    
+	// clear screen
     [colorBG set];
 	NSRectFill(rect);
     [colorFG set];
 
-	/* update x/y axis */
+	// update x/y axis
 	[self updateRange];
 
-	/* show matrix */
+	// show matrix
 	[self drawGrid:rect];
 
-	/* plot packet marker */
+	// plot packet marker
 	if (_showPacketMarker == TRUE)
 		[self drawPPS:rect];
 
-	/* plot bps graph */
+	// plot bps graph
     if (self.useHistgram)
         [self drawGraphHistgram:rect];
     else
         [self drawGraphBezier:rect];
 
-	/* plot guide line (max, average, ...) */
+	// plot guide line (max, average, ...)
 	[self drawMaxGuide:rect];
 	[self drawAvgGuide:rect];
 
-	/* graph params */
+	/// graph params
 	[self drawRange:rect];
 
 	// date
 	[self drawDate:rect];
+    
+    // rasterize layer
+    [self drawLayer];
 	[NSGraphicsContext restoreGraphicsState];
+}
+
+- (void)setLayerContextWithRect:(NSRect)rect
+{
+    CGContext = [[NSGraphicsContext currentContext] graphicsPort];
+    layer = CGLayerCreateWithContext(CGContext, rect.size, NULL);
+    layerCGContext = CGLayerGetContext(layer);
+    layerContext = [NSGraphicsContext graphicsContextWithCGContext:layerCGContext flipped:FALSE];
+    [NSGraphicsContext setCurrentContext:layerContext];
+}
+
+- (void)drawLayer
+{
+    CGContextDrawLayerAtPoint(CGContext, CGPointZero, layer);
 }
 
 - (void)resampleData:(TrafficDB *)dataBase inRect:(NSRect)rect
@@ -724,13 +753,9 @@ float const scroll_sensitivity = 10.0f;
 	}
 
 	if ([NSGraphicsContext currentContextDrawingToScreen]) {
-		NSDisableScreenUpdates();
-		// need to resample...
 		[self drawAllWithSize:_bounds OffScreen:NO];
-		NSEnableScreenUpdates();
 	}
 	else {
-		// off screen rendering
 		[self drawAllWithSize:dirty_rect OffScreen:YES];
 	}
 }
