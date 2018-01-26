@@ -57,6 +57,7 @@ NSString *const FMT_NODATA = @"NO DATA RECORD ";
 //
 // float constants
 //
+float const animation_fps = 20.0;
 float const magnify_sensitivity = 2.0;
 float const scroll_sensitivity = 10.0;
 
@@ -64,6 +65,9 @@ float const scroll_sensitivity = 10.0;
 // Private Properties
 //
 @interface GraphView ()
+// Animation Timer
+@property (nonatomic) NSTimer *animationTimer;
+
 // Graphic Components
 @property (nonatomic) CGContextRef CGContext;
 @property (nonatomic) CGLayerRef Backbuffer;
@@ -132,11 +136,12 @@ float const scroll_sensitivity = 10.0;
 - (void)drawLayer;
 
 // Computing
-- (void)resampleDataInRect:(NSRect)rect;
+- (BOOL)resampleDataInRect:(NSRect)rect;
+- (void)refreshView;
 @end
 
 //
-// class
+// class implementation
 //
 @implementation GraphView
 - (void)defineGraphicComponentsWithFrame:(CGRect)rect
@@ -180,6 +185,7 @@ float const scroll_sensitivity = 10.0;
     [self defineGraphicComponentsWithFrame:aRect];
 	self.viewData = nil;
 	self.showPacketMarker = TRUE;
+    self.animationFPS = animation_fps;
 	self.magnifySense = magnify_sensitivity;
 	self.scrollSense = scroll_sensitivity;
     self.useHistgram = FALSE;
@@ -227,12 +233,12 @@ float const scroll_sensitivity = 10.0;
 	self.y_range = new_range; // [Mbps]
 
 	// Y-axis MA
-	_FIRTimeLength = floor(_FIRTimeLength / round) * round;
-	if (_FIRTimeLength < _minFIRTimeLength)
-		_FIRTimeLength = _minFIRTimeLength;
-	else if (_FIRTimeLength > _maxFIRTimeLength)
-		_FIRTimeLength = _maxFIRTimeLength;
-	new_range = _FIRTimeLength * 1000.0f; // [ms]
+	self.FIRTimeLength = floor(self.FIRTimeLength / round) * round;
+	if (self.FIRTimeLength < self.minFIRTimeLength)
+		self.FIRTimeLength = self.minFIRTimeLength;
+	else if (self.FIRTimeLength > self.maxFIRTimeLength)
+		self.FIRTimeLength = self.maxFIRTimeLength;
+	new_range = self.FIRTimeLength * 1000.0f; // [ms]
 	if (self.FirRange < (new_range - round)
 	    || self.FirRange > (new_range + round)) {
 		resample = YES;
@@ -242,29 +248,29 @@ float const scroll_sensitivity = 10.0;
 	// Y-axis Packets per Sample
 	if (self.range_mode == RANGE_AUTO) {
 		// auto
-		self.pps_range = _maxSamples;
+		self.pps_range = self.maxSamples;
 	}
-	else if (self.pps_range < _maxSamples) {
+	else if (self.pps_range < self.maxSamples) {
 		// peak hold (no manual settting)
-		self.pps_range = _maxSamples;
+		self.pps_range = self.maxSamples;
 	}
 	
 	// X-axis
-	_viewTimeLength = floor(_viewTimeLength / round) * round;
-	if (_viewTimeLength < _minViewTimeLength)
-		_viewTimeLength = _minViewTimeLength;
-	else if (_viewTimeLength > _maxViewTimeLength)
-		_viewTimeLength = _maxViewTimeLength;
-	new_range = _viewTimeLength * 1000.0f; // [ms]
+	self.viewTimeLength = floor(self.viewTimeLength / round) * round;
+	if (self.viewTimeLength < self.minViewTimeLength)
+		self.viewTimeLength = self.minViewTimeLength;
+	else if (self.viewTimeLength > self.maxViewTimeLength)
+		self.viewTimeLength = self.maxViewTimeLength;
+	new_range = self.viewTimeLength * 1000.0f; // [ms]
 	if (self.x_range < (new_range - round)
 	    || self.x_range > (new_range + round)) {
 		resample = YES;
 		self.x_range = new_range;
 	}
 
-	_viewTimeOffset = floor(_viewTimeOffset / round) * round;
-	if (_viewTimeOffset > 0.0)
-		_viewTimeOffset = 0.0;
+	self.viewTimeOffset = floor(self.viewTimeOffset / round) * round;
+	if (self.viewTimeOffset > 0.0)
+		self.viewTimeOffset = 0.0;
 
     if (resample) {
 		[self purgeData];
@@ -318,27 +324,55 @@ float const scroll_sensitivity = 10.0;
 	return step;
 }
 
+- (void)startPlot
+{
+    [self stopPlot];
+
+    double animationInt = (1.0 / self.animationFPS);
+    self.animationTimer =
+    [NSTimer timerWithTimeInterval:animationInt
+                            target:self
+                          selector:@selector(refreshView)
+                          userInfo:nil
+                           repeats:TRUE];
+    [[NSRunLoop currentRunLoop] addTimer:self.animationTimer forMode:NSRunLoopCommonModes];
+    NSLog(@"Start animation");
+}
+
+- (void)stopPlot
+{
+    if (self.animationTimer) {
+        [self.animationTimer invalidate];
+        self.animationTimer = nil;
+    }
+    NSLog(@"Stop animation");
+}
+
+//
+// Actions/Events from window server
+//
 - (void)magnifyWithEvent:(NSEvent *)event
 {
-	_viewTimeLength *= 1.0/(1.0 + (event.magnification/_magnifySense));
+	self.viewTimeLength *= 1.0/(1.0 + (event.magnification/self.magnifySense));
 	[self updateRange];
 
-	[_controller zoomGesture:self];
+	[self.controller zoomGesture:self];
 }
 
 - (void)scrollWheel:(NSEvent *)event
 {
-	_FIRTimeLength -= (event.deltaY/_scrollSense);
-	_viewTimeOffset -= event.deltaX/_scrollSense;
+	self.FIRTimeLength -= (event.deltaY/self.scrollSense);
+	self.viewTimeOffset -= event.deltaX/self.scrollSense;
 	[self updateRange];
 
 	[self.controller scrollGesture:self];
 }
 
+//
+// Graphics
+//
 - (void)drawGraphHistgram:(NSRect)rect
 {
-	[NSGraphicsContext saveGraphicsState];
-    
 	[self.viewData enumerateDataUsingBlock:^(DerivedData *data, NSUInteger idx, BOOL *stop) {
 		NSRect bar;
 		CGFloat value = (CGFloat)[data doubleValue];
@@ -359,12 +393,10 @@ float const scroll_sensitivity = 10.0;
 			return;
 		[self.gradGraph drawInRect:bar angle:90.0];
 	}];
-	[NSGraphicsContext restoreGraphicsState];
 }
 
 - (void)drawGraphBezier:(NSRect)rect
 {
-    [NSGraphicsContext saveGraphicsState];
     [self.colorBPS set];
 
     // start from (0.0)
@@ -436,13 +468,10 @@ float const scroll_sensitivity = 10.0;
         [self.gradGraph drawInBezierPath:self.pathSolid angle:90.0];
         [self.pathSolid stroke];
     }
-    
-    [NSGraphicsContext restoreGraphicsState];
 }
 
 - (void)drawPPS:(NSRect)rect;
 {
-	[NSGraphicsContext saveGraphicsState];
     [self.colorPPS set];
 
     double scaler = (double)rect.size.height / (double)self.pps_range;
@@ -468,40 +497,10 @@ float const scroll_sensitivity = 10.0;
 	[self drawText:[NSString stringWithFormat:CAP_MAX_SMPL, self.pps_range]
 		inRect:rect
 	       atPoint:NSMakePoint(0.0f, rect.size.height)];
-
-	[NSGraphicsContext restoreGraphicsState];
-}
-
-- (void)drawText:(NSString *)text inRect:(NSRect)rect atPoint:(NSPoint)point
-{
-    NSAttributedString *attrText = [[NSAttributedString alloc] initWithString:text attributes:self.textAttributes];
-	NSSize size = [attrText size];
-    
-	if ((point.x + size.width) > rect.size.width)
-		point.x = rect.size.width - size.width;
-	if ((point.y + size.height) > rect.size.height)
-		point.y = rect.size.height - size.height;
-
-	[attrText drawAtPoint:point];
-}
-
-- (void)drawText:(NSString *)text inRect:(NSRect)rect alignRight:(CGFloat)y
-{
-	NSAttributedString *attrText = [[NSAttributedString alloc] initWithString:text attributes:self.textAttributes];
-	NSSize size = [attrText size];
-    
-    NSPoint point = {
-        .x = rect.size.width - size.width,
-        .y = y,
-    };
-	if ((point.y + size.height) > rect.size.height)
-		point.y = rect.size.height - size.height;
-	[attrText drawAtPoint:point];
 }
 
 - (void)drawMaxGuide:(NSRect)rect
 {
-    [NSGraphicsContext saveGraphicsState];
     [self.colorMAX set];
 
     // draw line
@@ -518,17 +517,14 @@ float const scroll_sensitivity = 10.0;
 		value = (rect.size.height / 5) * 4;
 	NSString *marker = [NSString stringWithFormat:CAP_MAX_MBPS, _maxValue];
 	[self drawText:marker inRect:rect atPoint:NSMakePoint((CGFloat)0.0, value)];
-
-	[NSGraphicsContext restoreGraphicsState];
 }
 
 - (void)drawAvgGuide:(NSRect)rect
 {
-    [NSGraphicsContext saveGraphicsState];
     [self.colorAVG set];
 
 	CGFloat deviation = (CGFloat)[self.viewData standardDeviation];
-	CGFloat value =	rect.size.height * (_averageValue / self.y_range);
+	CGFloat value =	rect.size.height * (self.averageValue / self.y_range);
     
     // draw line
     [self.pathSolid removeAllPoints];
@@ -562,15 +558,12 @@ float const scroll_sensitivity = 10.0;
 		value = (rect.size.height / 5);
 	else if (value > ((rect.size.height / 5) * 4))
 		value = (rect.size.height / 5) * 4;
-	NSString *marker = [NSString stringWithFormat:CAP_AVG_MBPS, _averageValue, deviation];
+	NSString *marker = [NSString stringWithFormat:CAP_AVG_MBPS, self.averageValue, deviation];
 	[self drawText:marker inRect:rect alignRight:value];
-
-	[NSGraphicsContext restoreGraphicsState];
 }
 
 - (void)drawGrid:(NSRect)rect
 {
-	[NSGraphicsContext saveGraphicsState];
     [self.colorGRID set];
     
 	for (int i = 1; i < 5; i++) {
@@ -589,8 +582,6 @@ float const scroll_sensitivity = 10.0;
 		[self.pathDash lineToPoint:NSMakePoint(x, rect.size.height)];
 		[self.pathDash stroke];
 	}
-    
-	[NSGraphicsContext restoreGraphicsState];
 }
 
 - (void)drawRange:(NSRect)rect
@@ -607,6 +598,33 @@ float const scroll_sensitivity = 10.0;
 		text = [self.dateFormatter stringFromDate:[self.viewData lastDate]];
 
     [self drawText:text inRect:rect alignRight:rect.size.height];
+}
+
+- (void)drawText:(NSString *)text inRect:(NSRect)rect atPoint:(NSPoint)point
+{
+    NSAttributedString *attrText = [[NSAttributedString alloc] initWithString:text attributes:self.textAttributes];
+    NSSize size = [attrText size];
+    
+    if ((point.x + size.width) > rect.size.width)
+        point.x = rect.size.width - size.width;
+    if ((point.y + size.height) > rect.size.height)
+        point.y = rect.size.height - size.height;
+    
+    [attrText drawAtPoint:point];
+}
+
+- (void)drawText:(NSString *)text inRect:(NSRect)rect alignRight:(CGFloat)y
+{
+    NSAttributedString *attrText = [[NSAttributedString alloc] initWithString:text attributes:self.textAttributes];
+    NSSize size = [attrText size];
+    
+    NSPoint point = {
+        .x = rect.size.width - size.width,
+        .y = y,
+    };
+    if ((point.y + size.height) > rect.size.height)
+        point.y = rect.size.height - size.height;
+    [attrText drawAtPoint:point];
 }
 
 - (void)drawAllWithSize:(NSRect)rect OffScreen:(BOOL)off
@@ -632,7 +650,7 @@ float const scroll_sensitivity = 10.0;
 		[self drawPPS:rect];
 
 	// plot bps graph
-    if (self.useHistgram)
+    if (self.useHistgram || ![self.resampler FIRenabled])
         [self drawGraphHistgram:rect];
     else
         [self drawGraphBezier:rect];
@@ -672,59 +690,63 @@ float const scroll_sensitivity = 10.0;
 
 - (void)drawRect:(NSRect)dirty_rect
 {
-    if (_bounds.size.width != self.resampler.outputSamples) {
+    if (self.bounds.size.width != self.resampler.outputSamples) {
         [self purgeData];
-        self.resampler.outputSamples = _bounds.size.width;
+        self.resampler.outputSamples = self.bounds.size.width;
     }
     
     if ([NSGraphicsContext currentContextDrawingToScreen]) {
-        [self drawAllWithSize:_bounds OffScreen:NO];
+        [self drawAllWithSize:self.bounds OffScreen:NO];
     }
     else {
         [self drawAllWithSize:dirty_rect OffScreen:YES];
     }
 }
 
-- (void)resampleDataInRect:(NSRect)rect
+//
+// Data Bindings
+//
+- (BOOL)resampleDataInRect:(NSRect)rect
 {
 	NSDate *end;
 
     // data is not imported.
     if (!self.inputData)
-        return;
+        return FALSE;
     
 	// fix up _viewTimeOffset
 	end = [self.inputData lastDate];
     if (end == nil) {
         NSLog(@"No timestamp");
-        return;
+        return FALSE;
     }
     else if (self.lastResample && [self.lastResample isEqual:end]) {
         NSLog(@"Data is not updated");
         // Not updated.
-        return;
+        return FALSE;
     }
     self.lastResample = end;
     
     // add offset
-	end = [end dateByAddingTimeInterval:_viewTimeOffset];
+	end = [end dateByAddingTimeInterval:self.viewTimeOffset];
 	if ([end laterDate:[self.inputData firstDate]] != end) {
-        _viewTimeOffset = [[self.inputData firstDate] timeIntervalSinceDate:[self.inputData lastDate]];
+        self.viewTimeOffset = [[self.inputData firstDate] timeIntervalSinceDate:[self.inputData lastDate]];
 	}
 
-	self.resampler.outputTimeLength = _viewTimeLength;
-	self.resampler.outputTimeOffset = _viewTimeOffset;
+	self.resampler.outputTimeLength = self.viewTimeLength;
+	self.resampler.outputTimeOffset = self.viewTimeOffset;
 	self.resampler.outputSamples = rect.size.width;
-	self.resampler.FIRTimeLength = _FIRTimeLength;
+	self.resampler.FIRTimeLength = self.FIRTimeLength;
     [self.resampler resampleDataBase:self.inputData atDate:end];
 
 	self.viewData = [self.resampler output];
 	self.maxSamples = [self.viewData maxSamples];
 	self.maxValue = [self.viewData maxDoubleValue];
 	self.averageValue = [self.viewData averageDoubleValue];
-
 	self.GraphOffset = [self.resampler overSample];
 	self.XmarkOffset = [self.resampler overSample] / 2;
+    
+    return TRUE;
 }
 
 - (void)importData:(TrafficDB *)dataBase
@@ -735,10 +757,22 @@ float const scroll_sensitivity = 10.0;
     [self resampleDataInRect:_bounds];
 }
 
+- (void)refreshView
+{
+    if ([self resampleDataInRect:self.bounds]) {
+        [self display];
+    }
+    else {
+        [self setNeedsDisplay:TRUE];
+    }
+}
+
 - (void)purgeData
 {
 	[self.resampler purgeData];
     self.lastResample = nil;
+    [self resampleDataInRect:_bounds];
+    [self setNeedsDisplay:TRUE];
 }
 
 - (void)saveFile:(TrafficDB *)dataBase;

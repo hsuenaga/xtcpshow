@@ -51,7 +51,9 @@
     NSUInteger tapStage = tap / KZ_STAGE;
     
     if (tapStage <= 0) {
-        tapStage = 1;
+        new->tap = 0;
+        new->stage = nil;
+        return new;
     }
     new->tap = tapStage * KZ_STAGE;
 
@@ -67,6 +69,9 @@
 
 - (DerivedData *)filter:(DerivedData *)sample
 {
+    if (!self.stage)
+        return sample;
+    
     for (int i = 0; i < [self.stage count]; i++) {
         NSDate *timestamp = [sample timestamp];
         NSUInteger samples = [sample numberOfSamples];

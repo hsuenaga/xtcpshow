@@ -263,8 +263,12 @@
 
 - (double)averageDoubleValue
 {
-	if (self.count == 0)
+    if (self.count == 0) {
+        NSLog(@"queue is empty");
+        NSLog(@"queue size is %zu", self.size);
 		return 0.0;
+
+    }
     double avg = [self sum] / (double)self.count;
     return [self roundDouble:avg];
 }

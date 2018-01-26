@@ -48,5 +48,6 @@
 - (void)updateParams;
 - (void)purgeData;
 - (void)resampleDataBase:(TrafficDB *)dataBase atDate:(NSDate *)date;
+- (BOOL)FIRenabled;
 
 @end

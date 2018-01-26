@@ -143,6 +143,11 @@
     overSample = [output count] - outputSamples;
 }
 
+- (BOOL)FIRenabled
+{
+    return [filterFIR tap] ? TRUE : FALSE;
+}
+
 - (NSDate *)roundDate:(NSDate *)date toTick:(NSTimeInterval)tick
 {
     NSTimeInterval unixTime;

@@ -118,7 +118,7 @@
     self.count++;
 
     // dequeue
-    return self.count < self.size ? nil : [self dequeueEntry];
+    return self.count > self.size ? [self dequeueEntry] : nil;
 }
 
 - (QueueEntry *)dequeueEntry

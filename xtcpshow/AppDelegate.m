@@ -105,8 +105,7 @@ static NSString *const PREFER_DEVICE=@"en";
 		[_model stopCapture];
 		[_startButton setTitle:LBL_START];
 		input_enabled = TRUE;
-		if (_timer)
-			[_timer invalidate];
+        [self.graphView stopPlot];
 	}
 	else {
 		/* start capture */
@@ -122,19 +121,12 @@ static NSString *const PREFER_DEVICE=@"en";
 		[_startButton setTitle:LBL_STOP];
 		input_enabled = FALSE;
 
-		_timer =
-		[NSTimer timerWithTimeInterval:UPDATE_INT
-					target:self
-				      selector:@selector(animationNotify:)
-				      userInfo:nil
-				       repeats:YES];
-		[[NSRunLoop currentRunLoop] addTimer:_timer
-					     forMode:NSRunLoopCommonModes];
-
         if ([_model startCapture] == FALSE) {
             [self samplingError:@"Cannot start capture thread"];
             return;
         }
+        [self.graphView importData:self.model.dataBase];
+        [self.graphView startPlot];
 	}
 
 	[_deviceSelector setEnabled:input_enabled];
@@ -145,13 +137,12 @@ static NSString *const PREFER_DEVICE=@"en";
 
 - (IBAction)changeZoom:(id)sender {
 	[_graphView setViewTimeLength:[sender floatValue]];
-	[self animationNotify:nil];
+    [self.graphView setNeedsDisplay:YES];
 	[self updateUserInterface];
 }
 
 - (IBAction)changeSmooth:(id)sender {
 	[_graphView setFIRTimeLength:[sender floatValue]];
-	[self animationNotify:nil];
 	[self updateUserInterface];
 }
 
@@ -161,7 +152,6 @@ static NSString *const PREFER_DEVICE=@"en";
 
 	value = [_graphView viewTimeLength];
 	[_zoomBar setFloatValue:value];
-	[self animationNotify:nil];
 	[self updateUserInterface];
 }
 
@@ -169,7 +159,6 @@ static NSString *const PREFER_DEVICE=@"en";
 {
 	float value = [_graphView FIRTimeLength];
 	[_smoothBar setFloatValue:value];
-	[self animationNotify:nil];
 	[self updateUserInterface];
 }
 
@@ -272,23 +261,18 @@ static NSString *const PREFER_DEVICE=@"en";
     }
 }
 
-- (void)animationNotify:(id)sender
-{
-    [_graphView importData:self.model.dataBase];
-//	[_graphView setNeedsDisplay:YES];
-    [_graphView display];
-
-	[self updateUserInterface];
-}
-
 - (void)samplingError:(NSString *)message
 {
 	NSAlert *alert;
 
+    // Reset UI
 	[_startButton setTitle:LBL_START];
 	[_deviceSelector setEnabled:YES];
 	[_filterField setEnabled:YES];
     [_promiscCheck setEnabled:YES];
+    [self.graphView stopPlot];
+
+    // Show alert dialog.
     NSLog(@"alert: %@", message);
     alert = [[NSAlert alloc] init];
     [alert addButtonWithTitle:@"OK"];
@@ -312,6 +296,8 @@ static NSString *const PREFER_DEVICE=@"en";
 	 setFloatValue:_model.samplingIntervalMS];
 	[_samplingField
 	 setFloatValue:_model.samplingIntervalLastMS];
+    
+    [self.graphView setNeedsDisplay:YES];
 }
 
 - (void)setupInterfaceButton:(NSPopUpButton *)btn

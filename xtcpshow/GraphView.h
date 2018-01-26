@@ -64,10 +64,14 @@ extern NSString *const RANGE_MANUAL;
 @property (assign) BOOL showDeviationBand;
 @property (assign) BOOL useHistgram;
 
+@property (assign) double animationFPS;
+
 // Action from UI
 - (float)setRange:(NSString *)mode withRange:(float)range;
 - (float)setRange:(NSString *)mode withStep:(int)step;
 - (int)stepValueFromRange:(float)range;
+- (void)startPlot;
+- (void)stopPlot;
 
 // Action from window server
 - (void)magnifyWithEvent:(NSEvent *)event;

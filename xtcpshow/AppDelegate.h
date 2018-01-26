@@ -32,9 +32,6 @@
 
 #import <Cocoa/Cocoa.h>
 
-#define UPDATE_FPS (20.0)
-#define UPDATE_INT (1.0/UPDATE_FPS)
-
 @class CaptureModel;
 @class GraphView;
 @class CaptureBPF;
@@ -87,7 +84,6 @@
 
 /* notify from model, controller(myself), ... */
 - (void) closeNotify:(NSNotification *)notify;
-- (void) animationNotify:(NSTimer *)sender;
 - (void) samplingError:(NSString *)message;
 - (void) updateUserInterface;
 
