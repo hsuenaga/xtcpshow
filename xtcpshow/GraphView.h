@@ -59,10 +59,6 @@ extern NSString *const RANGE_MANUAL;
 	NSUInteger GraphOffset;
 	NSUInteger XmarkOffset;
 
-	// gaphic object cache
-	NSGradient *graph_gradient;
-	NSMutableDictionary *text_attr;
-
 	// data filter
 	DataResampler *resampler;
 }

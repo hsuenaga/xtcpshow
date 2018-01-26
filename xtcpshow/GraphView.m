@@ -39,8 +39,26 @@
 #import "TrafficIndex.h"
 #import "TrafficDB.h"
 
-
+//
+// Private Properties
+//
 @interface GraphView ()
+@property (readonly, nonatomic) NSMutableDictionary *textAttributes;
+@property (readonly, nonatomic) NSGradient *gradGraph;
+@property (readonly, nonatomic) NSBezierPath *pathSolid;
+@property (readonly, nonatomic) NSBezierPath *pathDash;
+@property (readonly, nonatomic) NSColor *colorBG;
+@property (readonly, nonatomic) NSColor *colorFG;
+@property (readonly, nonatomic) NSColor *colorAVG;
+@property (readonly, nonatomic) NSColor *colorDEV;
+@property (readonly, nonatomic) NSColor *colorBPS;
+@property (readonly, nonatomic) NSColor *colorPPS;
+@property (readonly, nonatomic) NSColor *colorMAX;
+@property (readonly, nonatomic) NSColor *colorGRID;
+@property (readonly, nonatomic) NSColor *colorGradStart;
+@property (readonly, nonatomic) NSColor *colorGradEnd;
+@property (readonly, nonatomic) NSDateFormatter *dateFormatter;
+
 // Status Update
 - (void)updateRange;
 
@@ -86,36 +104,68 @@ float const scroll_sensitivity = 10.0f;
 // class
 //
 @implementation GraphView
+@synthesize textAttributes;
+@synthesize gradGraph;
+@synthesize pathSolid;
+@synthesize pathDash;
+@synthesize colorFG;
+@synthesize colorBG;
+@synthesize colorAVG;
+@synthesize colorDEV;
+@synthesize colorBPS;
+@synthesize colorMAX;
+@synthesize colorGradStart;
+@synthesize colorGradEnd;
+@synthesize colorPPS;
+@synthesize colorGRID;
+@synthesize dateFormatter;
+
+- (void)defineGraphicComponents
+{
+    // Colors
+    colorFG = [NSColor whiteColor];
+    colorBG = [NSColor blackColor];
+    colorAVG = [NSColor colorWithDeviceRed:0.0 green:1.0 blue:0.0 alpha:1.0];
+    colorDEV = [NSColor colorWithDeviceRed:0.0 green:1.0 blue:0.0 alpha:0.4];
+    colorGradStart = [NSColor colorWithDeviceRed:0.0 green:0.0 blue:0.0 alpha:0.0];
+    colorGradEnd = [NSColor colorWithDeviceRed:0.0 green:1.0 blue:0.0 alpha:1.0];
+    colorBPS = colorGradEnd;
+    colorPPS = [NSColor cyanColor];
+    colorMAX = [NSColor redColor];
+    colorGRID = colorFG;
+    
+    // Gradiations
+    gradGraph = [[NSGradient alloc] initWithStartingColor:colorGradStart endingColor:colorGradEnd];
+    
+    // Path
+    pathSolid = [NSBezierPath bezierPath];
+    pathDash = [NSBezierPath bezierPath];
+    const CGFloat dash[2] = {5.0, 5.0};
+    const NSUInteger count = sizeof(dash)/sizeof(dash[0]);
+    [pathDash setLineDash:dash count:count phase:0.0];
+
+    // Texts
+    textAttributes = [NSMutableDictionary new];
+    [textAttributes setValue:colorFG forKey:NSForegroundColorAttributeName];
+    [textAttributes setValue:[NSFont fontWithName:@"Menlo Regular" size:12] forKey:NSFontAttributeName];
+    dateFormatter = [NSDateFormatter new];
+    [dateFormatter setDateFormat:FMT_DATE];
+}
+
 - (GraphView *)initWithFrame:(CGRect)aRect
 {
 	self = [super initWithFrame:aRect];
 	if (!self)
 		return nil;
 
+    [self defineGraphicComponents];
 	self.data = nil;
 	self.showPacketMarker = TRUE;
 	self.magnifySense = magnify_sensitivity;
 	self.scrollSense = scroll_sensitivity;
     self.useHistgram = FALSE;
-
-    NSColor *initColor = [NSColor colorWithRed:0.0
-                                         green:0.0
-                                          blue:0.0
-                                         alpha:0.0];
-    NSColor *endColor  = [NSColor colorWithRed:0.0
-                                         green:1.0
-                                          blue:0.0
-                                         alpha:1.0];
-	graph_gradient = [[NSGradient alloc]
-			  initWithStartingColor:initColor
-			  endingColor:endColor];
+    
 	resampler = [[DataResampler alloc] init];
-
-	text_attr = [[NSMutableDictionary alloc] init];
-	[text_attr setValue:[NSColor whiteColor]
-		forKey:NSForegroundColorAttributeName];
-	[text_attr setValue:[NSFont fontWithName:@"Menlo Regular" size:12]
-		forKey:NSFontAttributeName];
 
 	return self;
 }
@@ -272,9 +322,10 @@ float const scroll_sensitivity = 10.0f;
 - (void)drawGraphHistgram:(NSRect)rect
 {
 	[NSGraphicsContext saveGraphicsState];
+    
 	[_data enumerateDataUsingBlock:^(DerivedData *data, NSUInteger idx, BOOL *stop) {
 		NSRect bar;
-		float value = [data doubleValue];
+		CGFloat value = (CGFloat)[data doubleValue];
 
 		if (idx < GraphOffset)
 			return;
@@ -284,13 +335,13 @@ float const scroll_sensitivity = 10.0f;
 			*stop = YES;
 			return;
 		}
-		bar.origin.x = (float)idx;
+		bar.origin.x = (CGFloat)idx;
 		bar.origin.y = 0;
 		bar.size.width = 1.0;
 		bar.size.height = value * rect.size.height / y_range;
 		if (bar.size.height < 1.0)
 			return;
-		[graph_gradient drawInRect:bar angle:90.0];
+		[gradGraph drawInRect:bar angle:90.0];
 	}];
 	[NSGraphicsContext restoreGraphicsState];
 }
@@ -298,19 +349,18 @@ float const scroll_sensitivity = 10.0f;
 - (void)drawGraphBezier:(NSRect)rect
 {
     [NSGraphicsContext saveGraphicsState];
-
-    double scaler = (double)rect.size.height / (double)y_range;
-    NSBezierPath __block *path = [NSBezierPath bezierPath];
-    NSPoint __block plot;
-    BOOL __block pathOpen = false;
-    [[NSColor greenColor] set];
+    [colorBPS set];
 
     // start from (0.0)
-    plot.x = 0.0;
-    plot.y = 0.0;
-    [path moveToPoint:plot];
+    NSPoint pointStart = {
+        .x = 0.0, .y=0.0
+    };
+    [pathSolid removeAllPoints];
+    [pathSolid moveToPoint:pointStart];
     
     // make path
+    double scaler = (double)rect.size.height / (double)y_range;
+    BOOL __block pathOpen = false;
     [_data enumerateDataUsingBlock:^(DerivedData *data, NSUInteger idx, BOOL *stop) {
         if (idx < GraphOffset)
             return;
@@ -328,40 +378,47 @@ float const scroll_sensitivity = 10.0f;
         else if (value > rect.size.height) {
             value = rect.size.height;
         }
-        
-        plot.x = (CGFloat)idx;
-        plot.y = (CGFloat)value;
+        NSPoint plot = {
+            .x = (CGFloat)idx,
+            .y = (CGFloat)value
+        };
         if (!pathOpen) {
             if (plot.y > 0.0) {
-                [path lineToPoint:plot];
+                // create new shape
+                [pathSolid lineToPoint:plot];
                 pathOpen = true;
                 return;
             }
-            [path moveToPoint:plot];
+            [pathSolid moveToPoint:plot];
             return;
         }
         else {
             if (plot.y == 0.0) {
-                [path lineToPoint:plot];
-                [graph_gradient drawInBezierPath:path angle:90.0];
-                [path stroke];
-                [path removeAllPoints];
-                [path moveToPoint:plot];
+                // close the shape
+                [pathSolid lineToPoint:plot];
+                [gradGraph drawInBezierPath:pathSolid angle:90.0];
+                [pathSolid stroke];
+                
+                // restart from currnet plot
+                [pathSolid removeAllPoints];
+                [pathSolid moveToPoint:plot];
                 pathOpen = false;
                 return;
             }
-            [path lineToPoint:plot];
+            [pathSolid lineToPoint:plot];
             return;
         }
     }];
     
     // end at (width, 0)
     if (pathOpen) {
-        plot.x = rect.size.width;
-        plot.y = 0;
-        [path lineToPoint:plot];
-        [graph_gradient drawInBezierPath:path angle:90.0];
-        [path stroke];
+        NSPoint pointEnd = {
+            .x = rect.size.width,
+            .y = 0.0
+        };
+        [pathSolid lineToPoint:pointEnd];
+        [gradGraph drawInBezierPath:pathSolid angle:90.0];
+        [pathSolid stroke];
     }
     
     [NSGraphicsContext restoreGraphicsState];
@@ -370,12 +427,10 @@ float const scroll_sensitivity = 10.0f;
 - (void)drawPPS:(NSRect)rect;
 {
 	[NSGraphicsContext saveGraphicsState];
-	[[NSColor cyanColor] set];
-	[_data enumerateDataUsingBlock:^(DerivedData *data, NSUInteger idx, BOOL *stop) {
-		NSBezierPath *path;
-		NSUInteger samples;
-		float h;
+    [colorPPS set];
 
+    double scaler = (double)rect.size.height / (double)pps_range;
+	[_data enumerateDataUsingBlock:^(DerivedData *data, NSUInteger idx, BOOL *stop) {
 		if (idx < XmarkOffset)
 			return;
 		idx -= XmarkOffset;
@@ -384,15 +439,14 @@ float const scroll_sensitivity = 10.0f;
 			*stop = YES;
 			return;
 		}
-		if ( (samples = [data numberOfSamples]) == 0)
+        NSUInteger samples = [data numberOfSamples];
+		if (samples == 0)
 			return;
-		h = rect.size.height / (float)pps_range;
-		h = h * (float)samples;
-		path = [NSBezierPath bezierPath];
-		[path moveToPoint:NSMakePoint((float)idx, 0.0f)];
-		[path lineToPoint:NSMakePoint((float)idx, h)];
-		[path setLineCapStyle:NSRoundLineCapStyle];
-		[path stroke];
+		CGFloat value = (CGFloat)samples * scaler;
+        [pathSolid removeAllPoints];
+		[pathSolid moveToPoint:NSMakePoint((CGFloat)idx, (CGFloat)0.0)];
+		[pathSolid lineToPoint:NSMakePoint((CGFloat)idx, value)];
+		[pathSolid stroke];
 	}];
 
 	[self drawText:[NSString stringWithFormat:CAP_MAX_SMPL, pps_range]
@@ -404,108 +458,96 @@ float const scroll_sensitivity = 10.0f;
 
 - (void)drawText:(NSString *)text inRect:(NSRect)rect atPoint:(NSPoint)point
 {
-	NSAttributedString *atext = [NSAttributedString alloc];
-	NSSize size;
-
-	atext = [atext initWithString:text attributes:text_attr];
-	size = [atext size];
+    NSAttributedString *attrText = [[NSAttributedString alloc] initWithString:text attributes:textAttributes];
+	NSSize size = [attrText size];
+    
 	if ((point.x + size.width) > rect.size.width)
 		point.x = rect.size.width - size.width;
 	if ((point.y + size.height) > rect.size.height)
 		point.y = rect.size.height - size.height;
 
-	[atext drawAtPoint:point];
+	[attrText drawAtPoint:point];
 }
 
 - (void)drawText:(NSString *)text inRect:(NSRect)rect alignRight:(CGFloat)y
 {
-	NSAttributedString *atext = [NSAttributedString alloc];
-	NSSize size;
-	NSPoint point;
-
-	atext = [atext initWithString:text attributes:text_attr];
-	size = [atext size];
-	point.x = rect.size.width - size.width;
-	point.y = y;
+	NSAttributedString *attrText = [[NSAttributedString alloc] initWithString:text attributes:textAttributes];
+	NSSize size = [attrText size];
+    
+    NSPoint point = {
+        .x = rect.size.width - size.width,
+        .y = y,
+    };
 	if ((point.y + size.height) > rect.size.height)
 		point.y = rect.size.height - size.height;
-	[atext drawAtPoint:point];
+	[attrText drawAtPoint:point];
 }
 
 - (void)drawMaxGuide:(NSRect)rect
 {
-	NSBezierPath *path;
-	NSString *marker;
-	float y;
+    [NSGraphicsContext saveGraphicsState];
+    [colorMAX set];
 
-	[NSGraphicsContext saveGraphicsState];
+    // draw line
+	CGFloat value = rect.size.height * (_maxValue / y_range);
+    [pathSolid removeAllPoints];
+	[pathSolid moveToPoint:NSMakePoint((CGFloat)0.0, value)];
+	[pathSolid lineToPoint:NSMakePoint(rect.size.width, value)];
+	[pathSolid stroke];
 
-	[[NSColor redColor] set];
-	path = [NSBezierPath bezierPath];
-	y = rect.size.height * (_maxValue / y_range);
-	[path moveToPoint:NSMakePoint(0.0, y)];
-	[path lineToPoint:NSMakePoint(rect.size.width, y)];
-	[path stroke];
-
-	/* max text */
-	if (y < (rect.size.height / 5))
-		y = (rect.size.height / 5);
-	else if (y > ((rect.size.height / 5) * 4))
-		y = (rect.size.height / 5) * 4;
-
-	marker = [NSString stringWithFormat:CAP_MAX_MBPS, _maxValue];
-	[self drawText:marker inRect:rect atPoint:NSMakePoint(0.0, y)];
+	// draw text
+	if (value < (rect.size.height / 5))
+		value = (rect.size.height / 5);
+	else if (value > ((rect.size.height / 5) * 4))
+		value = (rect.size.height / 5) * 4;
+	NSString *marker = [NSString stringWithFormat:CAP_MAX_MBPS, _maxValue];
+	[self drawText:marker inRect:rect atPoint:NSMakePoint((CGFloat)0.0, value)];
 
 	[NSGraphicsContext restoreGraphicsState];
 }
 
 - (void)drawAvgGuide:(NSRect)rect
 {
-	NSBezierPath *path;
-	NSString *marker;
-	float w, y, deviation;
+    [NSGraphicsContext saveGraphicsState];
+    [colorAVG set];
 
-	w = rect.size.width;
-	deviation = [_data standardDeviation];
+	CGFloat deviation = (CGFloat)[_data standardDeviation];
+	CGFloat value =	rect.size.height * (_averageValue / y_range);
+    
+    // draw line
+    [pathSolid removeAllPoints];
+	[pathSolid moveToPoint:NSMakePoint(0.0, value)];
+	[pathSolid lineToPoint:NSMakePoint(rect.size.width, value)];
+	[pathSolid stroke];
 
-	[NSGraphicsContext saveGraphicsState];
-
-	[[NSColor colorWithDeviceRed:0.0 green:1.0 blue:0.0 alpha:1.0] set];
-	path = [NSBezierPath bezierPath];
-	y =	rect.size.height * (_averageValue / y_range);
-	[path moveToPoint:NSMakePoint(0.0, y)];
-	[path lineToPoint:NSMakePoint(w, y)];
-	[path stroke];
-
+    // draw band
 	if (_showDeviationBand == TRUE) {
-		float dy, upper, lower;
-		[[NSColor colorWithDeviceRed:0.0 green:1.0 blue:0.0 alpha:0.4] set];
-		path = [NSBezierPath bezierPath];
-		y = rect.size.height * (_averageValue / y_range);
-		dy = rect.size.height * (deviation / y_range);
-		upper = y + dy;
+        [colorDEV set];
+
+		CGFloat dy = rect.size.height * (deviation / y_range);
+		CGFloat upper = value + dy;
 		if (upper > rect.size.height)
 			upper = rect.size.height;
-		lower = y - dy;
+		CGFloat lower = value - dy;
 		if (lower < 0.0)
 			lower = 0.0;
 
-		[path moveToPoint:NSMakePoint(0.0, upper)];
-		[path lineToPoint:NSMakePoint(0.0, lower)];
-		[path lineToPoint:NSMakePoint(w, lower)];
-		[path lineToPoint:NSMakePoint(w, upper)];
-		[path closePath];
-		[path fill];
+        [pathSolid removeAllPoints];
+		[pathSolid moveToPoint:NSMakePoint((CGFloat)0.0, upper)];
+		[pathSolid lineToPoint:NSMakePoint((CGFloat)0.0, lower)];
+		[pathSolid lineToPoint:NSMakePoint(rect.size.width, lower)];
+		[pathSolid lineToPoint:NSMakePoint(rect.size.width, upper)];
+		[pathSolid closePath];
+		[pathSolid fill];
 	}
 
-	/* max text */
-	if (y < (rect.size.height / 5))
-		y = (rect.size.height / 5);
-	else if (y > ((rect.size.height / 5) * 4))
-		y = (rect.size.height / 5) * 4;
-
-	marker = [NSString stringWithFormat:CAP_AVG_MBPS, _averageValue, deviation];
-	[self drawText:marker inRect:rect alignRight:y];
+	/* draw text */
+	if (value < (rect.size.height / 5))
+		value = (rect.size.height / 5);
+	else if (value > ((rect.size.height / 5) * 4))
+		value = (rect.size.height / 5) * 4;
+	NSString *marker = [NSString stringWithFormat:CAP_AVG_MBPS, _averageValue, deviation];
+	[self drawText:marker inRect:rect alignRight:value];
 
 	[NSGraphicsContext restoreGraphicsState];
 }
@@ -513,70 +555,52 @@ float const scroll_sensitivity = 10.0f;
 - (void)drawGrid:(NSRect)rect
 {
 	[NSGraphicsContext saveGraphicsState];
-	[[NSColor whiteColor] set];
+    [colorGRID set];
+    
 	for (int i = 1; i < 5; i++) {
-		CGFloat pattern[2] = {5.0, 5.0};
-		NSBezierPath *path;
-		float y = (rect.size.height / 5.0) * (float)i;
-		float x = (rect.size.width / 5.0) * (float)i;
+		CGFloat y = (rect.size.height / 5.0) * (CGFloat)i;
+		CGFloat x = (rect.size.width / 5.0) * (CGFloat)i;
 
 		// vertical line
-		path = [NSBezierPath bezierPath];
-		[path setLineDash:pattern count:2 phase:0.0];
-		[path moveToPoint:NSMakePoint(0, y)];
-		[path lineToPoint:NSMakePoint(rect.size.width, y)];
-		[path stroke];
+        [pathDash removeAllPoints];
+		[pathDash moveToPoint:NSMakePoint(0, y)];
+		[pathDash lineToPoint:NSMakePoint(rect.size.width, y)];
+		[pathDash stroke];
 
 		// horizontal line
-		path = [NSBezierPath bezierPath];
-		[path setLineDash:pattern count:2 phase:0.0];
-		[path moveToPoint:NSMakePoint(x, 0)];
-		[path lineToPoint:NSMakePoint(x, rect.size.height)];
-		[path stroke];
+        [pathDash removeAllPoints];
+		[pathDash moveToPoint:NSMakePoint(x, 0)];
+		[pathDash lineToPoint:NSMakePoint(x, rect.size.height)];
+		[pathDash stroke];
 	}
+    
 	[NSGraphicsContext restoreGraphicsState];
 }
 
 - (void)drawRange:(NSRect)rect
 {
-	NSString *text;
-	[NSGraphicsContext saveGraphicsState];
-	text =
-	[NSString stringWithFormat:FMT_RANGE,
-	 y_range / 5, x_range / 5, ma_range];
+	NSString *text = [NSString stringWithFormat:FMT_RANGE, (y_range / 5.0), (x_range / 5.0), ma_range];
 	[self drawText:text inRect:rect atPoint:NSMakePoint(0.0, 0.0)];
-
-	[NSGraphicsContext restoreGraphicsState];
 }
 
 - (void)drawDate:(NSRect)rect;
 {
-	NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-	NSString *text;
-
-	[NSGraphicsContext saveGraphicsState];
-	[dateFormatter setDateFormat:FMT_DATE];
+    NSString *text = FMT_NODATA;
+    
 	if (_data && ![_data isEmpty])
 		text = [dateFormatter stringFromDate:[_data lastDate]];
-	else
-		text = FMT_NODATA;
 
-	[self drawText:text inRect:rect alignRight:rect.size.height];
-	
-	[NSGraphicsContext restoreGraphicsState];
+    [self drawText:text inRect:rect alignRight:rect.size.height];
 }
 
 - (void)drawAllWithSize:(NSRect)rect OffScreen:(BOOL)off
 {
 	[NSGraphicsContext saveGraphicsState];
-
+    
 	/* clear screen */
-	if (off)
-		[[NSColor blackColor] set];
-	else
-		[[NSColor clearColor] set];
-
+    [colorBG set];
 	NSRectFill(rect);
+    [colorFG set];
 
 	/* update x/y axis */
 	[self updateRange];
