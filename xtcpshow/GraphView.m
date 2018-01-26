@@ -77,9 +77,9 @@ float const scroll_sensitivity = 10.0f;
     self.useHistgram = FALSE;
 
     NSColor *initColor = [NSColor colorWithRed:0.0
-                                         green:0.5
+                                         green:0.0
                                           blue:0.0
-                                         alpha:0.3];
+                                         alpha:0.0];
     NSColor *endColor  = [NSColor colorWithRed:0.0
                                          green:1.0
                                           blue:0.0
@@ -281,7 +281,7 @@ float const scroll_sensitivity = 10.0f;
     NSBezierPath __block *path = [NSBezierPath bezierPath];
     NSPoint __block plot;
     BOOL __block pathOpen = false;
-    
+    [[NSColor greenColor] set];
 
     // start from (0.0)
     plot.x = 0.0;
@@ -321,8 +321,8 @@ float const scroll_sensitivity = 10.0f;
         else {
             if (plot.y == 0.0) {
                 [path lineToPoint:plot];
-                [path closePath];
                 [graph_gradient drawInBezierPath:path angle:90.0];
+                [path stroke];
                 [path removeAllPoints];
                 [path moveToPoint:plot];
                 pathOpen = false;
@@ -338,8 +338,8 @@ float const scroll_sensitivity = 10.0f;
         plot.x = rect.size.width;
         plot.y = 0;
         [path lineToPoint:plot];
-        [path closePath];
         [graph_gradient drawInBezierPath:path angle:90.0];
+        [path stroke];
     }
     
     [NSGraphicsContext restoreGraphicsState];
