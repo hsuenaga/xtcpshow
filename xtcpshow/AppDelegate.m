@@ -67,9 +67,9 @@ static NSString *const PREFER_DEVICE=@"en";
 	[_graphView setMaxViewTimeLength:[_zoomBar maxValue]];
 	[_graphView setMinViewTimeLength:[_zoomBar minValue]];
 	[_graphView setViewTimeLength:[_zoomBar floatValue]];
-	[_graphView setMaxMATimeLength:[_smoothBar maxValue]];
-	[_graphView setMinMATimeLength:[_smoothBar minValue]];
-	[_graphView setMATimeLength:[_smoothBar floatValue]];
+	[_graphView setMaxFIRTimeLength:[_smoothBar maxValue]];
+	[_graphView setMinFIRTimeLength:[_smoothBar minValue]];
+	[_graphView setFIRTimeLength:[_smoothBar floatValue]];
 	[_graphView setNeedsDisplay:YES];
 	[_startButton setEnabled:TRUE];
 
@@ -149,7 +149,7 @@ static NSString *const PREFER_DEVICE=@"en";
 }
 
 - (IBAction)changeSmooth:(id)sender {
-	[_graphView setMATimeLength:[sender floatValue]];
+	[_graphView setFIRTimeLength:[sender floatValue]];
 	[self animationNotify:nil];
 	[self updateUserInterface];
 }
@@ -166,7 +166,7 @@ static NSString *const PREFER_DEVICE=@"en";
 
 - (void)scrollGesture:(id)sender
 {
-	float value = [_graphView MATimeLength];
+	float value = [_graphView FIRTimeLength];
 	[_smoothBar setFloatValue:value];
 	[self animationNotify:nil];
 	[self updateUserInterface];

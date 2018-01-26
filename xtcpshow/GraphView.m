@@ -39,6 +39,28 @@
 #import "TrafficIndex.h"
 #import "TrafficDB.h"
 
+
+@interface GraphView ()
+// Status Update
+- (void)updateRange;
+
+// Drawing
+- (void)drawGraphHistgram:(NSRect)rect;
+- (void)drawGraphBezier:(NSRect)rect;
+- (void)drawPPS:(NSRect)rect;
+- (void)drawText:(NSString *)text inRect:(NSRect)rect atPoint:(NSPoint)point;
+- (void)drawText:(NSString *)text inRect:(NSRect)rect alignRight:(CGFloat)y;
+- (void)drawMaxGuide:(NSRect)rect;
+- (void)drawAvgGuide:(NSRect)rect;
+- (void)drawGrid:(NSRect)rect;
+- (void)drawRange:(NSRect)rect;
+- (void)drawDate:(NSRect)rect;
+- (void)drawAllWithSize:(NSRect)rect OffScreen:(BOOL)off;
+
+// Computing
+- (void)resampleData:(TrafficDB *)dataBase inRect:(NSRect) rect;
+@end
+
 //
 // string resources
 //
@@ -137,12 +159,12 @@ float const scroll_sensitivity = 10.0f;
 	y_range = new_range; // [Mbps]
 
 	// Y-axis MA
-	_MATimeLength = floor(_MATimeLength / round) * round;
-	if (_MATimeLength < _minMATimeLength)
-		_MATimeLength = _minMATimeLength;
-	else if (_MATimeLength > _maxMATimeLength)
-		_MATimeLength = _maxMATimeLength;
-	new_range = _MATimeLength * 1000.0f; // [ms]
+	_FIRTimeLength = floor(_FIRTimeLength / round) * round;
+	if (_FIRTimeLength < _minFIRTimeLength)
+		_FIRTimeLength = _minFIRTimeLength;
+	else if (_FIRTimeLength > _maxFIRTimeLength)
+		_FIRTimeLength = _maxFIRTimeLength;
+	new_range = _FIRTimeLength * 1000.0f; // [ms]
 	if (ma_range < (new_range - round)
 	    || ma_range > (new_range + round)) {
 		resample = YES;
@@ -239,7 +261,7 @@ float const scroll_sensitivity = 10.0f;
 
 - (void)scrollWheel:(NSEvent *)event
 {
-	_MATimeLength -= (event.deltaY/_scrollSense);
+	_FIRTimeLength -= (event.deltaY/_scrollSense);
 	_viewTimeOffset -= event.deltaX/_scrollSense;
 	[self updateRange];
 	[resampler purgeData];
@@ -566,7 +588,7 @@ float const scroll_sensitivity = 10.0f;
 	if (_showPacketMarker == TRUE)
 		[self drawPPS:rect];
 
-	/* plot bar graph */
+	/* plot bps graph */
     if (self.useHistgram)
         [self drawGraphHistgram:rect];
     else
@@ -607,7 +629,7 @@ float const scroll_sensitivity = 10.0f;
 	resampler.outputTimeLength = _viewTimeLength;
 	resampler.outputTimeOffset = _viewTimeOffset;
 	resampler.outputSamples = rect.size.width;
-	resampler.FIRTimeLength = _MATimeLength;
+	resampler.FIRTimeLength = _FIRTimeLength;
 
     [resampler resampleDataBase:dataBase atDate:end];
 

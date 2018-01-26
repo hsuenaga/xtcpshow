@@ -81,9 +81,9 @@ extern NSString *const RANGE_MANUAL;
 @property (assign) NSTimeInterval maxViewTimeLength;
 @property (assign) NSTimeInterval viewTimeLength;
 
-@property (assign) NSTimeInterval maxMATimeLength;
-@property (assign) NSTimeInterval minMATimeLength;
-@property (assign) NSTimeInterval MATimeLength;
+@property (assign) NSTimeInterval maxFIRTimeLength;
+@property (assign) NSTimeInterval minFIRTimeLength;
+@property (assign) NSTimeInterval FIRTimeLength;
 
 @property (assign) NSTimeInterval viewTimeOffset;
 
@@ -91,32 +91,18 @@ extern NSString *const RANGE_MANUAL;
 @property (assign) BOOL showDeviationBand;
 @property (assign) BOOL useHistgram;
 
-- (void)updateRange;
-
 // Action from UI
 - (float)setRange:(NSString *)mode withRange:(float)range;
 - (float)setRange:(NSString *)mode withStep:(int)step;
 - (int)stepValueFromRange:(float)range;
+
+// Action from window server
 - (void)magnifyWithEvent:(NSEvent *)event;
 - (void)scrollWheel:(NSEvent *)event;
-
-// Drawing
-- (void)drawGraphHistgram:(NSRect)rect;
-- (void)drawGraphBezier:(NSRect)rect;
-- (void)drawPPS:(NSRect)rect;
-- (void)drawText:(NSString *)text inRect:(NSRect)rect atPoint:(NSPoint)point;
-- (void)drawText:(NSString *)text inRect:(NSRect)rect alignRight:(CGFloat)y;
-- (void)drawMaxGuide:(NSRect)rect;
-- (void)drawAvgGuide:(NSRect)rect;
-- (void)drawGrid:(NSRect)rect;
-- (void)drawRange:(NSRect)rect;
-- (void)drawDate:(NSRect)rect;
-- (void)drawAllWithSize:(NSRect)rect OffScreen:(BOOL)off;
-
-- (void)importData:(TrafficDB *)dataBase;
-- (void)resampleData:(TrafficDB *)dataBase inRect:(NSRect) rect;
-- (void)purgeData;
-- (void)saveFile:(TrafficDB *)dataBase;
 - (void)drawRect:(NSRect)rect;
 
+// Data-Binding
+- (void)importData:(TrafficDB *)dataBase;
+- (void)purgeData;
+- (void)saveFile:(TrafficDB *)dataBase;
 @end
