@@ -43,7 +43,10 @@ extern NSString *const RANGE_AUTO;
 extern NSString *const RANGE_PEAKHOLD;
 extern NSString *const RANGE_MANUAL;
 
-@interface GraphView : NSView
+@interface GraphView : NSView {
+    NSTimeInterval _viewTimeLength;
+    NSTimeInterval _FIRTimeLength;
+}
 @property (weak) AppDelegate *controller;
 
 // statistics

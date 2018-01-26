@@ -60,11 +60,14 @@ NSString *const FMT_NODATA = @"NO DATA RECORD ";
 float const animation_fps = 20.0;
 float const magnify_sensitivity = 2.0;
 float const scroll_sensitivity = 10.0;
+double const time_round = 0.05;
 
 //
 // Private Properties
 //
-@interface GraphView ()
+@interface GraphView () {
+    NSTimeInterval _viewTimeOffset;
+}
 // Animation Timer
 @property (nonatomic) NSTimer *animationTimer;
 
@@ -97,16 +100,16 @@ float const scroll_sensitivity = 10.0;
 @property (nonatomic) float scrollSense;
 
 // Offset of viewport. changed by scroll controll.
+@property (nonatomic) NSTimeInterval minViewTimeOffset;
 @property (nonatomic) NSTimeInterval viewTimeOffset;
+@property (nonatomic) NSTimeInterval maxViewTimeOffset;
 
 // X-axis adjustment
 @property (nonatomic) NSUInteger GraphOffset;
 @property (nonatomic) NSUInteger XmarkOffset;
 
-// X, Y Range settings.
+// Y Range settings.
 @property (nonatomic) double y_range;
-@property (nonatomic) double x_range;
-@property (nonatomic) double FirRange;
 @property (nonatomic) NSUInteger pps_range;
 
 // Data-Bidings
@@ -120,9 +123,7 @@ float const scroll_sensitivity = 10.0;
 
 // Status Update
 - (BOOL)updateRangeY;
-- (BOOL)updateRangeFIR;
 - (BOOL)updateRangePPS;
-- (BOOL)updateRangeX;
 - (void)updateRange;
 
 // Drawing
@@ -141,7 +142,7 @@ float const scroll_sensitivity = 10.0;
 - (void)drawLayer;
 
 // Computing
-- (double)saturateDouble:(double)value withMax:(double)max withMin:(double)min;
+- (double)saturateDouble:(double)value withMax:(double)max withMin:(double)min roundBy:(double)round;
 - (BOOL)resampleDataInRect:(NSRect)rect;
 - (void)refreshView;
 @end
@@ -198,6 +199,8 @@ float const scroll_sensitivity = 10.0;
 	self.scrollSense = scroll_sensitivity;
     self.useHistgram = FALSE;
 	self.resampler = [[DataResampler alloc] init];
+    self.minViewTimeOffset = NAN;
+    self.maxViewTimeOffset = 0.0;
 
 	return self;
 }
@@ -239,25 +242,6 @@ float const scroll_sensitivity = 10.0;
     return FALSE;
 }
 
-- (BOOL)updateRangeFIR
-{
-    const double round = 0.05; // 50 [ms]
-    float new_range;
-    
-    self.FIRTimeLength = floor(self.FIRTimeLength / round) * round;
-    self.FIRTimeLength = [self saturateDouble:self.FIRTimeLength
-                                      withMax:self.maxFIRTimeLength
-                                      withMin:self.minFIRTimeLength];
-    new_range = self.FIRTimeLength * 1000.0f; // [ms]
-    if (self.FirRange < (new_range - round)
-        || self.FirRange > (new_range + round)) {
-        self.FirRange = new_range;
-        return TRUE; // resample is required.
-    }
-    
-    return FALSE;
-}
-
 - (BOOL)updateRangePPS
 {
     if (self.range_mode == RANGE_AUTO) {
@@ -271,32 +255,6 @@ float const scroll_sensitivity = 10.0;
     return FALSE;
 }
 
-- (BOOL)updateRangeX
-{
-    const double round = 0.05; // 50 [ms]
-    float new_range;
-    
-    // offset
-    self.viewTimeOffset = floor(self.viewTimeOffset / round) * round;
-    if (self.viewTimeOffset > 0.0)
-        self.viewTimeOffset = 0.0;
-
-    // scale
-    self.viewTimeLength = floor(self.viewTimeLength / round) * round;
-    if (self.viewTimeLength < self.minViewTimeLength)
-        self.viewTimeLength = self.minViewTimeLength;
-    else if (self.viewTimeLength > self.maxViewTimeLength)
-        self.viewTimeLength = self.maxViewTimeLength;
-    new_range = self.viewTimeLength * 1000.0f; // [ms]
-    if (self.x_range < (new_range - round)
-        || self.x_range > (new_range + round)) {
-        self.x_range = new_range;
-        return TRUE;
-    }
-
-    return FALSE;
-}
-
 - (void)updateRange
 {
 	BOOL resample = NO;
@@ -305,18 +263,10 @@ float const scroll_sensitivity = 10.0;
     if ([self updateRangeY])
         resample = YES;
 
-	// FIR
-    if ([self updateRangeFIR])
-        resample = YES;
-    
 	// PPS
     if ([self updateRangePPS])
         resample = YES;
 	
-	// X-axis
-    if ([self updateRangeX])
-        resample = YES;
-
     // Purge data if required.
     if (resample)
 		[self purgeData];
@@ -333,6 +283,54 @@ float const scroll_sensitivity = 10.0;
 	[self updateRange];
 
 	return self.y_range;
+}
+
+- (NSTimeInterval)viewTimeLength
+{
+    return _viewTimeLength;
+}
+
+- (void)setViewTimeLength:(NSTimeInterval)viewTimeLength
+{
+    double old = _viewTimeLength;
+    _viewTimeLength = [self saturateDouble:viewTimeLength
+                                   withMax:self.maxViewTimeLength
+                                   withMin:self.minViewTimeLength
+                                   roundBy:time_round];
+    if (fabs(old - _viewTimeLength) > time_round)
+        [self purgeData];
+}
+
+- (NSTimeInterval)FIRTimeLength
+{
+    return _FIRTimeLength;
+}
+
+- (void)setFIRTimeLength:(NSTimeInterval)FIRTimeLength
+{
+    double old = _FIRTimeLength;
+    _FIRTimeLength = [self saturateDouble:FIRTimeLength
+                                  withMax:self.maxFIRTimeLength
+                                  withMin:self.minFIRTimeLength
+                                  roundBy:time_round];
+    if (fabs(old - _FIRTimeLength) > time_round)
+        [self purgeData];
+}
+
+- (NSTimeInterval)viewTimeOffset
+{
+    return _viewTimeOffset;
+}
+
+- (void)setViewTimeOffset:(NSTimeInterval)viewTimeOffset
+{
+    double old = _viewTimeOffset;
+    _viewTimeOffset = [self saturateDouble:viewTimeOffset
+                                   withMax:self.maxViewTimeOffset
+                                   withMin:self.minViewTimeOffset
+                                   roundBy:time_round];
+    if (fabs(old - _viewTimeOffset) > time_round)
+        [self purgeData];
 }
 
 - (float)setRange:(NSString *)mode withStep:(int)step
@@ -399,7 +397,6 @@ float const scroll_sensitivity = 10.0;
 - (void)magnifyWithEvent:(NSEvent *)event
 {
 	self.viewTimeLength *= 1.0/(1.0 + (event.magnification/self.magnifySense));
-	[self updateRange];
 
 	[self.controller zoomGesture:self];
 }
@@ -408,7 +405,6 @@ float const scroll_sensitivity = 10.0;
 {
 	self.FIRTimeLength -= (event.deltaY/self.scrollSense);
 	self.viewTimeOffset -= event.deltaX/self.scrollSense;
-	[self updateRange];
 
 	[self.controller scrollGesture:self];
 }
@@ -567,10 +563,10 @@ float const scroll_sensitivity = 10.0;
 	[self.pathSolid stroke];
 
 	// draw text
-	if (value < (rect.size.height / 5))
-		value = (rect.size.height / 5);
-	else if (value > ((rect.size.height / 5) * 4))
-		value = (rect.size.height / 5) * 4;
+    value = [self saturateDouble:value
+                         withMax:(rect.size.height / 5) * 4
+                         withMin:(rect.size.height / 5)
+                         roundBy:NAN];
 	NSString *marker = [NSString stringWithFormat:CAP_MAX_MBPS, _maxValue];
 	[self drawText:marker inRect:rect atPoint:NSMakePoint((CGFloat)0.0, value)];
 }
@@ -610,10 +606,10 @@ float const scroll_sensitivity = 10.0;
 	}
 
 	/* draw text */
-	if (value < (rect.size.height / 5))
-		value = (rect.size.height / 5);
-	else if (value > ((rect.size.height / 5) * 4))
-		value = (rect.size.height / 5) * 4;
+    value = [self saturateDouble:value
+                         withMax:(rect.size.height / 5) * 4
+                         withMin:(rect.size.height)
+                         roundBy:NAN];
 	NSString *marker = [NSString stringWithFormat:CAP_AVG_MBPS, self.averageValue, deviation];
 	[self drawText:marker inRect:rect alignRight:value];
 }
@@ -642,7 +638,10 @@ float const scroll_sensitivity = 10.0;
 
 - (void)drawRange:(NSRect)rect
 {
-	NSString *text = [NSString stringWithFormat:FMT_RANGE, (self.y_range / 5.0), (self.x_range / 5.0), self.FirRange];
+	NSString *text = [NSString stringWithFormat:FMT_RANGE,
+                      (self.y_range / 5.0),
+                      self.viewTimeLength * 1.0E3,
+                      self.FIRTimeLength * 1.0E3];
 	[self drawText:text inRect:rect atPoint:NSMakePoint(0.0, 0.0)];
 }
 
@@ -763,11 +762,13 @@ float const scroll_sensitivity = 10.0;
 //
 // Computing
 //
-- (double)saturateDouble:(double)value withMax:(double)max withMin:(double)min
+- (double)saturateDouble:(double)value withMax:(double)max withMin:(double)min roundBy:(double)round
 {
-    if (value < min)
+    if (!isnan(round))
+        value = floor(value/round) * round;
+    if (!isnan(min) && value < min)
         value = min;
-    if (value > max)
+    if (!isnan(max) && value > max)
         value = max;
     
     return value;
