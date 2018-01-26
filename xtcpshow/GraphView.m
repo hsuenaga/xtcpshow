@@ -141,6 +141,7 @@ float const scroll_sensitivity = 10.0;
 - (void)drawLayer;
 
 // Computing
+- (double)saturateDouble:(double)value withMax:(double)max withMin:(double)min;
 - (BOOL)resampleDataInRect:(NSRect)rect;
 - (void)refreshView;
 @end
@@ -244,10 +245,9 @@ float const scroll_sensitivity = 10.0;
     float new_range;
     
     self.FIRTimeLength = floor(self.FIRTimeLength / round) * round;
-    if (self.FIRTimeLength < self.minFIRTimeLength)
-        self.FIRTimeLength = self.minFIRTimeLength;
-    else if (self.FIRTimeLength > self.maxFIRTimeLength)
-        self.FIRTimeLength = self.maxFIRTimeLength;
+    self.FIRTimeLength = [self saturateDouble:self.FIRTimeLength
+                                      withMax:self.maxFIRTimeLength
+                                      withMin:self.minFIRTimeLength];
     new_range = self.FIRTimeLength * 1000.0f; // [ms]
     if (self.FirRange < (new_range - round)
         || self.FirRange > (new_range + round)) {
@@ -479,7 +479,7 @@ float const scroll_sensitivity = 10.0;
         // fill background
         if (fill && value > 0.0) {
             NSRect histgram;
-                
+            
             histgram.origin.x = plot.x;
             histgram.origin.y = 0;
             histgram.size.width = 1.0;
@@ -761,8 +761,18 @@ float const scroll_sensitivity = 10.0;
 }
 
 //
-// Data Bindings
+// Computing
 //
+- (double)saturateDouble:(double)value withMax:(double)max withMin:(double)min
+{
+    if (value < min)
+        value = min;
+    if (value > max)
+        value = max;
+    
+    return value;
+}
+
 - (BOOL)resampleDataInRect:(NSRect)rect
 {
 	NSDate *end;
