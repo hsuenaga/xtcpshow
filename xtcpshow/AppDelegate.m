@@ -97,15 +97,23 @@ static NSString *const PREFER_DEVICE=@"en";
     }
 }
 
+- (void)setInput:(BOOL)input_enabled
+{
+    [_startButton setTitle:(input_enabled ? LBL_START : LBL_STOP)];
+    [_deviceSelector setEnabled:input_enabled];
+    [_filterField setEnabled:input_enabled];
+    [_promiscCheck setEnabled:input_enabled];
+    [self updateUserInterface];
+}
+
 - (IBAction)startCapture:(id)sender {
 	BOOL input_enabled;
 
 	if ([self.model captureEnabled]) {
 		/* stop capture */
 		[_model stopCapture];
-		[_startButton setTitle:LBL_START];
-		input_enabled = TRUE;
         [self.graphView stopPlot];
+        input_enabled = TRUE;
 	}
 	else {
 		/* start capture */
@@ -114,25 +122,16 @@ static NSString *const PREFER_DEVICE=@"en";
 		_model.device =	[[_deviceSelector titleOfSelectedItem] cStringUsingEncoding:NSASCIIStringEncoding];
 		_model.filter =
 		[[_filterField stringValue] cStringUsingEncoding:NSASCIIStringEncoding];
-		if ([_promiscCheck state] == NSOnState)
-			_model.promisc = YES;
-		else
-			_model.promisc = NO;
-		[_startButton setTitle:LBL_STOP];
-		input_enabled = FALSE;
-
+        _model.promisc = ([_promiscCheck state] == NSOnState) ? YES:NO;
         if ([_model startCapture] == FALSE) {
             [self samplingError:@"Cannot start capture thread"];
             return;
         }
         [self.graphView importData:self.model.dataBase];
         [self.graphView startPlot];
+        input_enabled = FALSE;
 	}
-
-	[_deviceSelector setEnabled:input_enabled];
-	[_filterField setEnabled:input_enabled];
-	[_promiscCheck setEnabled:input_enabled];
-	[self updateUserInterface];
+    [self setInput:input_enabled];
 }
 
 - (IBAction)changeZoom:(id)sender {
@@ -266,11 +265,10 @@ static NSString *const PREFER_DEVICE=@"en";
 	NSAlert *alert;
 
     // Reset UI
-	[_startButton setTitle:LBL_START];
-	[_deviceSelector setEnabled:YES];
-	[_filterField setEnabled:YES];
-    [_promiscCheck setEnabled:YES];
+    [self.model stopCapture];
     [self.graphView stopPlot];
+    [self setInput:YES];
+    [self updateUserInterface];
 
     // Show alert dialog.
     NSLog(@"alert: %@", message);
@@ -282,8 +280,6 @@ static NSString *const PREFER_DEVICE=@"en";
     if (message)
         [alert setInformativeText:message];
     [alert runModal];
-
-	[self updateUserInterface];
 }
 
 - (void)updateUserInterface {
