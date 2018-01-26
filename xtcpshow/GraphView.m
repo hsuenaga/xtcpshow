@@ -75,6 +75,7 @@ float const scroll_sensitivity = 10.0;
 @property (nonatomic) NSMutableDictionary *textAttributes;
 @property (nonatomic) NSGradient *gradGraph;
 @property (nonatomic) NSBezierPath *pathSolid;
+@property (nonatomic) NSBezierPath *pathBold;
 @property (nonatomic) NSBezierPath *pathDash;
 @property (nonatomic) NSColor *colorBG;
 @property (nonatomic) NSColor *colorFG;
@@ -118,11 +119,15 @@ float const scroll_sensitivity = 10.0;
 @property (nonatomic) double averageValue;
 
 // Status Update
+- (BOOL)updateRangeY;
+- (BOOL)updateRangeFIR;
+- (BOOL)updateRangePPS;
+- (BOOL)updateRangeX;
 - (void)updateRange;
 
 // Drawing
 - (void)drawGraphHistgram:(NSRect)rect;
-- (void)drawGraphBezier:(NSRect)rect;
+- (void)drawGraphBezier:(NSRect)rect enableFill:(BOOL)fill;
 - (void)drawPPS:(NSRect)rect;
 - (void)drawText:(NSString *)text inRect:(NSRect)rect atPoint:(NSPoint)point;
 - (void)drawText:(NSString *)text inRect:(NSRect)rect alignRight:(CGFloat)y;
@@ -163,6 +168,8 @@ float const scroll_sensitivity = 10.0;
     
     // Path
     self.pathSolid = [NSBezierPath bezierPath];
+    self.pathBold = [NSBezierPath bezierPath];
+    [self.pathBold setLineWidth:2.0];
     self.pathDash = [NSBezierPath bezierPath];
     const CGFloat dash[2] = {5.0, 5.0};
     const NSUInteger count = sizeof(dash)/sizeof(dash[0]);
@@ -194,87 +201,125 @@ float const scroll_sensitivity = 10.0;
 	return self;
 }
 
+- (BOOL)updateRangeY
+{
+    float new_range;
+    float max = [self.viewData maxDoubleValue];
+    
+    if (self.range_mode == RANGE_MANUAL) {
+        if (self.manual_range <= 0.5f)
+            new_range = 0.5f;
+        else if (self.manual_range <= 1.0f)
+            new_range = 1.0f;
+        else if (self.manual_range <= 2.5f)
+            new_range = 2.5f;
+        else
+            new_range =
+            5.0f * (ceil(self.manual_range/5.0f));
+    } else {
+        if (self.range_mode == RANGE_PEAKHOLD) {
+            if (self.peak_range < max)
+                self.peak_range = max;
+            max = self.peak_range;
+        }
+        
+        /* automatic scaling */
+        if (max < 0.5f)
+            new_range = 0.5f;
+        else if (max < 1.0f)
+            new_range = 1.0f;
+        else if (max < 2.5f)
+            new_range = 2.5f;
+        else
+            new_range = 5.0f * (ceil(max / 5.0f));
+    }
+    self.y_range = new_range; // [Mbps]
+
+    return FALSE;
+}
+
+- (BOOL)updateRangeFIR
+{
+    const double round = 0.05; // 50 [ms]
+    float new_range;
+    
+    self.FIRTimeLength = floor(self.FIRTimeLength / round) * round;
+    if (self.FIRTimeLength < self.minFIRTimeLength)
+        self.FIRTimeLength = self.minFIRTimeLength;
+    else if (self.FIRTimeLength > self.maxFIRTimeLength)
+        self.FIRTimeLength = self.maxFIRTimeLength;
+    new_range = self.FIRTimeLength * 1000.0f; // [ms]
+    if (self.FirRange < (new_range - round)
+        || self.FirRange > (new_range + round)) {
+        self.FirRange = new_range;
+        return TRUE; // resample is required.
+    }
+    
+    return FALSE;
+}
+
+- (BOOL)updateRangePPS
+{
+    if (self.range_mode == RANGE_AUTO) {
+        // auto
+        self.pps_range = self.maxSamples;
+    }
+    else if (self.pps_range < self.maxSamples) {
+        // peak hold (no manual settting)
+        self.pps_range = self.maxSamples;
+    }
+    return FALSE;
+}
+
+- (BOOL)updateRangeX
+{
+    const double round = 0.05; // 50 [ms]
+    float new_range;
+    
+    // offset
+    self.viewTimeOffset = floor(self.viewTimeOffset / round) * round;
+    if (self.viewTimeOffset > 0.0)
+        self.viewTimeOffset = 0.0;
+
+    // scale
+    self.viewTimeLength = floor(self.viewTimeLength / round) * round;
+    if (self.viewTimeLength < self.minViewTimeLength)
+        self.viewTimeLength = self.minViewTimeLength;
+    else if (self.viewTimeLength > self.maxViewTimeLength)
+        self.viewTimeLength = self.maxViewTimeLength;
+    new_range = self.viewTimeLength * 1000.0f; // [ms]
+    if (self.x_range < (new_range - round)
+        || self.x_range > (new_range + round)) {
+        self.x_range = new_range;
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
 - (void)updateRange
 {
-	const double round = 0.05; // 50 [ms]
-	float max;
-	float new_range;
 	BOOL resample = NO;
 
 	// Y-axis
-	max = [self.viewData maxDoubleValue];
-	if (self.range_mode == RANGE_MANUAL) {
-		if (self.manual_range <= 0.5f)
-			new_range = 0.5f;
-		else if (self.manual_range <= 1.0f)
-			new_range = 1.0f;
-		else if (self.manual_range <= 2.5f)
-			new_range = 2.5f;
-		else
-			new_range =
-			5.0f * (ceil(self.manual_range/5.0f));
-	} else {
-		if (self.range_mode == RANGE_PEAKHOLD) {
-			if (self.peak_range < max)
-				self.peak_range = max;
-			max = self.peak_range;
-		}
+    if ([self updateRangeY])
+        resample = YES;
 
-		/* automatic scaling */
-		if (max < 0.5f)
-			new_range = 0.5f;
-		else if (max < 1.0f)
-			new_range = 1.0f;
-		else if (max < 2.5f)
-			new_range = 2.5f;
-		else
-			new_range = 5.0f * (ceil(max / 5.0f));
-	}
-	self.y_range = new_range; // [Mbps]
-
-	// Y-axis MA
-	self.FIRTimeLength = floor(self.FIRTimeLength / round) * round;
-	if (self.FIRTimeLength < self.minFIRTimeLength)
-		self.FIRTimeLength = self.minFIRTimeLength;
-	else if (self.FIRTimeLength > self.maxFIRTimeLength)
-		self.FIRTimeLength = self.maxFIRTimeLength;
-	new_range = self.FIRTimeLength * 1000.0f; // [ms]
-	if (self.FirRange < (new_range - round)
-	    || self.FirRange > (new_range + round)) {
-		resample = YES;
-		self.FirRange = new_range;
-	}
-
-	// Y-axis Packets per Sample
-	if (self.range_mode == RANGE_AUTO) {
-		// auto
-		self.pps_range = self.maxSamples;
-	}
-	else if (self.pps_range < self.maxSamples) {
-		// peak hold (no manual settting)
-		self.pps_range = self.maxSamples;
-	}
+	// FIR
+    if ([self updateRangeFIR])
+        resample = YES;
+    
+	// PPS
+    if ([self updateRangePPS])
+        resample = YES;
 	
 	// X-axis
-	self.viewTimeLength = floor(self.viewTimeLength / round) * round;
-	if (self.viewTimeLength < self.minViewTimeLength)
-		self.viewTimeLength = self.minViewTimeLength;
-	else if (self.viewTimeLength > self.maxViewTimeLength)
-		self.viewTimeLength = self.maxViewTimeLength;
-	new_range = self.viewTimeLength * 1000.0f; // [ms]
-	if (self.x_range < (new_range - round)
-	    || self.x_range > (new_range + round)) {
-		resample = YES;
-		self.x_range = new_range;
-	}
+    if ([self updateRangeX])
+        resample = YES;
 
-	self.viewTimeOffset = floor(self.viewTimeOffset / round) * round;
-	if (self.viewTimeOffset > 0.0)
-		self.viewTimeOffset = 0.0;
-
-    if (resample) {
+    // Purge data if required.
+    if (resample)
 		[self purgeData];
-    }
 }
 
 - (float)setRange:(NSString *)mode withRange:(float)range
@@ -395,7 +440,7 @@ float const scroll_sensitivity = 10.0;
 	}];
 }
 
-- (void)drawGraphBezier:(NSRect)rect
+- (void)drawGraphBezier:(NSRect)rect enableFill:(BOOL)fill
 {
     [self.colorBPS set];
 
@@ -403,8 +448,8 @@ float const scroll_sensitivity = 10.0;
     NSPoint pointStart = {
         .x = 0.0, .y=0.0
     };
-    [self.pathSolid removeAllPoints];
-    [self.pathSolid moveToPoint:pointStart];
+    [self.pathBold removeAllPoints];
+    [self.pathBold moveToPoint:pointStart];
     
     // make path
     double scaler = (double)rect.size.height / (double)self.y_range;
@@ -430,30 +475,42 @@ float const scroll_sensitivity = 10.0;
             .x = (CGFloat)idx,
             .y = (CGFloat)value
         };
+
+        // fill background
+        if (fill && value > 0.0) {
+            NSRect histgram;
+                
+            histgram.origin.x = plot.x;
+            histgram.origin.y = 0;
+            histgram.size.width = 1.0;
+            histgram.size.height = plot.y;
+            [self.gradGraph drawInRect:histgram angle:90.0];
+        }
+        
+        // draw outline
         if (!pathOpen) {
             if (plot.y > 0.0) {
                 // create new shape
-                [self.pathSolid lineToPoint:plot];
+                [self.pathBold lineToPoint:plot];
                 pathOpen = true;
                 return;
             }
-            [self.pathSolid moveToPoint:plot];
+            [self.pathBold moveToPoint:plot];
             return;
         }
         else {
             if (plot.y == 0.0) {
                 // close the shape
-                [self.pathSolid lineToPoint:plot];
-                [self.gradGraph drawInBezierPath:self.pathSolid angle:90.0];
-                [self.pathSolid stroke];
+                [self.pathBold lineToPoint:plot];
+                [self.pathBold stroke];
                 
                 // restart from currnet plot
-                [self.pathSolid removeAllPoints];
-                [self.pathSolid moveToPoint:plot];
+                [self.pathBold removeAllPoints];
+                [self.pathBold moveToPoint:plot];
                 pathOpen = false;
                 return;
             }
-            [self.pathSolid lineToPoint:plot];
+            [self.pathBold lineToPoint:plot];
             return;
         }
     }];
@@ -464,9 +521,8 @@ float const scroll_sensitivity = 10.0;
             .x = rect.size.width,
             .y = 0.0
         };
-        [self.pathSolid lineToPoint:pointEnd];
-        [self.gradGraph drawInBezierPath:self.pathSolid angle:90.0];
-        [self.pathSolid stroke];
+        [self.pathBold lineToPoint:pointEnd];
+        [self.pathBold stroke];
     }
 }
 
@@ -652,8 +708,9 @@ float const scroll_sensitivity = 10.0;
 	// plot bps graph
     if (self.useHistgram || ![self.resampler FIRenabled])
         [self drawGraphHistgram:rect];
-    else
-        [self drawGraphBezier:rect];
+    else {
+        [self drawGraphBezier:rect enableFill:TRUE];
+    }
 
 	// plot guide line (max, average, ...)
 	[self drawMaxGuide:rect];
