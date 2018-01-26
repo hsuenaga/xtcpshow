@@ -285,7 +285,7 @@ float const scroll_sensitivity = 10.0f;
 		_viewTimeOffset = 0.0;
 
     if (resample) {
-		[self.resampler purgeData];
+		[self purgeData];
     }
 }
 
@@ -340,7 +340,6 @@ float const scroll_sensitivity = 10.0f;
 {
 	_viewTimeLength *= 1.0/(1.0 + (event.magnification/_magnifySense));
 	[self updateRange];
-	[self purgeData];
 
 	[_controller zoomGesture:self];
 }
@@ -350,7 +349,6 @@ float const scroll_sensitivity = 10.0f;
 	_FIRTimeLength -= (event.deltaY/_scrollSense);
 	_viewTimeOffset -= event.deltaX/_scrollSense;
 	[self updateRange];
-	[self purgeData];
 
 	[self.controller scrollGesture:self];
 }
