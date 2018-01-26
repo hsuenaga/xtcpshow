@@ -32,7 +32,7 @@
 
 #import <Cocoa/Cocoa.h>
 
-#define UPDATE_FPS (10.0)
+#define UPDATE_FPS (20.0)
 #define UPDATE_INT (1.0/UPDATE_FPS)
 
 @class CaptureModel;
