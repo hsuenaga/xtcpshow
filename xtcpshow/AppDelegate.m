@@ -85,7 +85,7 @@ static NSString *const PREFER_DEVICE=@"en";
 	[_rangeSelector selectItemWithTitle:RANGE_AUTO];
 
 	// notification center
-	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(closeNofity:) name:NSWindowWillCloseNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(closeNotify:) name:NSWindowWillCloseNotification object:self.window];
 
 	[self updateUserInterface];
 }
@@ -257,11 +257,19 @@ static NSString *const PREFER_DEVICE=@"en";
 	[_graphView saveFile:self.model.dataBase];
 }
 
-- (void)closeNofity:(id)sender
+- (void)closeNotify:(NSNotification *)notify
 {
-	NSLog(@"close window. exitting..");
-	[_model stopCapture];
-	[NSApp performSelector:@selector(terminate:) withObject:nil afterDelay:0.0];
+    NSWindow *sender = [notify object];
+    
+    if (sender == self.window) {
+        NSLog(@"close window. exitting..");
+        [[NSNotificationCenter defaultCenter] removeObserver:self];
+        [_model stopCapture];
+        [NSApp performSelector:@selector(terminate:) withObject:nil afterDelay:0.0];
+    }
+    else {
+        NSLog(@"other window was closed.");
+    }
 }
 
 - (void)animationNotify:(id)sender

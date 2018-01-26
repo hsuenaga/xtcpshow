@@ -86,7 +86,7 @@
 @property (strong) NSTimer *timer;
 
 /* notify from model, controller(myself), ... */
-- (void) closeNofity:(id)sender;
+- (void) closeNotify:(NSNotification *)notify;
 - (void) animationNotify:(NSTimer *)sender;
 - (void) samplingError:(NSString *)message;
 - (void) updateUserInterface;
