@@ -58,31 +58,31 @@ static NSString *const PREFER_DEVICE=@"en";
 {
 	// Setup Model object
 	[self setModel:[[CaptureModel alloc] init]];
-	[_model setController:self]; // weak
+	[self.model setController:self]; // weak
 
 	// widget initialization
-	[_graphView setController:self];
-	[_graphView setRange:RANGE_AUTO withRange:0.0];
-	[_graphView setShowPacketMarker:NO];
-    [_graphView setUseHistgram:NO];
-	[_graphView setMaxViewTimeLength:[_zoomBar maxValue]];
-	[_graphView setMinViewTimeLength:[_zoomBar minValue]];
-	[_graphView setViewTimeLength:[_zoomBar floatValue]];
-	[_graphView setMaxFIRTimeLength:[_smoothBar maxValue]];
-	[_graphView setMinFIRTimeLength:[_smoothBar minValue]];
-	[_graphView setFIRTimeLength:[_smoothBar floatValue]];
-	[_graphView setNeedsDisplay:YES];
-	[_startButton setEnabled:TRUE];
+	[self.graphView setController:self];
+	[self.graphView setRange:RANGE_AUTO withRange:0.0];
+	[self.graphView setShowPacketMarker:NO];
+    [self.graphView setUseHistgram:NO];
+	[self.graphView setMaxViewTimeLength:[self.zoomBar maxValue]];
+	[self.graphView setMinViewTimeLength:[self.zoomBar minValue]];
+	[self.graphView setViewTimeLength:[self.zoomBar floatValue]];
+	[self.graphView setMaxFIRTimeLength:[self.smoothBar maxValue]];
+	[self.graphView setMinFIRTimeLength:[self.smoothBar minValue]];
+	[self.graphView setFIRTimeLength:[self.smoothBar floatValue]];
+	[self.graphView setNeedsDisplay:YES];
+	[self.startButton setEnabled:TRUE];
 
 	// setup intrface labels
-	[self setupInterfaceButton:_deviceSelector];
+	[self setupInterfaceButton:self.deviceSelector];
 
 	// setup range labels
-	[_rangeSelector removeAllItems];
-	[_rangeSelector addItemWithTitle:RANGE_AUTO];
-	[_rangeSelector addItemWithTitle:RANGE_PEAKHOLD];
-	[_rangeSelector addItemWithTitle:RANGE_MANUAL];
-	[_rangeSelector selectItemWithTitle:RANGE_AUTO];
+	[self.rangeSelector removeAllItems];
+	[self.rangeSelector addItemWithTitle:RANGE_AUTO];
+	[self.rangeSelector addItemWithTitle:RANGE_PEAKHOLD];
+	[self.rangeSelector addItemWithTitle:RANGE_MANUAL];
+	[self.rangeSelector selectItemWithTitle:RANGE_AUTO];
 
 	// notification center
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(closeNotify:) name:NSWindowWillCloseNotification object:self.window];
@@ -92,56 +92,53 @@ static NSString *const PREFER_DEVICE=@"en";
 
 - (IBAction)installHelper:(id)sender {
     [OpenBPFService installHelper];
-    if (_model) {
-        [_model openDevice];
+    if (self.model) {
+        [self.model openDevice];
     }
 }
 
 - (void)setInput:(BOOL)input_enabled
 {
-    [_startButton setTitle:(input_enabled ? LBL_START : LBL_STOP)];
-    [_deviceSelector setEnabled:input_enabled];
-    [_filterField setEnabled:input_enabled];
-    [_promiscCheck setEnabled:input_enabled];
+    [self.startButton setTitle:(input_enabled ? LBL_START : LBL_STOP)];
+    [self.deviceSelector setEnabled:input_enabled];
+    [self.filterField setEnabled:input_enabled];
+    [self.promiscCheck setEnabled:input_enabled];
     [self updateUserInterface];
 }
 
 - (IBAction)startCapture:(id)sender {
-	BOOL input_enabled;
-
 	if ([self.model captureEnabled]) {
 		/* stop capture */
-		[_model stopCapture];
+		[self.model stopCapture];
         [self.graphView stopPlot];
-        input_enabled = TRUE;
+        [self setInput:TRUE];
+        return;
 	}
-	else {
-		/* start capture */
-		[_model resetCounter];
 
-		_model.device =	[[_deviceSelector titleOfSelectedItem] cStringUsingEncoding:NSASCIIStringEncoding];
-		_model.filter =
-		[[_filterField stringValue] cStringUsingEncoding:NSASCIIStringEncoding];
-        _model.promisc = ([_promiscCheck state] == NSOnState) ? YES:NO;
-        if ([_model startCapture] == FALSE) {
-            [self samplingError:@"Cannot start capture thread"];
-            return;
-        }
-        [self.graphView importData:self.model.dataBase];
-        [self.graphView startPlot];
-        input_enabled = FALSE;
-	}
-    [self setInput:input_enabled];
+    /* start capture */
+    [self.model resetCounter];
+    
+    self.model.device = [[self.deviceSelector titleOfSelectedItem] cStringUsingEncoding:NSASCIIStringEncoding];
+    self.model.filter =
+    [[self.filterField stringValue] cStringUsingEncoding:NSASCIIStringEncoding];
+    self.model.promisc = ([self.promiscCheck state] == NSOnState) ? YES:NO;
+    if ([self.model startCapture] == FALSE) {
+        [self samplingError:@"Cannot start capture thread"];
+        return;
+    }
+    [self.graphView importData:self.model.dataBase];
+    [self.graphView startPlot];
+    [self setInput:FALSE];
 }
 
 - (IBAction)changeZoom:(id)sender {
-	[_graphView setViewTimeLength:[sender floatValue]];
+	[self.graphView setViewTimeLength:[sender floatValue]];
     [self.graphView setNeedsDisplay:YES];
 	[self updateUserInterface];
 }
 
 - (IBAction)changeSmooth:(id)sender {
-	[_graphView setFIRTimeLength:[sender floatValue]];
+	[self.graphView setFIRTimeLength:[sender floatValue]];
 	[self updateUserInterface];
 }
 
@@ -149,15 +146,15 @@ static NSString *const PREFER_DEVICE=@"en";
 {
 	float value;
 
-	value = [_graphView viewTimeLength];
-	[_zoomBar setFloatValue:value];
+	value = [self.graphView viewTimeLength];
+	[self.zoomBar setFloatValue:value];
 	[self updateUserInterface];
 }
 
 - (void)scrollGesture:(id)sender
 {
-	float value = [_graphView FIRTimeLength];
-	[_smoothBar setFloatValue:value];
+	float value = [self.graphView FIRTimeLength];
+	[self.smoothBar setFloatValue:value];
 	[self updateUserInterface];
 }
 
@@ -166,14 +163,14 @@ static NSString *const PREFER_DEVICE=@"en";
 	float range;
 	int step;
 
-	mode = [_rangeSelector titleOfSelectedItem];
+	mode = [self.rangeSelector titleOfSelectedItem];
 	if (mode != RANGE_MANUAL)
 		return;
 
-	step = [_rangeStepper intValue];
-	range = [_graphView setRange:mode withStep:step];
+	step = [self.rangeStepper intValue];
+	range = [self.graphView setRange:mode withStep:step];
 	NSLog(@"new range:%f", range);
-	[_rangeField setFloatValue:range];
+	[self.rangeField setFloatValue:range];
 	[self updateUserInterface];
 }
 
@@ -181,66 +178,66 @@ static NSString *const PREFER_DEVICE=@"en";
 	NSString *mode;
 	float range;
 
-	mode = [_rangeSelector titleOfSelectedItem];
+	mode = [self.rangeSelector titleOfSelectedItem];
 	if (mode != RANGE_MANUAL)
 		return;
 
-	range = [_rangeField floatValue];
+	range = [self.rangeField floatValue];
 	if (isnan(range) || isinf(range))
 		range = 0.0f;
 
-	range = [_graphView setRange:mode withRange:range];
-	[_rangeField setFloatValue:range];
-	[_rangeStepper
-	 setIntValue:[_graphView stepValueFromRange:range]];
+	range = [self.graphView setRange:mode withRange:range];
+	[self.rangeField setFloatValue:range];
+	[self.rangeStepper
+	 setIntValue:[self.graphView stepValueFromRange:range]];
 	[self updateUserInterface];
 }
 
 - (IBAction)setRangeType:(id)sender {
 	NSString *mode;
 
-	mode = [_rangeSelector titleOfSelectedItem];
+	mode = [self.rangeSelector titleOfSelectedItem];
 	if (mode == RANGE_MANUAL) {
 		float range;
 
-		[_rangeField setEnabled:YES];
-		[_rangeStepper setEnabled:YES];
-		range = [_rangeField floatValue];
-		range = [_graphView setRange:mode withRange:range];
-		[_rangeField setFloatValue:range];
+		[self.rangeField setEnabled:YES];
+		[self.rangeStepper setEnabled:YES];
+		range = [self.rangeField floatValue];
+		range = [self.graphView setRange:mode withRange:range];
+		[self.rangeField setFloatValue:range];
 		return;
 	}
 
-	[_rangeStepper setEnabled:NO];
-	[_rangeField setEnabled:NO];
-	[_graphView setRange:mode withRange:0.0f];
+	[self.rangeStepper setEnabled:NO];
+	[self.rangeField setEnabled:NO];
+	[self.graphView setRange:mode withRange:0.0f];
 	[self updateUserInterface];
 }
 
 - (IBAction)togglePacketMarker:(id)sender {
 	if ([sender state] == NSOnState)
-		[_graphView setShowPacketMarker:YES];
+		[self.graphView setShowPacketMarker:YES];
 	else
-		[_graphView setShowPacketMarker:NO];
+		[self.graphView setShowPacketMarker:NO];
 
-	[_graphView setNeedsDisplay:YES];
+	[self.graphView setNeedsDisplay:YES];
 }
 
 - (IBAction)toggleDeviation:(id)sender {
     if ([sender state] == NSOnState) {
-		[_graphView setShowDeviationBand:YES];
+		[self.graphView setShowDeviationBand:YES];
         NSLog(@"deviation enabled.");
     }
     else {
-		[_graphView setShowDeviationBand:NO];
+		[self.graphView setShowDeviationBand:NO];
         NSLog(@"deviation disabled.");
     }
 
-	[_graphView setNeedsDisplay:YES];
+	[self.graphView setNeedsDisplay:YES];
 }
 
 - (IBAction)copyGraphView:(id)sender {
-	[_graphView saveFile:self.model.dataBase];
+	[self.graphView saveFile:self.model.dataBase];
 }
 
 - (void)closeNotify:(NSNotification *)notify
@@ -250,7 +247,7 @@ static NSString *const PREFER_DEVICE=@"en";
     if (sender == self.window) {
         NSLog(@"close window. exitting..");
         [[NSNotificationCenter defaultCenter] removeObserver:self];
-        [_model stopCapture];
+        [self.model stopCapture];
         [NSApp performSelector:@selector(terminate:) withObject:nil afterDelay:0.0];
     }
     else {
@@ -281,15 +278,15 @@ static NSString *const PREFER_DEVICE=@"en";
 }
 
 - (void)updateUserInterface {
-	[_snapshotField	 setFloatValue:_model.mbps];
-	[_maxField setFloatValue:_model.max_mbps];
-	[_averageField setFloatValue:_model.average_mbps];
-	[_totalpktField setIntegerValue:_model.totalPkts];
+	[self.snapshotField	 setFloatValue:self.model.mbps];
+	[self.maxField setFloatValue:self.model.max_mbps];
+	[self.averageField setFloatValue:self.model.average_mbps];
+	[self.totalpktField setIntegerValue:self.model.totalPkts];
 
-	[_samplingTargetField
-	 setFloatValue:_model.samplingIntervalMS];
-	[_samplingField
-	 setFloatValue:_model.samplingIntervalLastMS];
+	[self.samplingTargetField
+	 setFloatValue:self.model.samplingIntervalMS];
+	[self.samplingField
+	 setFloatValue:self.model.samplingIntervalLastMS];
     
     [self.graphView setNeedsDisplay:YES];
 }
