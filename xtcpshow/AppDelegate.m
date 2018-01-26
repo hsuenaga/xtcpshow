@@ -64,6 +64,7 @@ static NSString *const PREFER_DEVICE=@"en";
 	[_graphView setController:self];
 	[_graphView setRange:RANGE_AUTO withRange:0.0];
 	[_graphView setShowPacketMarker:NO];
+    [_graphView setUseHistgram:NO];
 	[_graphView setMaxViewTimeLength:[_zoomBar maxValue]];
 	[_graphView setMinViewTimeLength:[_zoomBar minValue]];
 	[_graphView setViewTimeLength:[_zoomBar floatValue]];

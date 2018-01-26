@@ -43,45 +43,22 @@ extern NSString *const RANGE_AUTO;
 extern NSString *const RANGE_PEAKHOLD;
 extern NSString *const RANGE_MANUAL;
 
-@interface GraphView : NSView {
-	// X, Y Range
-	float y_range;
-	float x_range;
-	float ma_range;
-	NSUInteger pps_range;
-
-	// range configuration
-	NSString *range_mode;
-	float manual_range;
-	float peak_range;
-
-	// X-axis adjustment
-	NSUInteger GraphOffset;
-	NSUInteger XmarkOffset;
-
-	// data filter
-	DataResampler *resampler;
-}
-@property (strong) AppDelegate *controller;
-@property (strong) ComputeQueue *data;
+@interface GraphView : NSView
+@property (weak) AppDelegate *controller;
 
 // statistics
-@property (assign, readonly) NSUInteger maxSamples;
-@property (assign, readonly) float maxValue;
-@property (assign, readonly) float averageValue;
+@property (assign, readonly, nonatomic) NSUInteger maxSamples;
+@property (assign, readonly, nonatomic) double maxValue;
+@property (assign, readonly, nonatomic) double averageValue;
 
 // configuration
-@property (assign) float magnifySense;
-@property (assign) float scrollSense;
 @property (assign) NSTimeInterval minViewTimeLength;
-@property (assign) NSTimeInterval maxViewTimeLength;
 @property (assign) NSTimeInterval viewTimeLength;
+@property (assign) NSTimeInterval maxViewTimeLength;
 
-@property (assign) NSTimeInterval maxFIRTimeLength;
 @property (assign) NSTimeInterval minFIRTimeLength;
 @property (assign) NSTimeInterval FIRTimeLength;
-
-@property (assign) NSTimeInterval viewTimeOffset;
+@property (assign) NSTimeInterval maxFIRTimeLength;
 
 @property (assign) BOOL showPacketMarker;
 @property (assign) BOOL showDeviationBand;

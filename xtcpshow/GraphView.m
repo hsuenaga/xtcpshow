@@ -60,6 +60,19 @@
 @property (readonly, nonatomic) NSColor *colorGradEnd;
 @property (readonly, nonatomic) NSDateFormatter *dateFormatter;
 
+@property (assign) float magnifySense;
+@property (assign) float scrollSense;
+
+@property (assign) NSTimeInterval viewTimeOffset;
+
+@property (nonatomic) DataResampler *resampler;
+@property (weak, nonatomic) ComputeQueue *viewData;
+@property (weak, nonatomic) TrafficDB *inputData;
+@property (nonatomic) NSDate *lastResample;
+@property (assign, nonatomic) NSUInteger maxSamples;
+@property (assign, nonatomic) double maxValue;
+@property (assign, nonatomic) double averageValue;
+
 // Status Update
 - (void)updateRange;
 
@@ -79,7 +92,7 @@
 - (void)drawLayer;
 
 // Computing
-- (void)resampleData:(TrafficDB *)dataBase inRect:(NSRect) rect;
+- (void)resampleDataInRect:(NSRect)rect;
 @end
 
 //
@@ -111,6 +124,21 @@ float const scroll_sensitivity = 10.0f;
     CGContextRef CGContext;
     CGContextRef layerCGContext;
     CGLayerRef layer;
+    
+    // X, Y Range
+    float y_range;
+    float x_range;
+    float ma_range;
+    NSUInteger pps_range;
+    
+    // range configuration
+    NSString *range_mode;
+    float manual_range;
+    float peak_range;
+    
+    // X-axis adjustment
+    NSUInteger GraphOffset;
+    NSUInteger XmarkOffset;
 }
 @synthesize layerContext;
 @synthesize textAttributes;
@@ -168,13 +196,12 @@ float const scroll_sensitivity = 10.0f;
 		return nil;
 
     [self defineGraphicComponentsWithFrame:aRect];
-	self.data = nil;
+	self.viewData = nil;
 	self.showPacketMarker = TRUE;
 	self.magnifySense = magnify_sensitivity;
 	self.scrollSense = scroll_sensitivity;
     self.useHistgram = FALSE;
-    
-	resampler = [[DataResampler alloc] init];
+	self.resampler = [[DataResampler alloc] init];
 
 	return self;
 }
@@ -187,7 +214,7 @@ float const scroll_sensitivity = 10.0f;
 	BOOL resample = NO;
 
 	// Y-axis
-	max = [[self data] maxDoubleValue];
+	max = [self.viewData maxDoubleValue];
 	if (range_mode == RANGE_MANUAL) {
 		if (manual_range <= 0.5f)
 			new_range = 0.5f;
@@ -258,7 +285,7 @@ float const scroll_sensitivity = 10.0f;
 		_viewTimeOffset = 0.0;
 
     if (resample) {
-		[resampler purgeData];
+		[self.resampler purgeData];
     }
 }
 
@@ -313,7 +340,7 @@ float const scroll_sensitivity = 10.0f;
 {
 	_viewTimeLength *= 1.0/(1.0 + (event.magnification/_magnifySense));
 	[self updateRange];
-	[resampler purgeData];
+	[self purgeData];
 
 	[_controller zoomGesture:self];
 }
@@ -323,16 +350,16 @@ float const scroll_sensitivity = 10.0f;
 	_FIRTimeLength -= (event.deltaY/_scrollSense);
 	_viewTimeOffset -= event.deltaX/_scrollSense;
 	[self updateRange];
-	[resampler purgeData];
+	[self purgeData];
 
-	[_controller scrollGesture:self];
+	[self.controller scrollGesture:self];
 }
 
 - (void)drawGraphHistgram:(NSRect)rect
 {
 	[NSGraphicsContext saveGraphicsState];
     
-	[_data enumerateDataUsingBlock:^(DerivedData *data, NSUInteger idx, BOOL *stop) {
+	[self.viewData enumerateDataUsingBlock:^(DerivedData *data, NSUInteger idx, BOOL *stop) {
 		NSRect bar;
 		CGFloat value = (CGFloat)[data doubleValue];
 
@@ -370,7 +397,7 @@ float const scroll_sensitivity = 10.0f;
     // make path
     double scaler = (double)rect.size.height / (double)y_range;
     BOOL __block pathOpen = false;
-    [_data enumerateDataUsingBlock:^(DerivedData *data, NSUInteger idx, BOOL *stop) {
+    [self.viewData enumerateDataUsingBlock:^(DerivedData *data, NSUInteger idx, BOOL *stop) {
         if (idx < GraphOffset)
             return;
         idx -= GraphOffset;
@@ -439,7 +466,7 @@ float const scroll_sensitivity = 10.0f;
     [colorPPS set];
 
     double scaler = (double)rect.size.height / (double)pps_range;
-	[_data enumerateDataUsingBlock:^(DerivedData *data, NSUInteger idx, BOOL *stop) {
+	[self.viewData enumerateDataUsingBlock:^(DerivedData *data, NSUInteger idx, BOOL *stop) {
 		if (idx < XmarkOffset)
 			return;
 		idx -= XmarkOffset;
@@ -520,7 +547,7 @@ float const scroll_sensitivity = 10.0f;
     [NSGraphicsContext saveGraphicsState];
     [colorAVG set];
 
-	CGFloat deviation = (CGFloat)[_data standardDeviation];
+	CGFloat deviation = (CGFloat)[self.viewData standardDeviation];
 	CGFloat value =	rect.size.height * (_averageValue / y_range);
     
     // draw line
@@ -596,8 +623,8 @@ float const scroll_sensitivity = 10.0f;
 {
     NSString *text = FMT_NODATA;
     
-	if (_data && ![_data isEmpty])
-		text = [dateFormatter stringFromDate:[_data lastDate]];
+	if (self.viewData && ![self.viewData isEmpty])
+		text = [dateFormatter stringFromDate:[self.viewData lastDate]];
 
     [self drawText:text inRect:rect alignRight:rect.size.height];
 }
@@ -659,50 +686,75 @@ float const scroll_sensitivity = 10.0f;
     CGContextDrawLayerAtPoint(CGContext, CGPointZero, layer);
 }
 
-- (void)resampleData:(TrafficDB *)dataBase inRect:(NSRect)rect
+- (void)drawRect:(NSRect)dirty_rect
+{
+    if (_bounds.size.width != self.resampler.outputSamples) {
+        [self purgeData];
+        self.resampler.outputSamples = _bounds.size.width;
+    }
+    
+    if ([NSGraphicsContext currentContextDrawingToScreen]) {
+        [self drawAllWithSize:_bounds OffScreen:NO];
+    }
+    else {
+        [self drawAllWithSize:dirty_rect OffScreen:YES];
+    }
+}
+
+- (void)resampleDataInRect:(NSRect)rect
 {
 	NSDate *end;
 
-    if (!resampler) {
-        NSLog(@"No resampler object");
+    // data is not imported.
+    if (!self.inputData)
         return;
-    }
     
 	// fix up _viewTimeOffset
-	end = [dataBase lastDate];
+	end = [self.inputData lastDate];
     if (end == nil) {
         NSLog(@"No timestamp");
         return;
     }
+    else if (self.lastResample && [self.lastResample isEqual:end]) {
+        NSLog(@"Data is not updated");
+        // Not updated.
+        return;
+    }
+    self.lastResample = end;
+    
+    // add offset
 	end = [end dateByAddingTimeInterval:_viewTimeOffset];
-	if ([end laterDate:[dataBase firstDate]] != end) {
-        _viewTimeOffset = [[dataBase firstDate] timeIntervalSinceDate:[dataBase lastDate]];
+	if ([end laterDate:[self.inputData firstDate]] != end) {
+        _viewTimeOffset = [[self.inputData firstDate] timeIntervalSinceDate:[self.inputData lastDate]];
 	}
 
-	resampler.outputTimeLength = _viewTimeLength;
-	resampler.outputTimeOffset = _viewTimeOffset;
-	resampler.outputSamples = rect.size.width;
-	resampler.FIRTimeLength = _FIRTimeLength;
+	self.resampler.outputTimeLength = _viewTimeLength;
+	self.resampler.outputTimeOffset = _viewTimeOffset;
+	self.resampler.outputSamples = rect.size.width;
+	self.resampler.FIRTimeLength = _FIRTimeLength;
+    [self.resampler resampleDataBase:self.inputData atDate:end];
 
-    [resampler resampleDataBase:dataBase atDate:end];
+	self.viewData = [self.resampler output];
+	self.maxSamples = [self.viewData maxSamples];
+	self.maxValue = [self.viewData maxDoubleValue];
+	self.averageValue = [self.viewData averageDoubleValue];
 
-	_data = [resampler output];
-	_maxSamples = [_data maxSamples];
-	_maxValue = [_data maxDoubleValue];
-	_averageValue = [_data averageDoubleValue];
-
-	GraphOffset = [resampler overSample];
-	XmarkOffset = [resampler overSample] / 2;
+	GraphOffset = [self.resampler overSample];
+	XmarkOffset = [self.resampler overSample] / 2;
 }
 
 - (void)importData:(TrafficDB *)dataBase
 {
-    [self resampleData:dataBase inRect:_bounds];
+    if (self.inputData != dataBase) {
+        self.inputData = dataBase;
+    }
+    [self resampleDataInRect:_bounds];
 }
 
 - (void)purgeData
 {
-	[resampler purgeData];
+	[self.resampler purgeData];
+    self.lastResample = nil;
 }
 
 - (void)saveFile:(TrafficDB *)dataBase;
@@ -721,7 +773,7 @@ float const scroll_sensitivity = 10.0f;
 	image_rect.origin.y = 0;
 	NSLog(@"create PNG image");
 	[self purgeData];
-    [self resampleData:dataBase inRect:image_rect];
+    [self resampleDataInRect:image_rect];
 	[self drawAllWithSize:image_rect OffScreen:YES];
 	[NSGraphicsContext restoreGraphicsState];
 
@@ -742,21 +794,6 @@ float const scroll_sensitivity = 10.0f;
 
 	// restore data for display
 	[self purgeData];
-    [self resampleData:dataBase inRect:_bounds];
-}
-
-- (void)drawRect:(NSRect)dirty_rect
-{
-	if (_bounds.size.width != resampler.outputSamples) {
-		[resampler purgeData];
-		resampler.outputSamples = _bounds.size.width;
-	}
-
-	if ([NSGraphicsContext currentContextDrawingToScreen]) {
-		[self drawAllWithSize:_bounds OffScreen:NO];
-	}
-	else {
-		[self drawAllWithSize:dirty_rect OffScreen:YES];
-	}
+    [self resampleDataInRect:_bounds];
 }
 @end
