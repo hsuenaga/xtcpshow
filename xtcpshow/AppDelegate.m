@@ -223,8 +223,6 @@ static NSString *const PREFER_DEVICE=@"en";
 	else
 		[_graphView setShowPacketMarker:NO];
 
-	[_graphView purgeData];
-	[_graphView importData:self.model.dataBase];
 	[_graphView setNeedsDisplay:YES];
 }
 
