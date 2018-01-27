@@ -640,7 +640,7 @@ double const time_round = 0.05;
 {
 	NSString *text = [NSString stringWithFormat:FMT_RANGE,
                       (self.y_range / 5.0),
-                      self.viewTimeLength * 1.0E3,
+                      (self.viewTimeLength /5.0) * 1.0E3,
                       self.FIRTimeLength * 1.0E3];
 	[self drawText:text inRect:rect atPoint:NSMakePoint(0.0, 0.0)];
 }
