@@ -40,6 +40,7 @@
 - (double)elapsedFrom:(struct timeval *)last;
 - (BOOL)tick_expired;
 - (void)sendError:(NSString *)message;
+- (void)sendUpdate;
 - (void)sendFinish;
 @end
 
@@ -193,6 +194,7 @@
             model.mbps = mbps;
             model.max_mbps = max_mbps;
             model.samplingIntervalLast = last_interval;
+            [self sendUpdate];
 			bytes = 0;
 		}
 	}
@@ -303,6 +305,14 @@
 	 waitUntilDone:NO];
 }
 
+- (void)sendUpdate
+{
+    [self.model
+     performSelectorOnMainThread:@selector(updateCounter:)
+     withObject:self
+     waitUntilDone:NO];
+}
+
 - (void)sendFinish
 {
 	[model
@@ -310,5 +320,4 @@
 	 withObject:self
 	 waitUntilDone:NO];
 }
-
 @end

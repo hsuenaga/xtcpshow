@@ -23,32 +23,22 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 //
-//  DataResampler.h
+//  GraphViewOperation.h
 //  xtcpshow
 //
-//  Created by SUENAGA Hiroki on 2013/08/02.
-//  Copyright (c) 2013 SUENAGA Hiroki. All rights reserved.
+//  Created by 末永洋樹 on 2018/01/27.
+//  Copyright © 2018年 SUENAGA Hiroki. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
 
-#import "TrafficDB.h"
-#import "ComputeQueue.h"
+#import "GraphView.h"
 
-@interface DataResampler : NSObject
-@property (strong, atomic, readonly) NSRecursiveLock *outputLock;
-@property (strong, nonatomic, readonly) ComputeQueue *output;
-@property (assign, nonatomic) NSUInteger outputSamples;
-@property (assign, nonatomic) NSTimeInterval outputTimeLength;
-@property (assign, nonatomic) NSTimeInterval outputTimeOffset;
-@property (assign, nonatomic) NSTimeInterval FIRTimeLength;
-@property (assign, nonatomic, readonly) NSUInteger overSample;
+@interface GraphViewOperation : NSOperation
+@property (nonatomic) NSTimer *timer;
+@property (weak) GraphView *view;
+@property (nonatomic) BOOL repeat;
 
-// public
-- (DataResampler *)init;
-- (void)updateParams;
-- (void)purgeData;
-- (void)resampleDataBase:(TrafficDB *)dataBase atDate:(NSDate *)date;
-- (BOOL)FIRenabled;
-
+- (id)initWithGraphView:(GraphView *)view;
+- (void)mainTimer;
 @end

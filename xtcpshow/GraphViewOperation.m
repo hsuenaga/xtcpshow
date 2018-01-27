@@ -23,32 +23,59 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 //
-//  DataResampler.h
+//  GraphViewOperation.m
 //  xtcpshow
 //
-//  Created by SUENAGA Hiroki on 2013/08/02.
-//  Copyright (c) 2013 SUENAGA Hiroki. All rights reserved.
+//  Created by 末永洋樹 on 2018/01/27.
+//  Copyright © 2018年 SUENAGA Hiroki. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
+#import "GraphViewOperation.h"
 
-#import "TrafficDB.h"
-#import "ComputeQueue.h"
+@implementation GraphViewOperation
+- (id)initWithGraphView:(GraphView *)view
+{
+    self = [super init];
+    self.view = view;
+    self.repeat = FALSE;
+    return self;
+}
 
-@interface DataResampler : NSObject
-@property (strong, atomic, readonly) NSRecursiveLock *outputLock;
-@property (strong, nonatomic, readonly) ComputeQueue *output;
-@property (assign, nonatomic) NSUInteger outputSamples;
-@property (assign, nonatomic) NSTimeInterval outputTimeLength;
-@property (assign, nonatomic) NSTimeInterval outputTimeOffset;
-@property (assign, nonatomic) NSTimeInterval FIRTimeLength;
-@property (assign, nonatomic, readonly) NSUInteger overSample;
+- (id)init
+{
+    return [self initWithGraphView:nil];
+}
 
-// public
-- (DataResampler *)init;
-- (void)updateParams;
-- (void)purgeData;
-- (void)resampleDataBase:(TrafficDB *)dataBase atDate:(NSDate *)date;
-- (BOOL)FIRenabled;
+- (void)mainTimer
+{
+    if ([self isCancelled]) {
+        [self.timer invalidate];
+        return;
+    }
+    [self.view refreshData];
+    [self.view performSelectorOnMainThread:@selector(display)
+                           withObject:nil
+                        waitUntilDone:FALSE];
+}
 
+- (void)main
+{
+    if (!self.repeat) {
+        NSLog(@"GraphView Oneshot Update.");
+        [self mainTimer];
+        return;
+    }
+    
+    NSLog(@"GraphView Animiation start.");
+    double animationInt = 1.0 / self.view.animationFPS;
+    self.timer = [NSTimer timerWithTimeInterval:animationInt
+                                         target:self
+                                       selector:@selector(mainTimer)
+                                       userInfo:nil
+                                        repeats:TRUE];
+    [[NSRunLoop currentRunLoop] addTimer:self.timer
+                                 forMode:NSRunLoopCommonModes];
+    [[NSRunLoop currentRunLoop] run];
+    NSLog(@"GraphView Animation end.");
+}
 @end

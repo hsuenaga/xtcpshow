@@ -37,6 +37,7 @@
 		46B19D9520157E7A009F2ECD /* TrafficDB.m in Sources */ = {isa = PBXBuildFile; fileRef = 46B19D9420157E7A009F2ECD /* TrafficDB.m */; };
 		46C08CBC200875200006E8D5 /* Queue.m in Sources */ = {isa = PBXBuildFile; fileRef = 46C08CBB200875200006E8D5 /* Queue.m */; };
 		46C08CBF20089CB00006E8D5 /* FIR.m in Sources */ = {isa = PBXBuildFile; fileRef = 46C08CBE20089CB00006E8D5 /* FIR.m */; };
+		46CB9010201B971B00E470C8 /* GraphViewOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 46CB900F201B971B00E470C8 /* GraphViewOperation.m */; };
 		46DE97A917D2D15B009E0A16 /* BPFService.m in Sources */ = {isa = PBXBuildFile; fileRef = 46DE97A817D2D15B009E0A16 /* BPFService.m */; };
 /* End PBXBuildFile section */
 
@@ -130,6 +131,8 @@
 		46C08CBD200875440006E8D5 /* Queue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Queue.h; sourceTree = "<group>"; };
 		46C08CBE20089CB00006E8D5 /* FIR.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = FIR.m; sourceTree = "<group>"; };
 		46C08CC020089CC70006E8D5 /* FIR.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FIR.h; sourceTree = "<group>"; };
+		46CB900E201B971B00E470C8 /* GraphViewOperation.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GraphViewOperation.h; sourceTree = "<group>"; };
+		46CB900F201B971B00E470C8 /* GraphViewOperation.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GraphViewOperation.m; sourceTree = "<group>"; };
 		46D1634017CE117C009418DF /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		46D1634117CE117C009418DF /* Launchd.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Launchd.plist; sourceTree = "<group>"; };
 		46DE97A717D2D15B009E0A16 /* BPFService.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BPFService.h; sourceTree = "<group>"; };
@@ -241,6 +244,8 @@
 				46B19D9420157E7A009F2ECD /* TrafficDB.m */,
 				46583CB717A0CA4D007B6572 /* GraphView.h */,
 				46583CB517A0CA41007B6572 /* GraphView.m */,
+				46CB900E201B971B00E470C8 /* GraphViewOperation.h */,
+				46CB900F201B971B00E470C8 /* GraphViewOperation.m */,
 				4639F8391798BA9700E59491 /* MainMenu.xib */,
 				4639F82B1798BA9700E59491 /* Supporting Files */,
 			);
@@ -420,6 +425,7 @@
 				4664DA8F2019A3CC00438512 /* authopenBPF.m in Sources */,
 				466E550717AB2AA500C978C9 /* ComputeQueue.m in Sources */,
 				46C08CBF20089CB00006E8D5 /* FIR.m in Sources */,
+				46CB9010201B971B00E470C8 /* GraphViewOperation.m in Sources */,
 				466E550A17AB491800C978C9 /* DataResampler.m in Sources */,
 				4682948417B4634D008AC9D4 /* DerivedData.m in Sources */,
 				46A10AD117CEF4A50011A9E8 /* CaptureBPF.m in Sources */,

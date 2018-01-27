@@ -127,7 +127,7 @@ static NSString *const PREFER_DEVICE=@"en";
         return;
     }
     [self.graphView importData:self.model.dataBase];
-    [self.graphView startPlot];
+    [self.graphView startPlot:TRUE];
     [self setInput:FALSE];
 }
 

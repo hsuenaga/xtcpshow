@@ -66,6 +66,7 @@
 - (void)stopCapture;
 - (BOOL)captureEnabled;
 - (void)resetCounter;
+- (void)updateCounter:(id)sender;
 
 - (double)samplingIntervalMS;
 - (double)samplingIntervalLastMS;

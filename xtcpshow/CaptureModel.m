@@ -135,6 +135,11 @@
 	samplingIntervalLast = 0.0;
 }
 
+- (void) updateCounter:(id)sender
+{
+    [self.controller updateUserInterface];
+}
+
 - (double) samplingIntervalMS
 {
 	return (samplingInterval * 1.0E3);

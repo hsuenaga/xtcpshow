@@ -50,9 +50,9 @@ extern NSString *const RANGE_MANUAL;
 @property (weak) AppDelegate *controller;
 
 // statistics
-@property (assign, readonly, nonatomic) NSUInteger maxSamples;
-@property (assign, readonly, nonatomic) double maxValue;
-@property (assign, readonly, nonatomic) double averageValue;
+@property (assign, readonly, atomic) NSUInteger maxSamples;
+@property (assign, readonly, atomic) double maxValue;
+@property (assign, readonly, atomic) double averageValue;
 
 // configuration
 @property (assign) NSTimeInterval minViewTimeLength;
@@ -73,13 +73,14 @@ extern NSString *const RANGE_MANUAL;
 - (float)setRange:(NSString *)mode withRange:(float)range;
 - (float)setRange:(NSString *)mode withStep:(int)step;
 - (int)stepValueFromRange:(float)range;
-- (void)startPlot;
+- (void)startPlot:(BOOL)repeat;
 - (void)stopPlot;
 
 // Action from window server
 - (void)magnifyWithEvent:(NSEvent *)event;
 - (void)scrollWheel:(NSEvent *)event;
 - (void)drawRect:(NSRect)rect;
+- (void)refreshData;
 
 // Data-Binding
 - (void)importData:(TrafficDB *)dataBase;

@@ -33,6 +33,7 @@
 
 #import "AppDelegate.h"
 #import "GraphView.h"
+#import "GraphViewOperation.h"
 #import "ComputeQueue.h"
 #import "DataResampler.h"
 #import "DerivedData.h"
@@ -68,8 +69,10 @@ double const time_round = 0.05;
 @interface GraphView () {
     NSTimeInterval _viewTimeOffset;
 }
-// Animation Timer
-@property (nonatomic) NSTimer *animationTimer;
+// Animation
+@property (atomic) NSOperationQueue *cueAnimation;
+@property (atomic) BOOL cueActive;
+@property (atomic) NSRect lastBounds;
 
 // Graphic Components
 @property (nonatomic) CGContextRef CGContext;
@@ -113,13 +116,13 @@ double const time_round = 0.05;
 @property (nonatomic) NSUInteger pps_range;
 
 // Data-Bidings
-@property (nonatomic) DataResampler *resampler;
-@property (nonatomic) NSDate *lastResample;
-@property (weak, nonatomic) ComputeQueue *viewData;
-@property (weak, nonatomic) TrafficDB *inputData;
-@property (nonatomic) NSUInteger maxSamples;
-@property (nonatomic) double maxValue;
-@property (nonatomic) double averageValue;
+@property (atomic) DataResampler *resampler;
+@property (atomic) NSDate *lastResample;
+@property (weak, atomic) ComputeQueue *viewData;
+@property (weak, atomic) TrafficDB *inputData;
+@property (atomic) NSUInteger maxSamples;
+@property (atomic) double maxValue;
+@property (atomic) double averageValue;
 
 // Status Update
 - (BOOL)updateRangeY;
@@ -144,7 +147,6 @@ double const time_round = 0.05;
 // Computing
 - (double)saturateDouble:(double)value withMax:(double)max withMin:(double)min roundBy:(double)round;
 - (BOOL)resampleDataInRect:(NSRect)rect;
-- (void)refreshView;
 @end
 
 //
@@ -192,6 +194,8 @@ double const time_round = 0.05;
 		return nil;
 
     [self defineGraphicComponentsWithFrame:aRect];
+    self.cueAnimation = [NSOperationQueue new];
+    self.cueActive = FALSE;
 	self.viewData = nil;
 	self.showPacketMarker = TRUE;
     self.animationFPS = animation_fps;
@@ -367,28 +371,24 @@ double const time_round = 0.05;
 	return step;
 }
 
-- (void)startPlot
+- (void)startPlot:(BOOL)repeat
 {
-    [self stopPlot];
-
-    double animationInt = (1.0 / self.animationFPS);
-    self.animationTimer =
-    [NSTimer timerWithTimeInterval:animationInt
-                            target:self
-                          selector:@selector(refreshView)
-                          userInfo:nil
-                           repeats:TRUE];
-    [[NSRunLoop currentRunLoop] addTimer:self.animationTimer forMode:NSRunLoopCommonModes];
-    NSLog(@"Start animation");
+    if (self.cueActive)
+        return;
+    
+    GraphViewOperation *op = [[GraphViewOperation alloc] initWithGraphView:self];
+    [op setQueuePriority:NSOperationQueuePriorityHigh];
+    [op setRepeat:repeat];
+    [self.cueAnimation addOperation:op];
+    if (repeat)
+        self.cueActive = TRUE;
 }
 
 - (void)stopPlot
 {
-    if (self.animationTimer) {
-        [self.animationTimer invalidate];
-        self.animationTimer = nil;
-    }
-    NSLog(@"Stop animation");
+    [self.cueAnimation cancelAllOperations];
+    [self.cueAnimation waitUntilAllOperationsAreFinished];
+    self.cueActive = FALSE;
 }
 
 //
@@ -685,6 +685,7 @@ double const time_round = 0.05;
 - (void)drawAllWithSize:(NSRect)rect OffScreen:(BOOL)off
 {
 	[NSGraphicsContext saveGraphicsState];
+    [self.resampler.outputLock lock];
     
     // create layer (back buffer)
     [self setLayerContextWithRect:rect];
@@ -723,6 +724,8 @@ double const time_round = 0.05;
     
     // rasterize layer
     [self drawLayer];
+    
+    [self.resampler.outputLock unlock];
 	[NSGraphicsContext restoreGraphicsState];
 }
 
@@ -746,6 +749,8 @@ double const time_round = 0.05;
 
 - (void)drawRect:(NSRect)dirty_rect
 {
+    self.lastBounds = self.bounds;
+
     if (self.bounds.size.width != self.resampler.outputSamples) {
         [self purgeData];
         self.resampler.outputSamples = self.bounds.size.width;
@@ -779,8 +784,9 @@ double const time_round = 0.05;
 	NSDate *end;
 
     // data is not imported.
-    if (!self.inputData)
+    if (!self.inputData) {
         return FALSE;
+    }
     
 	// fix up _viewTimeOffset
 	end = [self.inputData lastDate];
@@ -790,7 +796,6 @@ double const time_round = 0.05;
     }
     else if (self.lastResample && [self.lastResample isEqual:end]) {
         NSLog(@"Data is not updated");
-        // Not updated.
         return FALSE;
     }
     self.lastResample = end;
@@ -822,25 +827,21 @@ double const time_round = 0.05;
     if (self.inputData != dataBase) {
         self.inputData = dataBase;
     }
-    [self resampleDataInRect:_bounds];
+    [self startPlot:FALSE];
 }
 
-- (void)refreshView
+- (void)refreshData
 {
-    if ([self resampleDataInRect:self.bounds]) {
-        [self display];
-    }
-    else {
-        [self setNeedsDisplay:TRUE];
-    }
+    // called from GraphViewOperation
+    [self resampleDataInRect:self.lastBounds];
 }
 
 - (void)purgeData
 {
 	[self.resampler purgeData];
     self.lastResample = nil;
-    [self resampleDataInRect:_bounds];
-    [self setNeedsDisplay:TRUE];
+    self.lastBounds = self.bounds;
+    [self startPlot:FALSE];
 }
 
 - (void)saveFile:(TrafficDB *)dataBase;
@@ -858,9 +859,12 @@ double const time_round = 0.05;
 	image_rect.origin.x = 0;
 	image_rect.origin.y = 0;
 	NSLog(@"create PNG image");
-	[self purgeData];
+    [self.resampler.outputLock lock];
+	[self.resampler purgeData];
     [self resampleDataInRect:image_rect];
 	[self drawAllWithSize:image_rect OffScreen:YES];
+    [self.resampler.outputLock unlock];
+    [self purgeData];
 	[NSGraphicsContext restoreGraphicsState];
 
 	// get filename
@@ -877,9 +881,5 @@ double const time_round = 0.05;
 	png = [buffer representationUsingType:NSPNGFileType properties:prop];
 	[png writeToURL:[[panel directoryURL] URLByAppendingPathComponent:[panel nameFieldStringValue]]
 	      atomically:NO];
-
-	// restore data for display
-	[self purgeData];
-    [self resampleDataInRect:_bounds];
 }
 @end
