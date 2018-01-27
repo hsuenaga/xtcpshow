@@ -81,6 +81,7 @@ extern NSString *const RANGE_MANUAL;
 - (void)scrollWheel:(NSEvent *)event;
 - (void)drawRect:(NSRect)rect;
 - (void)refreshData;
+- (void)drawLayerToGC;
 
 // Data-Binding
 - (void)importData:(TrafficDB *)dataBase;

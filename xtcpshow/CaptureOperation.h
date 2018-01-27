@@ -36,7 +36,7 @@
 #import "TrafficDB.h"
 
 #define TIMESLOT    (1.000) // [s]
-#define BPF_TIMEOUT (1)     // [ms]
+#define BPF_TIMEOUT (10)     // [ms]
 
 @interface CaptureOperation : NSOperation
 @property (weak, nonatomic) CaptureModel *model;

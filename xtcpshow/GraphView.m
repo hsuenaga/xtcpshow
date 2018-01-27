@@ -72,11 +72,12 @@ double const time_round = 0.05;
 // Animation
 @property (atomic) NSOperationQueue *cueAnimation;
 @property (atomic) BOOL cueActive;
+@property (atomic) BOOL bgReady;
 @property (atomic) NSRect lastBounds;
 
 // Graphic Components
-@property (nonatomic) CGContextRef CGContext;
-@property (nonatomic) CGLayerRef Backbuffer;
+@property (nonatomic) CGLayerRef CGBackbuffer;
+@property (atomic)    NSGraphicsContext* NSBackbuffer;
 @property (nonatomic) NSGraphicsContext *layerBackbufferContext;
 @property (nonatomic) NSMutableDictionary *textAttributes;
 @property (nonatomic) NSGradient *gradGraph;
@@ -141,8 +142,8 @@ double const time_round = 0.05;
 - (void)drawRange:(NSRect)rect;
 - (void)drawDate:(NSRect)rect;
 - (void)drawAllWithSize:(NSRect)rect OffScreen:(BOOL)off;
-- (void)setLayerContextWithRect:(NSRect)rect;
-- (void)drawLayer;
+- (void)setLayerContext;
+- (void)drawToLayer;
 
 // Computing
 - (double)saturateDouble:(double)value withMax:(double)max withMin:(double)min roundBy:(double)round;
@@ -684,11 +685,7 @@ double const time_round = 0.05;
 
 - (void)drawAllWithSize:(NSRect)rect OffScreen:(BOOL)off
 {
-	[NSGraphicsContext saveGraphicsState];
     [self.resampler.outputLock lock];
-    
-    // create layer (back buffer)
-    [self setLayerContextWithRect:rect];
     
 	// clear screen
     [self.colorBG set];
@@ -722,29 +719,44 @@ double const time_round = 0.05;
 	// date
 	[self drawDate:rect];
     
-    // rasterize layer
-    [self drawLayer];
-    
     [self.resampler.outputLock unlock];
-	[NSGraphicsContext restoreGraphicsState];
 }
 
-- (void)setLayerContextWithRect:(NSRect)rect
+- (void)setLayerContext
 {
-    self.CGContext = [[NSGraphicsContext currentContext] graphicsPort];
-    self.Backbuffer = CGLayerCreateWithContext(self.CGContext, rect.size, NULL);
+    if (self.CGBackbuffer) {
+        CGLayerRelease(self.CGBackbuffer);
+        self.CGBackbuffer = NULL;
+        self.NSBackbuffer = nil;
+    }
     
-    CGContextRef gcBackbuffer = CGLayerGetContext(self.Backbuffer);
-    NSGraphicsContext *gc = [NSGraphicsContext graphicsContextWithCGContext:gcBackbuffer flipped:FALSE];
-
-    [NSGraphicsContext setCurrentContext:gc];
+    CGContextRef cgc = [[NSGraphicsContext currentContext] graphicsPort];
+    self.CGBackbuffer = CGLayerCreateWithContext(cgc, self.bounds.size, NULL);
+    
+    cgc = CGLayerGetContext(self.CGBackbuffer);
+    self.NSBackbuffer= [NSGraphicsContext graphicsContextWithCGContext:cgc flipped:FALSE];
+    self.bgReady = FALSE;
 }
 
-- (void)drawLayer
+- (void)drawToLayer
 {
-    CGContextDrawLayerAtPoint(self.CGContext, CGPointZero, self.Backbuffer);
-    CGLayerRelease(self.Backbuffer);
-    self.Backbuffer = NULL;
+    if (!self.NSBackbuffer)
+        return;
+    
+    [NSGraphicsContext saveGraphicsState];
+    [NSGraphicsContext setCurrentContext:self.NSBackbuffer];
+    [self drawAllWithSize:self.bounds OffScreen:FALSE];
+    [NSGraphicsContext restoreGraphicsState];
+    self.bgReady = TRUE;
+}
+
+- (void)drawLayerToGC
+{
+    if (!self.bgReady)
+        return;
+    CGContextRef cgc = [[NSGraphicsContext currentContext] graphicsPort];
+    CGContextDrawLayerAtPoint(cgc, CGPointZero, self.CGBackbuffer);
+    self.bgReady = FALSE;
 }
 
 - (void)drawRect:(NSRect)dirty_rect
@@ -754,8 +766,17 @@ double const time_round = 0.05;
         if (self.bounds.size.width != self.resampler.outputSamples) {
             self.resampler.outputSamples = self.bounds.size.width;
             [self purgeData];
+            self.bgReady = FALSE;
         }
-        [self drawAllWithSize:self.bounds OffScreen:NO];
+        [self setLayerContext];
+        if (self.bgReady) {
+            [self drawLayerToGC];
+        }
+        else {
+            [NSGraphicsContext saveGraphicsState];
+            [self drawAllWithSize:dirty_rect OffScreen:FALSE];
+            [NSGraphicsContext restoreGraphicsState];
+        }
     }
     else {
         NSLog(@"Off Screen Rendring requested.");
@@ -840,7 +861,11 @@ double const time_round = 0.05;
 - (void)refreshData
 {
     // called from GraphViewOperation
+    if (self.bgReady)
+        return;
+    
     [self resampleDataInRect:self.lastBounds];
+    [self drawToLayer];
 }
 
 - (void)purgeData
