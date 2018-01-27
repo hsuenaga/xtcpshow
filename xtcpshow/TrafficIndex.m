@@ -387,6 +387,16 @@
         msEnd = msEnd - (msEnd % msResolution) + msResolution;
         self.End = msec2date(msEnd);
     }
+    while ([dataRef count] > 0 &&
+           [self.End timeIntervalSinceDate:self.Start] > (self.nextResolution * NBRANCH)) {
+        TrafficIndex *firstChild;
+        [dataRef removePointerAtIndex:0];
+        if ([dataRef count] > 0) {
+            firstChild = [dataRef pointerAtIndex:0];
+            if (firstChild)
+                self.Start = firstChild.Start;
+        }
+    }
 }
 
 - (NSUInteger)msResolution
