@@ -749,18 +749,25 @@ double const time_round = 0.05;
 
 - (void)drawRect:(NSRect)dirty_rect
 {
-    self.lastBounds = self.bounds;
-
-    if (self.bounds.size.width != self.resampler.outputSamples) {
-        [self purgeData];
-        self.resampler.outputSamples = self.bounds.size.width;
-    }
-    
     if ([NSGraphicsContext currentContextDrawingToScreen]) {
+        self.lastBounds = self.bounds;
+        if (self.bounds.size.width != self.resampler.outputSamples) {
+            self.resampler.outputSamples = self.bounds.size.width;
+            [self purgeData];
+        }
         [self drawAllWithSize:self.bounds OffScreen:NO];
     }
     else {
+        NSLog(@"Off Screen Rendring requested.");
+        NSLog(@"w:%f, h:%f, x:%f, y:%f", dirty_rect.size.width, dirty_rect.size.height, dirty_rect.origin.x, dirty_rect.origin.y);
+        [self.resampler.outputLock lock];
+        [self.resampler purgeData];
+        self.lastResample = nil;
+        [self resampleDataInRect:dirty_rect];
         [self drawAllWithSize:dirty_rect OffScreen:YES];
+        [self.resampler.outputLock unlock];
+        NSLog(@"Off Screen Rendring done.");
+        [self purgeData];
     }
 }
 
@@ -846,18 +853,21 @@ double const time_round = 0.05;
 
 - (void)saveFile:(TrafficDB *)dataBase;
 {
-	NSSize image_size = NSMakeSize(640, 480);
-	NSRect image_rect;
+#if 0
+    NSSize image_size = NSMakeSize(640, 480);
+    NSRect image_rect = {
+        .size = image_size,
+        .origin = {
+            .x = 0,
+            .y = 0,
+        }
+    };
 	NSBitmapImageRep *buffer = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:nil pixelsWide:image_size.width pixelsHigh:image_size.height bitsPerSample:8 samplesPerPixel:4 hasAlpha:YES isPlanar:NO colorSpaceName:NSCalibratedRGBColorSpace bitmapFormat:0 bytesPerRow:(image_size.width * 4) bitsPerPixel:32];
 	NSData *png;
 	NSGraphicsContext *gc = [NSGraphicsContext graphicsContextWithBitmapImageRep:buffer];
-	NSSavePanel *panel;
 
 	[NSGraphicsContext saveGraphicsState];
 	[NSGraphicsContext setCurrentContext:gc];
-	image_rect.size = image_size;
-	image_rect.origin.x = 0;
-	image_rect.origin.y = 0;
 	NSLog(@"create PNG image");
     [self.resampler.outputLock lock];
 	[self.resampler purgeData];
@@ -866,20 +876,31 @@ double const time_round = 0.05;
     [self.resampler.outputLock unlock];
     [self purgeData];
 	[NSGraphicsContext restoreGraphicsState];
-
-	// get filename
-	panel = [NSSavePanel savePanel];
-	[panel setAllowedFileTypes:@[@"png"]];
-	[panel setNameFieldStringValue:@"xtcpshow_hardcopy.png"];
-	[panel runModal];
-	NSLog(@"save to %@%@",
-	      [panel directoryURL],
-	      [panel nameFieldStringValue]);
+    
+    // get filename
+    NSSavePanel *panel = [NSSavePanel savePanel];
+    [panel setAllowedFileTypes:@[@"png"]];
+    [panel setNameFieldStringValue:@"xtcpshow_hardcopy.png"];
+    [panel runModal];
+    NSLog(@"save to %@%@",
+          [panel directoryURL],
+          [panel nameFieldStringValue]);
     NSDictionary *prop = [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithBool:false],
                           NSImageInterlaced, nil];
     
-	png = [buffer representationUsingType:NSPNGFileType properties:prop];
-	[png writeToURL:[[panel directoryURL] URLByAppendingPathComponent:[panel nameFieldStringValue]]
-	      atomically:NO];
+    png = [buffer representationUsingType:NSPNGFileType properties:prop];
+    [png writeToURL:[[panel directoryURL] URLByAppendingPathComponent:[panel nameFieldStringValue]]
+         atomically:NO];
+#else
+    NSRect image_rect = [self bounds];
+    NSData *pdfData = [self dataWithPDFInsideRect:image_rect];
+
+    NSSavePanel *panel = [NSSavePanel savePanel];
+    [panel setAllowedFileTypes:@[@"pdf"]];
+    [panel setNameFieldStringValue:@"xtcpshow_hardcopy.pdf"];
+    [panel runModal];
+    NSLog(@"save to %@", [panel URL]);
+    [pdfData writeToURL:[panel URL] atomically:TRUE];
+#endif
 }
 @end
