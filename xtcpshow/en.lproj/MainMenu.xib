@@ -660,7 +660,7 @@
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES"/>
             <rect key="contentRect" x="58" y="211" width="800" height="600"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1680" height="1050"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1280" height="800"/>
             <value key="minSize" type="size" width="640" height="480"/>
             <view key="contentView" id="372">
                 <rect key="frame" x="0.0" y="0.0" width="800" height="600"/>
@@ -673,17 +673,17 @@
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="658" customClass="GraphView">
-                                    <rect key="frame" x="20" y="50" width="694" height="358"/>
+                                    <rect key="frame" x="20" y="49" width="694" height="359"/>
                                 </customView>
                                 <slider horizontalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="1039">
-                                    <rect key="frame" x="720" y="47" width="24" height="339"/>
+                                    <rect key="frame" x="720" y="46" width="24" height="340"/>
                                     <sliderCell key="cell" continuous="YES" alignment="left" minValue="0.10000000000000001" maxValue="10" doubleValue="0.5" tickMarkPosition="right" numberOfTickMarks="5" sliderType="linear" id="1040"/>
                                     <connections>
                                         <action selector="changeSmooth:" target="494" id="1063"/>
                                     </connections>
                                 </slider>
                                 <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="974">
-                                    <rect key="frame" x="75" y="19" width="505" height="23"/>
+                                    <rect key="frame" x="75" y="18" width="505" height="23"/>
                                     <sliderCell key="cell" continuous="YES" state="on" alignment="left" minValue="0.10000000000000001" maxValue="60" doubleValue="5" tickMarkPosition="above" numberOfTickMarks="5" sliderType="linear" id="975"/>
                                     <connections>
                                         <action selector="changeZoom:" target="494" id="1003"/>
@@ -761,7 +761,7 @@
                             <constraint firstItem="1039" firstAttribute="centerX" secondItem="1160" secondAttribute="centerX" id="o0p-R3-UXP"/>
                         </constraints>
                     </box>
-                    <tabView translatesAutoresizingMaskIntoConstraints="NO" id="1236">
+                    <tabView initialItem="1237" translatesAutoresizingMaskIntoConstraints="NO" id="1236">
                         <rect key="frame" x="13" y="458" width="774" height="136"/>
                         <constraints>
                             <constraint firstAttribute="height" relation="lessThanOrEqual" constant="120" id="1604"/>
@@ -920,6 +920,79 @@
                                         <constraint firstItem="1522" firstAttribute="centerY" secondItem="1541" secondAttribute="centerY" id="umg-HE-Z9Q"/>
                                         <constraint firstItem="895" firstAttribute="top" secondItem="890" secondAttribute="bottom" constant="8" symbolic="YES" id="yiD-Qg-imn"/>
                                         <constraint firstItem="1531" firstAttribute="leading" secondItem="1522" secondAttribute="trailing" constant="8" symbolic="YES" id="ytt-K9-nq7"/>
+                                    </constraints>
+                                </view>
+                            </tabViewItem>
+                            <tabViewItem label="Graphics" identifier="" id="VsT-nb-3sS" userLabel="Graphics">
+                                <view key="view" id="EpS-Zl-4Rl">
+                                    <rect key="frame" x="10" y="33" width="754" height="90"/>
+                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                    <subviews>
+                                        <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="PGV-3y-ubd">
+                                            <rect key="frame" x="84" y="48" width="104" height="26"/>
+                                            <popUpButtonCell key="cell" type="push" title="Gausian(3)" bezelStyle="rounded" alignment="center" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="sgd-JB-Iwb" id="W0L-LO-bMe">
+                                                <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                                <font key="font" metaFont="menu"/>
+                                                <menu key="menu" id="P5u-S3-kOL">
+                                                    <items>
+                                                        <menuItem title="SMA(1)" id="8AG-UC-wbL"/>
+                                                        <menuItem title="TMA(2)" id="fDn-Tb-E3Q"/>
+                                                        <menuItem title="Gausian(3)" state="on" id="sgd-JB-Iwb"/>
+                                                    </items>
+                                                </menu>
+                                            </popUpButtonCell>
+                                        </popUpButton>
+                                        <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="s8D-Rh-tGR">
+                                            <rect key="frame" x="110" y="1" width="78" height="26"/>
+                                            <popUpButtonCell key="cell" type="push" title="Rich" bezelStyle="rounded" alignment="center" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="vdO-LO-ywq" id="VjE-68-lhu">
+                                                <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                                <font key="font" metaFont="menu"/>
+                                                <menu key="menu" id="Elz-be-7bP">
+                                                    <items>
+                                                        <menuItem title="None" id="hwm-dX-xEM"/>
+                                                        <menuItem title="Simple" id="ytR-3h-gAU"/>
+                                                        <menuItem title="Rich" state="on" id="vdO-LO-ywq"/>
+                                                    </items>
+                                                </menu>
+                                            </popUpButtonCell>
+                                        </popUpButton>
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="p6Z-mr-OaP">
+                                            <rect key="frame" x="18" y="53" width="62" height="17"/>
+                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="KZ Depth" id="Cnt-On-SbS">
+                                                <font key="font" metaFont="system"/>
+                                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                        <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Fhx-ST-ejE">
+                                            <rect key="frame" x="18" y="29" width="169" height="18"/>
+                                            <buttonCell key="cell" type="check" title="BPS Outline Curve" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="zVx-55-vVI">
+                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                <font key="font" metaFont="system"/>
+                                            </buttonCell>
+                                        </button>
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ebP-HP-3Nm">
+                                            <rect key="frame" x="18" y="6" width="88" height="17"/>
+                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="BPS Fill Mode" id="AuD-WI-Epa">
+                                                <font key="font" metaFont="system"/>
+                                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                    </subviews>
+                                    <constraints>
+                                        <constraint firstItem="Fhx-ST-ejE" firstAttribute="leading" secondItem="p6Z-mr-OaP" secondAttribute="leading" id="1iq-7v-u8y"/>
+                                        <constraint firstItem="s8D-Rh-tGR" firstAttribute="centerY" secondItem="ebP-HP-3Nm" secondAttribute="centerY" id="7Kv-ZF-d5s"/>
+                                        <constraint firstItem="ebP-HP-3Nm" firstAttribute="leading" secondItem="Fhx-ST-ejE" secondAttribute="leading" id="7NQ-UH-Yjm"/>
+                                        <constraint firstItem="Fhx-ST-ejE" firstAttribute="trailing" secondItem="s8D-Rh-tGR" secondAttribute="trailing" id="Bh2-8W-FjL"/>
+                                        <constraint firstItem="s8D-Rh-tGR" firstAttribute="leading" secondItem="ebP-HP-3Nm" secondAttribute="trailing" constant="8" symbolic="YES" id="IKp-7A-xwQ"/>
+                                        <constraint firstItem="p6Z-mr-OaP" firstAttribute="leading" secondItem="EpS-Zl-4Rl" secondAttribute="leading" constant="20" symbolic="YES" id="TsD-LP-Xwh"/>
+                                        <constraint firstItem="PGV-3y-ubd" firstAttribute="leading" secondItem="p6Z-mr-OaP" secondAttribute="trailing" constant="8" symbolic="YES" id="dAL-ux-jYa"/>
+                                        <constraint firstItem="Fhx-ST-ejE" firstAttribute="top" secondItem="p6Z-mr-OaP" secondAttribute="bottom" constant="8" symbolic="YES" id="gSz-Ls-lFb"/>
+                                        <constraint firstItem="PGV-3y-ubd" firstAttribute="trailing" secondItem="Fhx-ST-ejE" secondAttribute="trailing" id="iHv-Cf-nmR"/>
+                                        <constraint firstItem="p6Z-mr-OaP" firstAttribute="top" secondItem="EpS-Zl-4Rl" secondAttribute="top" constant="20" symbolic="YES" id="o9i-PZ-10e"/>
+                                        <constraint firstItem="PGV-3y-ubd" firstAttribute="centerY" secondItem="p6Z-mr-OaP" secondAttribute="centerY" id="ox6-8a-MDH"/>
+                                        <constraint firstItem="ebP-HP-3Nm" firstAttribute="top" secondItem="Fhx-ST-ejE" secondAttribute="bottom" constant="8" symbolic="YES" id="pwM-dE-mEO"/>
                                     </constraints>
                                 </view>
                             </tabViewItem>
@@ -1154,9 +1227,12 @@
         <customObject id="494" customClass="AppDelegate">
             <connections>
                 <outlet property="averageField" destination="1404" id="1450"/>
+                <outlet property="bpsFillMode" destination="s8D-Rh-tGR" id="l4b-QG-Og4"/>
+                <outlet property="bpsOutlineEnable" destination="Fhx-ST-ejE" id="Of3-VX-Gov"/>
                 <outlet property="deviceSelector" destination="1204" id="1447"/>
                 <outlet property="filterField" destination="863" id="971"/>
                 <outlet property="graphView" destination="658" id="1036"/>
+                <outlet property="kzDepth" destination="PGV-3y-ubd" id="rVH-xg-WSF"/>
                 <outlet property="maxField" destination="1396" id="1449"/>
                 <outlet property="promiscCheck" destination="1627" id="1633"/>
                 <outlet property="rangeField" destination="1531" id="1601"/>

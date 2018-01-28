@@ -49,6 +49,11 @@
 @property (weak) IBOutlet NSPopUpButton *rangeSelector;
 @property (weak) IBOutlet NSButton *promiscCheck;
 
+/* Graphics TAB */
+@property (weak) IBOutlet NSPopUpButton *kzDepth;
+@property (weak) IBOutlet NSButton *bpsOutlineEnable;
+@property (weak) IBOutlet NSPopUpButton *bpsFillMode;
+
 /* Status TAB */
 @property (weak) IBOutlet NSTextField *snapshotField;
 @property (weak) IBOutlet NSTextField *maxField;
