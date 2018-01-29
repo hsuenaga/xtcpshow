@@ -147,8 +147,8 @@ double const time_round = 0.05;
     self.useHistgram = FALSE;
     self.useOutline = TRUE;
     self.fillMode = E_FILL_RICH;
-	self.resampler = [[PID alloc] init];
-    self.resampler.kzStage = 3;
+	self.PID = [[PID alloc] init];
+    self.PID.kzStage = 3;
     self.minViewTimeOffset = NAN;
     self.maxViewTimeOffset = 0.0;
 
@@ -238,19 +238,19 @@ double const time_round = 0.05;
 - (void)setFIRMode:(NSString *)mode
 {
     if ([mode compare:FIR_NONE] == NSOrderedSame) {
-        self.resampler.kzStage = 0;
+        self.PID.kzStage = 0;
     }
     if ([mode compare:FIR_SMA] == NSOrderedSame) {
-        self.resampler.kzStage = 1;
+        self.PID.kzStage = 1;
     }
     else if ([mode compare:FIR_TMA] == NSOrderedSame) {
-        self.resampler.kzStage = 2;
+        self.PID.kzStage = 2;
     }
     else if ([mode compare:FIR_GAUS] == NSOrderedSame) {
-        self.resampler.kzStage = 3;
+        self.PID.kzStage = 3;
     }
     else {
-        self.resampler.kzStage = 0;
+        self.PID.kzStage = 0;
     }
     [self purgeData];
 }
@@ -413,18 +413,18 @@ double const time_round = 0.05;
         self.viewTimeOffset = [[self.inputData firstDate] timeIntervalSinceDate:[self.inputData lastDate]];
 	}
 
-	self.resampler.outputTimeLength = self.viewTimeLength;
-	self.resampler.outputTimeOffset = self.viewTimeOffset;
-	self.resampler.outputSamples = rect.size.width;
-	self.resampler.FIRTimeLength = self.FIRTimeLength;
-    [self.resampler resampleDataBase:self.inputData atDate:end];
+	self.PID.outputTimeLength = self.viewTimeLength;
+	self.PID.outputTimeOffset = self.viewTimeOffset;
+	self.PID.outputSamples = rect.size.width;
+	self.PID.FIRTimeLength = self.FIRTimeLength;
+    [self.PID resampleDataBase:self.inputData atDate:end];
 
-	self.viewData = [self.resampler output];
+	self.viewData = [self.PID output];
 	self->_maxSamples = [self.viewData maxSamples];
 	self->_maxValue = [self.viewData maxDoubleValue];
 	self->_averageValue = [self.viewData averageDoubleValue];
-	self.GraphOffset = [self.resampler overSample];
-	self.XmarkOffset = [self.resampler overSample] / 2;
+	self.GraphOffset = [self.PID overSample];
+	self.XmarkOffset = [self.PID overSample] / 2;
     
     return TRUE;
 }
@@ -440,7 +440,7 @@ double const time_round = 0.05;
 
 - (void)purgeData
 {
-	[self.resampler purgeData];
+	[self.PID purgeData];
     self.lastResample = nil;
     self.lastBounds = self.bounds;
     [self startPlot:FALSE];

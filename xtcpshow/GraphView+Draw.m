@@ -337,7 +337,7 @@
 
 - (void)drawAllWithSize:(NSRect)rect OffScreen:(BOOL)off
 {
-    [self.resampler.outputLock lock];
+    [self.PID.outputLock lock];
     
     // clear screen
     [self.colorBG set];
@@ -355,7 +355,7 @@
         [self drawPPS:rect];
     
     // plot bps graph
-    if (self.useHistgram || ![self.resampler FIRenabled])
+    if (self.useHistgram || ![self.PID FIRenabled])
         [self drawGraphHistgram:rect];
     else {
         [self drawGraphBezier:rect];
@@ -371,7 +371,7 @@
     // date
     [self drawDate:rect];
     
-    [self.resampler.outputLock unlock];
+    [self.PID.outputLock unlock];
 }
 
 - (void)setLayerContext
@@ -425,8 +425,8 @@
 {
     if ([NSGraphicsContext currentContextDrawingToScreen]) {
         self.lastBounds = self.bounds;
-        if (self.bounds.size.width != self.resampler.outputSamples) {
-            self.resampler.outputSamples = self.bounds.size.width;
+        if (self.bounds.size.width != self.PID.outputSamples) {
+            self.PID.outputSamples = self.bounds.size.width;
             [self purgeData];
             self.bgReady = FALSE;
         }
@@ -443,12 +443,12 @@
     else {
         NSLog(@"Off Screen Rendring requested.");
         NSLog(@"w:%f, h:%f, x:%f, y:%f", dirty_rect.size.width, dirty_rect.size.height, dirty_rect.origin.x, dirty_rect.origin.y);
-        [self.resampler.outputLock lock];
-        [self.resampler purgeData];
+        [self.PID.outputLock lock];
+        [self.PID purgeData];
         self.lastResample = nil;
         [self resampleDataInRect:dirty_rect];
         [self drawAllWithSize:dirty_rect OffScreen:YES];
-        [self.resampler.outputLock unlock];
+        [self.PID.outputLock unlock];
         NSLog(@"Off Screen Rendring done.");
         [self purgeData];
     }

@@ -132,7 +132,7 @@ enum e_fill_mode {
 
 // Data Binding
 @property (weak, atomic) ComputeQueue *viewData;
-@property (atomic) PID *resampler;
+@property (atomic) PID *PID;
 @property (atomic) NSDate *lastResample;
 @property (weak, atomic) TrafficDB *inputData;
 
