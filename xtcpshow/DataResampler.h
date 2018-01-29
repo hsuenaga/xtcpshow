@@ -43,6 +43,7 @@
 @property (assign, nonatomic) NSTimeInterval outputTimeOffset;
 @property (assign, nonatomic) NSTimeInterval FIRTimeLength;
 @property (assign, nonatomic, readonly) NSUInteger overSample;
+@property (assign, nonatomic) NSUInteger kzStage;
 
 // public
 - (DataResampler *)init;

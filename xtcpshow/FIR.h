@@ -38,7 +38,7 @@
 
 @interface FIR : NSObject
 - (id)init;
-+ (id)FIRwithTap:(size_t)tap;
++ (id)FIRwithTap:(size_t)tap withStage:(NSUInteger)nstage;
 - (DerivedData *)filter:(DerivedData *)sample;
 
 @property (nonatomic, readonly)NSUInteger tap;

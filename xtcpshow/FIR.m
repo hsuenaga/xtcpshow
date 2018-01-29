@@ -33,32 +33,39 @@
 #import "FIR.h"
 #import "ComputeQueue.h"
 
-@implementation FIR
+@implementation FIR {
+    NSUInteger numberOfStage;
+}
 @synthesize tap;
 @synthesize stage;
-
-#define KZ_STAGE 3
 
 - (id)init
 {
     self = [super init];
+    self->numberOfStage = 0;
     return self;
 }
 
-+ (id)FIRwithTap:(size_t)tap
++ (id)FIRwithTap:(size_t)tap withStage:(NSUInteger)nstage;
 {
     FIR *new = [[FIR alloc] init];
-    NSUInteger tapStage = tap / KZ_STAGE;
+    new->numberOfStage = nstage;
+    if (nstage == 0) {
+        new->tap = 0;
+        new->stage = nil;
+        return new;
+    }
+    NSUInteger tapStage = tap / nstage;
     
     if (tapStage <= 0) {
         new->tap = 0;
         new->stage = nil;
         return new;
     }
-    new->tap = tapStage * KZ_STAGE;
+    new->tap = tapStage * nstage;
 
     NSMutableArray *FIR_Factory = [[NSMutableArray alloc] init];
-    for (int i = 0; i < KZ_STAGE; i++) {
+    for (int i = 0; i < nstage; i++) {
         ComputeQueue *stage = [ComputeQueue queueWithZero:tapStage];
         [FIR_Factory addObject:stage];
     }

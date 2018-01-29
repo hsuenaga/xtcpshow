@@ -83,6 +83,21 @@ static NSString *const PREFER_DEVICE=@"en";
 	[self.rangeSelector addItemWithTitle:RANGE_PEAKHOLD];
 	[self.rangeSelector addItemWithTitle:RANGE_MANUAL];
 	[self.rangeSelector selectItemWithTitle:RANGE_AUTO];
+    
+    // setup fillMode labels
+    [self.bpsFillMode removeAllItems];
+    [self.bpsFillMode addItemWithTitle:FILL_NONE];
+    [self.bpsFillMode addItemWithTitle:FILL_SIMPLE];
+    [self.bpsFillMode addItemWithTitle:FILL_RICH];
+    [self.bpsFillMode selectItemWithTitle:FILL_RICH];
+    
+    // setup FIR labels
+    [self.kzDepth removeAllItems];
+    [self.kzDepth addItemWithTitle:FIR_NONE];
+    [self.kzDepth addItemWithTitle:FIR_SMA];
+    [self.kzDepth addItemWithTitle:FIR_TMA];
+    [self.kzDepth addItemWithTitle:FIR_GAUS];
+    [self.kzDepth selectItemWithTitle:FIR_GAUS];
 
 	// notification center
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(closeNotify:) name:NSWindowWillCloseNotification object:self.window];
@@ -140,6 +155,21 @@ static NSString *const PREFER_DEVICE=@"en";
 - (IBAction)changeSmooth:(id)sender {
 	[self.graphView setFIRTimeLength:[sender floatValue]];
 	[self updateUserInterface];
+}
+
+- (IBAction)changeKZDepth:(id)sender {
+    [self.graphView setFIRMode:[self.kzDepth titleOfSelectedItem]];
+    [self.graphView setNeedsDisplay:YES];
+}
+
+- (IBAction)chnageBpsOutline:(id)sender {
+    [self.graphView setUseOutline:[self.bpsOutlineEnable state]];
+    [self.graphView setNeedsDisplay:YES];
+}
+
+- (IBAction)changeBPSFillMode:(id)sender {
+    [self.graphView setBPSFillMode:[self.bpsFillMode titleOfSelectedItem]];
+    [self.graphView setNeedsDisplay:YES];
 }
 
 - (void)zoomGesture:(id)sender

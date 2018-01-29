@@ -47,6 +47,15 @@ NSString *const RANGE_AUTO = @"Auto";
 NSString *const RANGE_PEAKHOLD = @"PeakHold";
 NSString *const RANGE_MANUAL = @"Manual";
 
+NSString *const FIR_NONE = @"NONE";
+NSString *const FIR_SMA = @"SMA(1)";
+NSString *const FIR_TMA = @"TMA(2)";
+NSString *const FIR_GAUS = @"Gausian(3)";
+
+NSString *const FILL_NONE = @"None";
+NSString *const FILL_SIMPLE = @"Simple";
+NSString *const FILL_RICH = @"Rich";
+
 NSString *const CAP_MAX_SMPL = @" Max %lu [packets/sample]";
 NSString *const CAP_MAX_MBPS = @" Max %6.3f [Mbps]";
 NSString *const CAP_AVG_MBPS = @" Avg %6.3f [Mbps], StdDev %6.3f [Mbps]";
@@ -70,6 +79,7 @@ double const time_round = 0.05;
     NSTimeInterval _viewTimeOffset;
 }
 // Animation
+@property (atomic) NSTimer *timerAnimation;
 @property (atomic) NSOperationQueue *cueAnimation;
 @property (atomic) BOOL cueActive;
 @property (atomic) BOOL bgReady;
@@ -132,7 +142,7 @@ double const time_round = 0.05;
 
 // Drawing
 - (void)drawGraphHistgram:(NSRect)rect;
-- (void)drawGraphBezier:(NSRect)rect enableFill:(BOOL)fill;
+- (void)drawGraphBezier:(NSRect)rect;
 - (void)drawPPS:(NSRect)rect;
 - (void)drawText:(NSString *)text inRect:(NSRect)rect atPoint:(NSPoint)point;
 - (void)drawText:(NSString *)text inRect:(NSRect)rect alignRight:(CGFloat)y;
@@ -203,7 +213,10 @@ double const time_round = 0.05;
 	self.magnifySense = magnify_sensitivity;
 	self.scrollSense = scroll_sensitivity;
     self.useHistgram = FALSE;
+    self.useOutline = TRUE;
+    self.fillMode = E_FILL_RICH;
 	self.resampler = [[DataResampler alloc] init];
+    self.resampler.kzStage = 3;
     self.minViewTimeOffset = NAN;
     self.maxViewTimeOffset = 0.0;
 
@@ -290,6 +303,40 @@ double const time_round = 0.05;
 	return self.y_range;
 }
 
+- (void)setFIRMode:(NSString *)mode
+{
+    if ([mode compare:FIR_NONE] == NSOrderedSame) {
+        self.resampler.kzStage = 0;
+    }
+    if ([mode compare:FIR_SMA] == NSOrderedSame) {
+        self.resampler.kzStage = 1;
+    }
+    else if ([mode compare:FIR_TMA] == NSOrderedSame) {
+        self.resampler.kzStage = 2;
+    }
+    else if ([mode compare:FIR_GAUS] == NSOrderedSame) {
+        self.resampler.kzStage = 3;
+    }
+    else {
+        self.resampler.kzStage = 0;
+    }
+    [self purgeData];
+}
+
+- (void)setBPSFillMode:(NSString *)mode
+{
+    if ([mode compare:FILL_NONE] == NSOrderedSame) {
+        self.fillMode = E_FILL_NONE;
+    }
+    else if ([mode compare:FILL_SIMPLE] == NSOrderedSame) {
+        self.fillMode = E_FILL_SIMPLE;
+    }
+    else if ([mode compare:FILL_RICH] == NSOrderedSame) {
+        self.fillMode = E_FILL_RICH;
+    }
+    [self purgeData];
+}
+
 - (NSTimeInterval)viewTimeLength
 {
     return _viewTimeLength;
@@ -372,24 +419,42 @@ double const time_round = 0.05;
 	return step;
 }
 
+- (void)drawInBackground
+{
+    GraphViewOperation *op = [[GraphViewOperation alloc] initWithGraphView:self];
+    [op setQueuePriority:NSOperationQueuePriorityHigh];
+    [self.cueAnimation addOperation:op];
+
+}
+
 - (void)startPlot:(BOOL)repeat
 {
     if (self.cueActive)
         return;
-    
-    GraphViewOperation *op = [[GraphViewOperation alloc] initWithGraphView:self];
-    [op setQueuePriority:NSOperationQueuePriorityHigh];
-    [op setRepeat:repeat];
-    [self.cueAnimation addOperation:op];
-    if (repeat)
-        self.cueActive = TRUE;
+    if (!repeat) {
+        NSLog(@"One shot plot.");
+        [self drawInBackground];
+        return;
+    }
+    NSLog(@"Start animiation...");
+    double interval = 1.0 / self.animationFPS;
+    self.timerAnimation = [NSTimer timerWithTimeInterval:interval
+                                                  target:self selector:@selector(drawInBackground)
+                                                userInfo:nil
+                                                 repeats:TRUE];
+    [[NSRunLoop currentRunLoop] addTimer:self.timerAnimation
+                                 forMode:NSRunLoopCommonModes];
+    self.cueActive = TRUE;
 }
 
 - (void)stopPlot
 {
-    [self.cueAnimation cancelAllOperations];
-    [self.cueAnimation waitUntilAllOperationsAreFinished];
-    self.cueActive = FALSE;
+    if (self.cueActive) {
+        NSLog(@"Stop animation...");
+        [self.timerAnimation invalidate];
+        self.timerAnimation = nil;
+        self.cueActive = FALSE;
+    }
 }
 
 //
@@ -415,6 +480,8 @@ double const time_round = 0.05;
 //
 - (void)drawGraphHistgram:(NSRect)rect
 {
+    [self.colorBPS set];
+    
 	[self.viewData enumerateDataUsingBlock:^(DerivedData *data, NSUInteger idx, BOOL *stop) {
 		NSRect bar;
 		CGFloat value = (CGFloat)[data doubleValue];
@@ -433,11 +500,12 @@ double const time_round = 0.05;
 		bar.size.height = value * rect.size.height / self.y_range;
 		if (bar.size.height < 1.0)
 			return;
-		[self.gradGraph drawInRect:bar angle:90.0];
+        NSRectFill(bar);
+//		[self.gradGraph drawInRect:bar angle:90.0];
 	}];
 }
 
-- (void)drawGraphBezier:(NSRect)rect enableFill:(BOOL)fill
+- (void)drawGraphBezier:(NSRect)rect
 {
     [self.colorBPS set];
 
@@ -474,7 +542,7 @@ double const time_round = 0.05;
         };
 
         // fill background
-        if (fill && value > 0.0) {
+        if (self.fillMode == E_FILL_RICH && value > 0.0) {
             NSRect histgram;
             
             histgram.origin.x = plot.x;
@@ -485,6 +553,8 @@ double const time_round = 0.05;
         }
         
         // draw outline
+        if (!self.useOutline && self.fillMode != E_FILL_SIMPLE)
+            return;
         if (!pathOpen) {
             if (plot.y > 0.0) {
                 // create new shape
@@ -499,7 +569,10 @@ double const time_round = 0.05;
             if (plot.y == 0.0) {
                 // close the shape
                 [self.pathBold lineToPoint:plot];
-                [self.pathBold stroke];
+                if (self.fillMode == E_FILL_SIMPLE)
+                    [self.gradGraph drawInBezierPath:self.pathBold angle:90.0];
+                if (self.useOutline)
+                    [self.pathBold stroke];
                 
                 // restart from currnet plot
                 [self.pathBold removeAllPoints];
@@ -513,13 +586,17 @@ double const time_round = 0.05;
     }];
     
     // end at (width, 0)
-    if (pathOpen) {
+    if ((self.useOutline || self.fillMode == E_FILL_SIMPLE)
+        && pathOpen) {
         NSPoint pointEnd = {
             .x = rect.size.width,
             .y = 0.0
         };
         [self.pathBold lineToPoint:pointEnd];
-        [self.pathBold stroke];
+        if (self.fillMode == E_FILL_SIMPLE)
+            [self.gradGraph drawInBezierPath:self.pathBold angle:90.0];
+        if (self.useOutline)
+            [self.pathBold stroke];
     }
 }
 
@@ -609,7 +686,7 @@ double const time_round = 0.05;
 	/* draw text */
     value = [self saturateDouble:value
                          withMax:(rect.size.height / 5) * 4
-                         withMin:(rect.size.height)
+                         withMin:(rect.size.height / 5)
                          roundBy:NAN];
 	NSString *marker = [NSString stringWithFormat:CAP_AVG_MBPS, self.averageValue, deviation];
 	[self drawText:marker inRect:rect alignRight:value];
@@ -706,7 +783,7 @@ double const time_round = 0.05;
     if (self.useHistgram || ![self.resampler FIRenabled])
         [self drawGraphHistgram:rect];
     else {
-        [self drawGraphBezier:rect enableFill:TRUE];
+        [self drawGraphBezier:rect];
     }
 
 	// plot guide line (max, average, ...)
@@ -878,45 +955,6 @@ double const time_round = 0.05;
 
 - (void)saveFile:(TrafficDB *)dataBase;
 {
-#if 0
-    NSSize image_size = NSMakeSize(640, 480);
-    NSRect image_rect = {
-        .size = image_size,
-        .origin = {
-            .x = 0,
-            .y = 0,
-        }
-    };
-	NSBitmapImageRep *buffer = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:nil pixelsWide:image_size.width pixelsHigh:image_size.height bitsPerSample:8 samplesPerPixel:4 hasAlpha:YES isPlanar:NO colorSpaceName:NSCalibratedRGBColorSpace bitmapFormat:0 bytesPerRow:(image_size.width * 4) bitsPerPixel:32];
-	NSData *png;
-	NSGraphicsContext *gc = [NSGraphicsContext graphicsContextWithBitmapImageRep:buffer];
-
-	[NSGraphicsContext saveGraphicsState];
-	[NSGraphicsContext setCurrentContext:gc];
-	NSLog(@"create PNG image");
-    [self.resampler.outputLock lock];
-	[self.resampler purgeData];
-    [self resampleDataInRect:image_rect];
-	[self drawAllWithSize:image_rect OffScreen:YES];
-    [self.resampler.outputLock unlock];
-    [self purgeData];
-	[NSGraphicsContext restoreGraphicsState];
-    
-    // get filename
-    NSSavePanel *panel = [NSSavePanel savePanel];
-    [panel setAllowedFileTypes:@[@"png"]];
-    [panel setNameFieldStringValue:@"xtcpshow_hardcopy.png"];
-    [panel runModal];
-    NSLog(@"save to %@%@",
-          [panel directoryURL],
-          [panel nameFieldStringValue]);
-    NSDictionary *prop = [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithBool:false],
-                          NSImageInterlaced, nil];
-    
-    png = [buffer representationUsingType:NSPNGFileType properties:prop];
-    [png writeToURL:[[panel directoryURL] URLByAppendingPathComponent:[panel nameFieldStringValue]]
-         atomically:NO];
-#else
     NSRect image_rect = [self bounds];
     NSData *pdfData = [self dataWithPDFInsideRect:image_rect];
 
@@ -926,6 +964,5 @@ double const time_round = 0.05;
     [panel runModal];
     NSLog(@"save to %@", [panel URL]);
     [pdfData writeToURL:[panel URL] atomically:TRUE];
-#endif
 }
 @end

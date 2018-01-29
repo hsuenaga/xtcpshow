@@ -660,7 +660,7 @@
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES"/>
             <rect key="contentRect" x="58" y="211" width="800" height="600"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1280" height="800"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1680" height="1050"/>
             <value key="minSize" type="size" width="640" height="480"/>
             <view key="contentView" id="372">
                 <rect key="frame" x="0.0" y="0.0" width="800" height="600"/>
@@ -929,7 +929,7 @@
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
                                         <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="PGV-3y-ubd">
-                                            <rect key="frame" x="84" y="48" width="104" height="26"/>
+                                            <rect key="frame" x="83" y="48" width="105" height="26"/>
                                             <popUpButtonCell key="cell" type="push" title="Gausian(3)" bezelStyle="rounded" alignment="center" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="sgd-JB-Iwb" id="W0L-LO-bMe">
                                                 <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                                                 <font key="font" metaFont="menu"/>
@@ -940,6 +940,9 @@
                                                         <menuItem title="Gausian(3)" state="on" id="sgd-JB-Iwb"/>
                                                     </items>
                                                 </menu>
+                                                <connections>
+                                                    <action selector="changeKZDepth:" target="494" id="Hja-HH-DEd"/>
+                                                </connections>
                                             </popUpButtonCell>
                                         </popUpButton>
                                         <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="s8D-Rh-tGR">
@@ -954,11 +957,14 @@
                                                         <menuItem title="Rich" state="on" id="vdO-LO-ywq"/>
                                                     </items>
                                                 </menu>
+                                                <connections>
+                                                    <action selector="changeBPSFillMode:" target="494" id="2XN-D9-bgl"/>
+                                                </connections>
                                             </popUpButtonCell>
                                         </popUpButton>
                                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="p6Z-mr-OaP">
-                                            <rect key="frame" x="18" y="53" width="62" height="17"/>
-                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="KZ Depth" id="Cnt-On-SbS">
+                                            <rect key="frame" x="18" y="53" width="61" height="17"/>
+                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="FIR mode" id="Cnt-On-SbS">
                                                 <font key="font" metaFont="system"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
@@ -969,6 +975,9 @@
                                             <buttonCell key="cell" type="check" title="BPS Outline Curve" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="zVx-55-vVI">
                                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                 <font key="font" metaFont="system"/>
+                                                <connections>
+                                                    <action selector="chnageBpsOutline:" target="494" id="5PW-gi-nkh"/>
+                                                </connections>
                                             </buttonCell>
                                         </button>
                                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ebP-HP-3Nm">

@@ -43,6 +43,21 @@ extern NSString *const RANGE_AUTO;
 extern NSString *const RANGE_PEAKHOLD;
 extern NSString *const RANGE_MANUAL;
 
+extern NSString *const FIR_NONE;
+extern NSString *const FIR_SMA;
+extern NSString *const FIR_TMA;
+extern NSString *const FIR_GAUS;
+
+extern NSString *const FILL_NONE;
+extern NSString *const FILL_SIMPLE;
+extern NSString *const FILL_RICH;
+
+enum e_fill_mode {
+    E_FILL_NONE,
+    E_FILL_SIMPLE,
+    E_FILL_RICH
+};
+
 @interface GraphView : NSView {
     NSTimeInterval _viewTimeLength;
     NSTimeInterval _FIRTimeLength;
@@ -66,6 +81,8 @@ extern NSString *const RANGE_MANUAL;
 @property (assign) BOOL showPacketMarker;
 @property (assign) BOOL showDeviationBand;
 @property (assign) BOOL useHistgram;
+@property (assign) BOOL useOutline;
+@property (assign) enum e_fill_mode fillMode;
 
 @property (assign) double animationFPS;
 
@@ -75,6 +92,8 @@ extern NSString *const RANGE_MANUAL;
 - (int)stepValueFromRange:(float)range;
 - (void)startPlot:(BOOL)repeat;
 - (void)stopPlot;
+- (void)setFIRMode:(NSString *)mode;
+- (void)setBPSFillMode:(NSString *)mode;
 
 // Action from window server
 - (void)magnifyWithEvent:(NSEvent *)event;

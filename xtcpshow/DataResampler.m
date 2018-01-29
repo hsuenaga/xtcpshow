@@ -63,6 +63,7 @@
 {
     self = [super init];
     self->_outputLock = [NSRecursiveLock new];
+    self->_kzStage = 3;
     return self;
 }
 
@@ -73,7 +74,7 @@
     dataLength = outputTimeLength + FIRTimeLength;
     
     // allocate FIR
-    filterFIR = [FIR FIRwithTap:ceil(FIRTimeLength/tick)];
+    filterFIR = [FIR FIRwithTap:ceil(FIRTimeLength/tick) withStage:self.kzStage];
     
     NSUInteger maxSamples = outputSamples + [filterFIR tap];
     output = [ComputeQueue queueWithZero:maxSamples];

@@ -37,7 +37,6 @@
 {
     self = [super init];
     self.view = view;
-    self.repeat = FALSE;
     return self;
 }
 
@@ -46,36 +45,11 @@
     return [self initWithGraphView:nil];
 }
 
-- (void)mainTimer
-{
-    if ([self isCancelled]) {
-        [self.timer invalidate];
-        return;
-    }
-    [self.view refreshData];
-    [self.view performSelectorOnMainThread:@selector(display)
-                           withObject:nil
-                        waitUntilDone:FALSE];
-}
-
 - (void)main
 {
-    if (!self.repeat) {
-        NSLog(@"GraphView Oneshot Update.");
-        [self mainTimer];
-        return;
-    }
-    
-    NSLog(@"GraphView Animiation start.");
-    double animationInt = 1.0 / self.view.animationFPS;
-    self.timer = [NSTimer timerWithTimeInterval:animationInt
-                                         target:self
-                                       selector:@selector(mainTimer)
-                                       userInfo:nil
-                                        repeats:TRUE];
-    [[NSRunLoop currentRunLoop] addTimer:self.timer
-                                 forMode:NSRunLoopCommonModes];
-    [[NSRunLoop currentRunLoop] run];
-    NSLog(@"GraphView Animation end.");
+    [self.view refreshData];
+    [self.view performSelectorOnMainThread:@selector(display)
+                                withObject:nil
+                             waitUntilDone:FALSE];
 }
 @end

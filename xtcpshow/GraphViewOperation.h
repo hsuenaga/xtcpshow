@@ -35,10 +35,7 @@
 #import "GraphView.h"
 
 @interface GraphViewOperation : NSOperation
-@property (nonatomic) NSTimer *timer;
 @property (weak) GraphView *view;
-@property (nonatomic) BOOL repeat;
 
 - (id)initWithGraphView:(GraphView *)view;
-- (void)mainTimer;
 @end
