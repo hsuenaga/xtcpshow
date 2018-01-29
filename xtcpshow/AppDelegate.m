@@ -64,7 +64,7 @@ static NSString *const LBL_CAP_ERROR=@"CAPTURE ERROR";
 	[self.graphView setMaxFIRTimeLength:[self.smoothBar maxValue]];
 	[self.graphView setMinFIRTimeLength:[self.smoothBar minValue]];
 	[self.graphView setFIRTimeLength:[self.smoothBar floatValue]];
-    [self.graphView createFillButton:self.rangeSelector];
+    [self.graphView createRangeButton:self.rangeSelector];
     [self.graphView createFillButton:self.bpsFillMode];
     [self.graphView createFIRButton:self.kzDepth];
     [self.graphView setNeedsDisplay:YES];
