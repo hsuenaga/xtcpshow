@@ -23,7 +23,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 //
-//  DataResampler.m
+//  PID.m
 //  xtcpshow
 //
 //  Created by SUENAGA Hiroki on 2013/08/02.
@@ -31,7 +31,7 @@
 //
 #import "math.h"
 
-#import "DataResampler.h"
+#import "PID.h"
 #import "TrafficIndex.h"
 #import "TrafficData.h"
 #import "TrafficDB.h"
@@ -39,13 +39,13 @@
 #import "ComputeQueue.h"
 #import "FIR.h"
 
-@interface DataResampler ()
+@interface PID ()
 - (NSDate *)roundDate:(NSDate *)date toTick:(NSTimeInterval)tick;
 - (void)dumpParams;
 - (void)invalidValueException;
 @end
 
-@implementation DataResampler {
+@implementation PID {
     FIR *filterFIR;
     BOOL write_protect;
     BOOL running;
@@ -59,7 +59,7 @@
 @synthesize FIRTimeLength;
 @synthesize overSample;
 
-- (DataResampler *)init
+- (PID *)init
 {
     self = [super init];
     self->_outputLock = [NSRecursiveLock new];

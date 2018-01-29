@@ -41,7 +41,7 @@
 #import "CaptureModel.h"
 #import "GraphView.h"
 #import "GraphView+Draw.h"
-#import "DataResampler.h"
+#import "PID.h"
 #import "CaptureBPF.h"
 #import "OpenBPFService.h"
 

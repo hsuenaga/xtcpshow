@@ -23,7 +23,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 //
-//  DataResampler.h
+//  PID.h
 //  xtcpshow
 //
 //  Created by SUENAGA Hiroki on 2013/08/02.
@@ -35,7 +35,7 @@
 #import "TrafficDB.h"
 #import "ComputeQueue.h"
 
-@interface DataResampler : NSObject
+@interface PID : NSObject
 @property (strong, atomic, readonly) NSRecursiveLock *outputLock;
 @property (strong, nonatomic, readonly) ComputeQueue *output;
 @property (assign, nonatomic) NSUInteger outputSamples;
@@ -46,7 +46,7 @@
 @property (assign, nonatomic) NSUInteger kzStage;
 
 // public
-- (DataResampler *)init;
+- (PID *)init;
 - (void)updateParams;
 - (void)purgeData;
 - (void)resampleDataBase:(TrafficDB *)dataBase atDate:(NSDate *)date;

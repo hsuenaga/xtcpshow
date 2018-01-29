@@ -35,7 +35,7 @@
 #import "GraphView.h"
 #import "GraphViewOperation.h"
 #import "ComputeQueue.h"
-#import "DataResampler.h"
+#import "PID.h"
 #import "DerivedData.h"
 #import "TrafficIndex.h"
 #import "TrafficDB.h"
@@ -147,7 +147,7 @@ double const time_round = 0.05;
     self.useHistgram = FALSE;
     self.useOutline = TRUE;
     self.fillMode = E_FILL_RICH;
-	self.resampler = [[DataResampler alloc] init];
+	self.resampler = [[PID alloc] init];
     self.resampler.kzStage = 3;
     self.minViewTimeOffset = NAN;
     self.maxViewTimeOffset = 0.0;

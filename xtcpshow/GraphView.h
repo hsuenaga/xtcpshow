@@ -35,7 +35,7 @@
 @class GraphData;
 @class Queue;
 @class ComputeQueue;
-@class DataResampler;
+@class PID;
 @class TrafficIndex;
 @class TrafficDB;
 
@@ -132,7 +132,7 @@ enum e_fill_mode {
 
 // Data Binding
 @property (weak, atomic) ComputeQueue *viewData;
-@property (atomic) DataResampler *resampler;
+@property (atomic) PID *resampler;
 @property (atomic) NSDate *lastResample;
 @property (weak, atomic) TrafficDB *inputData;
 

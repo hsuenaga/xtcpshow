@@ -9,7 +9,7 @@
 #import "GraphView.h"
 #import "GraphView+Draw.h"
 #import "GraphViewOperation.h"
-#import "DataResampler.h"
+#import "PID.h"
 #import "ComputeQueue.h"
 
 @implementation GraphView (Draw)
