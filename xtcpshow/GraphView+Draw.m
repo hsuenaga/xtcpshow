@@ -453,6 +453,4 @@
         [self purgeData];
     }
 }
-
-
 @end
