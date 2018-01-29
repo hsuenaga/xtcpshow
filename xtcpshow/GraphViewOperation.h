@@ -33,6 +33,7 @@
 #import <Foundation/Foundation.h>
 
 #import "GraphView.h"
+#import "GraphView+Draw.h"
 
 @interface GraphViewOperation : NSOperation
 @property (weak) GraphView *view;

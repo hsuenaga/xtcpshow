@@ -52,6 +52,14 @@ extern NSString *const FILL_NONE;
 extern NSString *const FILL_SIMPLE;
 extern NSString *const FILL_RICH;
 
+extern NSString *const CAP_MAX_SMPL;
+extern NSString *const CAP_MAX_MBPS;
+extern NSString *const CAP_AVG_MBPS;
+
+extern NSString *const FMT_RANGE;
+extern NSString *const FMT_DATE;
+extern NSString *const FMT_NODATA;
+
 enum e_fill_mode {
     E_FILL_NONE,
     E_FILL_SIMPLE,
@@ -84,26 +92,68 @@ enum e_fill_mode {
 @property (assign) BOOL useOutline;
 @property (assign) enum e_fill_mode fillMode;
 
+// Animation
 @property (assign) double animationFPS;
+@property (atomic) NSTimer *timerAnimation;
+@property (atomic) NSOperationQueue *cueAnimation;
+@property (atomic) BOOL cueActive;
+@property (atomic) BOOL bgReady;
+@property (atomic) NSRect lastBounds;
+
+// Graphic Components
+@property (nonatomic) CGLayerRef CGBackbuffer;
+@property (atomic)    NSGraphicsContext* NSBackbuffer;
+@property (nonatomic) NSGraphicsContext *layerBackbufferContext;
+@property (nonatomic) NSMutableDictionary *textAttributes;
+@property (nonatomic) NSGradient *gradGraph;
+@property (nonatomic) NSBezierPath *pathSolid;
+@property (nonatomic) NSBezierPath *pathBold;
+@property (nonatomic) NSBezierPath *pathDash;
+@property (nonatomic) NSColor *colorBG;
+@property (nonatomic) NSColor *colorFG;
+@property (nonatomic) NSColor *colorAVG;
+@property (nonatomic) NSColor *colorDEV;
+@property (nonatomic) NSColor *colorBPS;
+@property (nonatomic) NSColor *colorPPS;
+@property (nonatomic) NSColor *colorMAX;
+@property (nonatomic) NSColor *colorGRID;
+@property (nonatomic) NSColor *colorGradStart;
+@property (nonatomic) NSColor *colorGradEnd;
+@property (nonatomic) NSDateFormatter *dateFormatter;
+
+// Range adjustment
+@property (nonatomic) NSString *range_mode;
+@property (nonatomic) double manual_range;
+@property (nonatomic) double peak_range;
+@property (nonatomic) NSUInteger GraphOffset;
+@property (nonatomic) NSUInteger XmarkOffset;
+@property (nonatomic) double y_range;
+@property (nonatomic) NSUInteger pps_range;
+
+// Data Binding
+@property (weak, atomic) ComputeQueue *viewData;
+@property (atomic) DataResampler *resampler;
+@property (atomic) NSDate *lastResample;
+@property (weak, atomic) TrafficDB *inputData;
 
 // Action from UI
 - (float)setRange:(NSString *)mode withRange:(float)range;
 - (float)setRange:(NSString *)mode withStep:(int)step;
 - (int)stepValueFromRange:(float)range;
-- (void)startPlot:(BOOL)repeat;
-- (void)stopPlot;
 - (void)setFIRMode:(NSString *)mode;
 - (void)setBPSFillMode:(NSString *)mode;
 
 // Action from window server
 - (void)magnifyWithEvent:(NSEvent *)event;
 - (void)scrollWheel:(NSEvent *)event;
-- (void)drawRect:(NSRect)rect;
-- (void)refreshData;
-- (void)drawLayerToGC;
 
-// Data-Binding
+- (void)updateRange;
+
+// Data Processing
+- (BOOL)resampleDataInRect:(NSRect)rect;
 - (void)importData:(TrafficDB *)dataBase;
 - (void)purgeData;
 - (void)saveFile:(TrafficDB *)dataBase;
+
+- (double)saturateDouble:(double)value withMax:(double)max withMin:(double)min roundBy:(double)round;
 @end
