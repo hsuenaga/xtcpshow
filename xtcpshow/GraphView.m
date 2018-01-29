@@ -159,8 +159,15 @@ double const time_round = 0.05;
 {
     float new_range;
     float max = [self.viewData maxDoubleValue];
+    if (self.range_mode == RANGE_PEAKHOLD) {
+        if (self.peak_range < max)
+            self.peak_range = max;
+        else
+            max = self.peak_range;
+    }
     
     if (self.range_mode == RANGE_MANUAL) {
+        /* manual scaling */
         if (self.manual_range <= 0.5f)
             new_range = 0.5f;
         else if (self.manual_range <= 1.0f)
@@ -171,12 +178,6 @@ double const time_round = 0.05;
             new_range =
             5.0f * (ceil(self.manual_range/5.0f));
     } else {
-        if (self.range_mode == RANGE_PEAKHOLD) {
-            if (self.peak_range < max)
-                self.peak_range = max;
-            max = self.peak_range;
-        }
-        
         /* automatic scaling */
         if (max < 0.5f)
             new_range = 0.5f;
@@ -237,16 +238,16 @@ double const time_round = 0.05;
 
 - (void)setFIRMode:(NSString *)mode
 {
-    if ([mode compare:FIR_NONE] == NSOrderedSame) {
+    if (mode == FIR_NONE) {
         self.PID.kzStage = 0;
     }
-    if ([mode compare:FIR_SMA] == NSOrderedSame) {
+    else if (mode == FIR_SMA) {
         self.PID.kzStage = 1;
     }
-    else if ([mode compare:FIR_TMA] == NSOrderedSame) {
+    else if (mode == FIR_TMA) {
         self.PID.kzStage = 2;
     }
-    else if ([mode compare:FIR_GAUS] == NSOrderedSame) {
+    else if (mode == FIR_GAUS) {
         self.PID.kzStage = 3;
     }
     else {
@@ -257,16 +258,45 @@ double const time_round = 0.05;
 
 - (void)setBPSFillMode:(NSString *)mode
 {
-    if ([mode compare:FILL_NONE] == NSOrderedSame) {
+    if (mode == FILL_NONE) {
         self.fillMode = E_FILL_NONE;
     }
-    else if ([mode compare:FILL_SIMPLE] == NSOrderedSame) {
+    else if (mode == FILL_SIMPLE) {
         self.fillMode = E_FILL_SIMPLE;
     }
-    else if ([mode compare:FILL_RICH] == NSOrderedSame) {
+    else if (mode == FILL_RICH) {
         self.fillMode = E_FILL_RICH;
     }
     [self purgeData];
+}
+
+- (void)createRangeButton:(NSPopUpButton *)btn
+{
+    [btn removeAllItems];
+    [btn addItemWithTitle:RANGE_AUTO];
+    [btn addItemWithTitle:RANGE_PEAKHOLD];
+    [btn addItemWithTitle:RANGE_MANUAL];
+    [btn selectItemWithTitle:RANGE_AUTO];
+    [self setRange:RANGE_AUTO withRange:0.0];
+}
+
+- (void)createFIRButton:(NSPopUpButton *)btn
+{
+    [btn removeAllItems];
+    [btn addItemWithTitle:FIR_NONE];
+    [btn addItemWithTitle:FIR_SMA];
+    [btn addItemWithTitle:FIR_TMA];
+    [btn addItemWithTitle:FIR_GAUS];
+    [btn selectItemWithTitle:FIR_GAUS];
+}
+
+- (void)createFillButton:(NSPopUpButton *)btn
+{
+    [btn removeAllItems];
+    [btn addItemWithTitle:FILL_NONE];
+    [btn addItemWithTitle:FILL_SIMPLE];
+    [btn addItemWithTitle:FILL_RICH];
+    [btn selectItemWithTitle:FILL_RICH];
 }
 
 - (NSTimeInterval)viewTimeLength

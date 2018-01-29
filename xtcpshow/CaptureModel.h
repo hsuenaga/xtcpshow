@@ -67,6 +67,7 @@
 - (BOOL)captureEnabled;
 - (void)resetCounter;
 - (void)updateCounter:(id)sender;
+- (void)createInterfaceButton:(NSPopUpButton *)btn;
 
 - (double)samplingIntervalMS;
 - (double)samplingIntervalLastMS;

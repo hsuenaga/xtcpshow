@@ -91,7 +91,4 @@
 - (void) closeNotify:(NSNotification *)notify;
 - (void) samplingError:(NSString *)message;
 - (void) updateUserInterface;
-
-/* initialize environment */
-- (void) setupInterfaceButton:(NSPopUpButton *)btn;
 @end

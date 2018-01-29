@@ -143,6 +143,11 @@ enum e_fill_mode {
 - (void)setFIRMode:(NSString *)mode;
 - (void)setBPSFillMode:(NSString *)mode;
 
+// UI helper
+- (void)createFIRButton:(NSPopUpButton *)btn;
+- (void)createRangeButton:(NSPopUpButton *)btn;
+- (void)createFillButton:(NSPopUpButton *)btn;
+
 // Action from window server
 - (void)magnifyWithEvent:(NSEvent *)event;
 - (void)scrollWheel:(NSEvent *)event;

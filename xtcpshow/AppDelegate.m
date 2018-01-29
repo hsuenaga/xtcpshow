@@ -29,10 +29,6 @@
 //  Created by SUENAGA Hiroki on 2013/07/19.
 //  Copyright (c) 2013 SUENAGA Hiroki. All rights reserved.
 //
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <net/if.h>
-#include <ifaddrs.h>
 
 #import <ServiceManagement/ServiceManagement.h>
 #import <Security/Security.h>
@@ -50,9 +46,6 @@ static NSString *const LBL_STOP=@"STOP";
 static NSString *const LBL_OK=@"OK";
 static NSString *const LBL_CAP_ERROR=@"CAPTURE ERROR";
 
-static NSString *const DEF_DEVICE=@"en0";
-static NSString *const PREFER_DEVICE=@"en";
-
 @implementation AppDelegate
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
@@ -63,7 +56,6 @@ static NSString *const PREFER_DEVICE=@"en";
 
 	// widget initialization
 	[self.graphView setController:self];
-	[self.graphView setRange:RANGE_AUTO withRange:0.0];
 	[self.graphView setShowPacketMarker:NO];
     [self.graphView setUseHistgram:NO];
 	[self.graphView setMaxViewTimeLength:[self.zoomBar maxValue]];
@@ -72,37 +64,18 @@ static NSString *const PREFER_DEVICE=@"en";
 	[self.graphView setMaxFIRTimeLength:[self.smoothBar maxValue]];
 	[self.graphView setMinFIRTimeLength:[self.smoothBar minValue]];
 	[self.graphView setFIRTimeLength:[self.smoothBar floatValue]];
-	[self.graphView setNeedsDisplay:YES];
-	[self.startButton setEnabled:TRUE];
+    [self.graphView createFillButton:self.rangeSelector];
+    [self.graphView createFillButton:self.bpsFillMode];
+    [self.graphView createFIRButton:self.kzDepth];
+    [self.graphView setNeedsDisplay:YES];
 
-	// setup intrface labels
-	[self setupInterfaceButton:self.deviceSelector];
-
-	// setup range labels
-	[self.rangeSelector removeAllItems];
-	[self.rangeSelector addItemWithTitle:RANGE_AUTO];
-	[self.rangeSelector addItemWithTitle:RANGE_PEAKHOLD];
-	[self.rangeSelector addItemWithTitle:RANGE_MANUAL];
-	[self.rangeSelector selectItemWithTitle:RANGE_AUTO];
+    // setup intrface labels
+    [self.model createInterfaceButton:self.deviceSelector];
     
-    // setup fillMode labels
-    [self.bpsFillMode removeAllItems];
-    [self.bpsFillMode addItemWithTitle:FILL_NONE];
-    [self.bpsFillMode addItemWithTitle:FILL_SIMPLE];
-    [self.bpsFillMode addItemWithTitle:FILL_RICH];
-    [self.bpsFillMode selectItemWithTitle:FILL_RICH];
-    
-    // setup FIR labels
-    [self.kzDepth removeAllItems];
-    [self.kzDepth addItemWithTitle:FIR_NONE];
-    [self.kzDepth addItemWithTitle:FIR_SMA];
-    [self.kzDepth addItemWithTitle:FIR_TMA];
-    [self.kzDepth addItemWithTitle:FIR_GAUS];
-    [self.kzDepth selectItemWithTitle:FIR_GAUS];
-
 	// notification center
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(closeNotify:) name:NSWindowWillCloseNotification object:self.window];
 
+    [self.startButton setEnabled:TRUE];
 	[self updateUserInterface];
 }
 
@@ -320,54 +293,5 @@ static NSString *const PREFER_DEVICE=@"en";
 	 setFloatValue:self.model.samplingIntervalLastMS];
     
     [self.graphView setNeedsDisplay:YES];
-}
-
-- (void)setupInterfaceButton:(NSPopUpButton *)btn
-{
-	struct ifaddrs *ifap0, *ifap;
-
-	if (getifaddrs(&ifap0) < 0)
-		return;
-
-	[btn removeAllItems];
-
-	for (ifap = ifap0; ifap; ifap = ifap->ifa_next) {
-		NSString *if_name, *exist_name;
-		NSArray *name_array;
-		NSEnumerator *enumerator;
-
-		if (ifap->ifa_flags & IFF_LOOPBACK)
-			continue;
-		if (!(ifap->ifa_flags & IFF_UP))
-			continue;
-		if (!(ifap->ifa_flags & IFF_RUNNING))
-			continue;
-
-		if_name = [NSString
-			   stringWithCString:ifap->ifa_name
-			   encoding:NSASCIIStringEncoding];
-		name_array = [btn itemTitles];
-		enumerator = [name_array objectEnumerator];
-		while (exist_name = [enumerator nextObject]) {
-			if ([if_name isEqualToString:exist_name]) {
-				if_name = nil;
-				break;
-			}
-		}
-		if (if_name == nil)
-			continue;
-
-		[btn addItemWithTitle:if_name];
-		if ([if_name isEqualToString:DEF_DEVICE])
-			[btn selectItemWithTitle:if_name];
-		else {
-			NSRange range;
-			range = [if_name rangeOfString:PREFER_DEVICE];
-			if (range.location != NSNotFound)
-				[btn selectItemWithTitle:if_name];
-		}
-	}
-
-	freeifaddrs(ifap0);
 }
 @end
