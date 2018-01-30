@@ -24,6 +24,7 @@
 		4639F8431799095A00E59491 /* CaptureModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 4639F8421799095A00E59491 /* CaptureModel.m */; };
 		4639F847179D0D0900E59491 /* libpcap.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4639F846179D0D0900E59491 /* libpcap.dylib */; };
 		46580546201F0C8F00169963 /* GraphView+Draw.m in Sources */ = {isa = PBXBuildFile; fileRef = 46580545201F0C8F00169963 /* GraphView+Draw.m */; };
+		465805492020051300169963 /* GenericData.m in Sources */ = {isa = PBXBuildFile; fileRef = 465805482020051300169963 /* GenericData.m */; };
 		46583CB617A0CA41007B6572 /* GraphView.m in Sources */ = {isa = PBXBuildFile; fileRef = 46583CB517A0CA41007B6572 /* GraphView.m */; };
 		46583CBA17A0D192007B6572 /* CaptureOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 46583CB917A0D192007B6572 /* CaptureOperation.m */; };
 		4664DA8C2019794000438512 /* OpenBPFService.m in Sources */ = {isa = PBXBuildFile; fileRef = 4664DA8B2019794000438512 /* OpenBPFService.m */; };
@@ -99,6 +100,8 @@
 		4639F846179D0D0900E59491 /* libpcap.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libpcap.dylib; path = usr/lib/libpcap.dylib; sourceTree = SDKROOT; };
 		46580544201F0C8F00169963 /* GraphView+Draw.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "GraphView+Draw.h"; sourceTree = "<group>"; };
 		46580545201F0C8F00169963 /* GraphView+Draw.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "GraphView+Draw.m"; sourceTree = "<group>"; };
+		465805472020051300169963 /* GenericData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GenericData.h; sourceTree = "<group>"; };
+		465805482020051300169963 /* GenericData.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GenericData.m; sourceTree = "<group>"; };
 		46583CB517A0CA41007B6572 /* GraphView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GraphView.m; sourceTree = "<group>"; };
 		46583CB717A0CA4D007B6572 /* GraphView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GraphView.h; sourceTree = "<group>"; };
 		46583CB817A0D187007B6572 /* CaptureOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CaptureOperation.h; sourceTree = "<group>"; };
@@ -239,6 +242,8 @@
 				4682948217B4634D008AC9D4 /* DerivedData.h */,
 				4682948317B4634D008AC9D4 /* DerivedData.m */,
 				4620811D1FECE93C003B3C74 /* TimeConverter.h */,
+				465805472020051300169963 /* GenericData.h */,
+				465805482020051300169963 /* GenericData.m */,
 				466DD1711FEB6D8300A58CB1 /* TrafficData.h */,
 				466DD1721FEB6D8300A58CB1 /* TrafficData.m */,
 				4620811E1FECEA00003B3C74 /* TrafficIndex.h */,
@@ -428,6 +433,7 @@
 				46583CBA17A0D192007B6572 /* CaptureOperation.m in Sources */,
 				46C08CBC200875200006E8D5 /* Queue.m in Sources */,
 				4664DA8F2019A3CC00438512 /* authopenBPF.m in Sources */,
+				465805492020051300169963 /* GenericData.m in Sources */,
 				466E550717AB2AA500C978C9 /* ComputeQueue.m in Sources */,
 				46580546201F0C8F00169963 /* GraphView+Draw.m in Sources */,
 				46C08CBF20089CB00006E8D5 /* FIR.m in Sources */,

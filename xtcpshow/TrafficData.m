@@ -35,6 +35,13 @@
 static int newID = 0;
 static NSFileHandle *debugHandle = nil;
 
+enum enumDataMode {
+    MODE_SAMPLE,
+    MODE_INTEGER,
+    MODE_DOUBLE,
+    MODE_FRACTION
+};
+
 //
 // base class of traffic data
 //
@@ -42,22 +49,23 @@ static NSFileHandle *debugHandle = nil;
 @property (assign, nonatomic, readwrite) int objectID;
 @property (strong, nonatomic, readwrite) id parent;
 @property (strong, nonatomic, readwrite) id next;
-@property (assign, nonatomic, readwrite) uint64_t numberOfSamples;
-@property (assign, nonatomic, readwrite) uint64_t bytesReceived;
+@property (strong, nonatomic, readwrite) NSNumber *numerator;
+@property (strong, nonatomic, readwrite) NSNumber *denominator;
+@property (assign, nonatomic) uint64_t numberOfSamples;
 @property (strong, nonatomic, readwrite) NSDate *Start;
 @property (strong, nonatomic, readwrite) NSDate *End;
 @property (strong, nonatomic, readwrite) id aux;
 @property (weak, nonatomic) TrafficData *newerSample;
 @property (weak, nonatomic) TrafficData *olderSample;
+@property (assign, nonatomic) enum enumDataMode mode;
 - (id)init;
 - (id)initAtTimeval:(struct timeval *)tv withPacketLength:(uint64_t)lengh;
 @end
 
 @implementation TrafficData
+@synthesize numberOfSamples;
 @synthesize objectID;
 @synthesize parent;
-@synthesize numberOfSamples;
-@synthesize bytesReceived;
 @synthesize Start;
 @synthesize End;
 
@@ -72,8 +80,8 @@ static NSFileHandle *debugHandle = nil;
     objectID = [[self class] newID];
     if (tv) {
         self.Start = self.End = tv2date(tv);
-        numberOfSamples = 1;
-        bytesReceived = length;
+        self.numberOfSamples = 1;
+        self.bytesReceived = length;
         [self alignStartEnd];
     }
     
@@ -126,6 +134,12 @@ static NSFileHandle *debugHandle = nil;
 //
 - (TrafficData *)addSampleAtTimeval:(struct timeval *)tv withBytes:(NSUInteger)bytes auxData:(id)aux
 {
+    if (self.mode != MODE_SAMPLE) {
+        NSException *ex = [NSException exceptionWithName:@"Invalid mode"
+                                                  reason:@"Data is not sample"
+                                                userInfo:nil];
+        @throw ex;
+    }
     self.bytesReceived += bytes;
     self.numberOfSamples++;
     return self;
@@ -133,6 +147,13 @@ static NSFileHandle *debugHandle = nil;
 
 -(BOOL)dataAtDate:(NSDate *)date withBytes:(NSUInteger *)bytes withSamples:(NSUInteger *)samples
 {
+    if (self.mode != MODE_SAMPLE) {
+        NSException *ex = [NSException exceptionWithName:@"Invalid mode"
+                                                  reason:@"Data is not sample"
+                                                userInfo:nil];
+        @throw ex;
+    }
+    
     if (!date || !self.Start) {
         *bytes = *samples = 0;
         return TRUE; // no date
@@ -146,6 +167,46 @@ static NSFileHandle *debugHandle = nil;
     }
         
     return FALSE;
+}
+
+- (uint64_t)bytesReceived
+{
+    if (self.mode != MODE_SAMPLE) {
+        NSException *ex = [NSException exceptionWithName:@"Invalid mode"
+                                                  reason:@"Data is not sample"
+                                                userInfo:nil];
+        @throw ex;
+    }
+    return (uint64_t)[self.numerator unsignedIntegerValue];
+}
+
+- (void)setBytesReceived:(uint64_t)bytesReceived
+{
+    if (self.mode != MODE_SAMPLE) {
+        NSException *ex = [NSException exceptionWithName:@"Invalid mode"
+                                                  reason:@"Data is not sample"
+                                                userInfo:nil];
+        @throw ex;
+    }
+    self.denominator = [NSNumber numberWithUnsignedInteger:1];
+    self.numerator = [NSNumber numberWithUnsignedInteger:bytesReceived];
+}
+
+- (double)doubleValue
+{
+    return [self.numerator doubleValue]/[self.denominator doubleValue];
+}
+
+- (int)intValue
+{
+    if ([self.denominator intValue] == 0) {
+        NSException *ex = [NSException exceptionWithName:@"Devid by zero."
+                                                  reason:@"denominator is zero."
+                                                userInfo:nil];
+        @throw ex;
+    }
+    
+    return (int)([self.numerator intValue]/[self.denominator intValue]);
 }
 
 -(NSUInteger)bitsAtDate:(NSDate *)date
@@ -180,18 +241,34 @@ static NSFileHandle *debugHandle = nil;
 //
 - (NSString *)bytesString
 {
-    if (self.bytesReceived < 1000)
-        return [NSString stringWithFormat:@"%3llu [bytes]",
-                self.bytesReceived];
-    else if (self.bytesReceived < 1000000)
-        return [NSString stringWithFormat:@"%4.1f [kbytes]",
-                (double)self.bytesReceived * 1.0E-3];
-    else if (self.bytesReceived < 1000000000)
-        return [NSString stringWithFormat:@"%4.1f [Mbytes]",
-                (double)self.bytesReceived * 1.0E-6];
-    
-    return [NSString stringWithFormat:@"%.1f [Gbytes]",
-            (double)self.bytesReceived * 1.0E-9];
+    switch (self.mode) {
+        case MODE_SAMPLE:
+            if (self.bytesReceived < 1000)
+                return [NSString stringWithFormat:@"%3llu [bytes]",
+                        self.bytesReceived];
+            else if (self.bytesReceived < 1000000)
+                return [NSString stringWithFormat:@"%4.1f [kbytes]",
+                        (double)self.bytesReceived * 1.0E-3];
+            else if (self.bytesReceived < 1000000000)
+                return [NSString stringWithFormat:@"%4.1f [Mbytes]",
+                        (double)self.bytesReceived * 1.0E-6];
+            
+            return [NSString stringWithFormat:@"%.1f [Gbytes]",
+                    (double)self.bytesReceived * 1.0E-9];
+            break;
+        case MODE_DOUBLE:
+            return [NSString stringWithFormat:@"%4.1f [doubleValue]", [self doubleValue]];
+            break;
+        case MODE_INTEGER:
+            return [NSString stringWithFormat:@"%d [intergerValue]", [self intValue]];
+            break;
+        case MODE_FRACTION:
+            return [NSString stringWithFormat:@"%ld/%ld [fraction]",
+                    [self.numerator integerValue], [self.denominator integerValue]];
+            break;
+        default:
+            return @"Not Supported";
+    }
 }
 
 //
@@ -235,11 +312,12 @@ static NSFileHandle *debugHandle = nil;
 {
     TrafficData *new = [[TrafficData alloc] init];
     
-    new->numberOfSamples = self.numberOfSamples;
-    new->bytesReceived = self.bytesReceived;
-    new->Start = self.Start;
-    new->End = self.End;
-    new->parent = nil;
+    
+    new.numberOfSamples = self.numberOfSamples;
+    new.bytesReceived = self.bytesReceived;
+    new.Start = self.Start;
+    new.End = self.End;
+    new.parent = nil;
     
     return new;
 }
