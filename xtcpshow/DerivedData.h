@@ -37,11 +37,11 @@
 @property (assign, readonly) NSUInteger numberOfSamples;
 
 #pragma mark - allocator
-+ (id)dataWithoutSample;
-+ (id)dataWithSingleDouble:(double)data;
-+ (id)dataWithSingleInt:(int)data;
++ (id)dataWithoutValue;
++ (id)dataWithDouble:(double)data;
++ (id)dataWithInteger:(int)data;
 + (id)dataWithDouble:(double)data atDate:(NSDate *)date fromSamples:(NSUInteger)samples;
-+ (id)dataWithInt:(int)data atDate:(NSDate *)date fromSamples:(NSUInteger)samples;
++ (id)dataWithInteger:(int)data atDate:(NSDate *)date fromSamples:(NSUInteger)samples;
 + (id)dataWithNumber:(NSNumber *)number atDate:(NSDate *)date fromSamples:(NSUInteger)samples;
 
 #pragma mark - accessor

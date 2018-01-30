@@ -64,10 +64,15 @@
 - (id)initAtTimeval:(struct timeval *)tv withPacketLength:(uint64_t)length
 {
     NSNumber *data = [NSNumber numberWithUnsignedInteger:length];
-    self = [super initWithMode:DATA_UINTEGER numerator:data denominator:nil];
+    NSDate *date = tv2date(tv);
+    self = [super initWithMode:DATA_UINTEGER
+                     numerator:data
+                   denominator:nil
+                      dataFrom:date
+                        dataTo:nil
+                   fromSamples:0];
     self.parent = nil;
     if (tv) {
-        self.dataFrom = self.dataTo = tv2date(tv);
         [self alignStartEnd];
     }
     if (length > 0) {

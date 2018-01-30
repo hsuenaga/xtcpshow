@@ -42,7 +42,6 @@
 @property (strong, nonatomic, readonly) id parent;
 @property (strong, nonatomic, readonly) id next;
 @property (strong, nonatomic, readonly) id aux;
-@property (assign, nonatomic, readonly) NSUInteger numberOfSamples;
 
 #pragma mark - initializer
 - (id)initAtTimeval:(struct timeval *)tv withPacketLength:(uint64_t)length;

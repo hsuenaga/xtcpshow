@@ -21,6 +21,8 @@ enum enum_data_mode {
 @property (nonatomic, class) NSFileHandle *debugHandle;
 
 @property (nonatomic, readonly) NSUInteger objectID;
+@property (nonatomic, readonly) NSDate *timestamp;
+@property (nonatomic, readonly) NSUInteger numberOfSamples;
 @property (nonatomic) NSDate *dataFrom;
 @property (nonatomic) NSDate *dataTo;
 @property (nonatomic) double doubleValue;
@@ -28,14 +30,16 @@ enum enum_data_mode {
 @property (nonatomic) uint64_t uint64Value;
 
 #pragma mark - initializer
-- (id)initWithMode:(enum enum_data_mode)mode numerator:(NSNumber *)nvalue denominator:(NSNumber *)dvalue;
+- (id)initWithMode:(enum enum_data_mode)mode numerator:(NSNumber *)nvalue denominator:(NSNumber *)dvalue dataFrom:(NSDate *)from dataTo:(NSDate *)to fromSamples:(NSUInteger)samples;
 
 #pragma mark - allocator
 + (id)dataWithoutValue;
++ (id)dataWithDouble:(double)data atDate:(NSDate *)date fromSamples:(NSUInteger)samples;
 + (id)dataWithDouble:(double)data;
++ (id)dataWithInteger:(NSInteger)data atDate:(NSDate *)date fromSamples:(NSUInteger)samples;
 + (id)dataWithInteger:(NSInteger)data;
++ (id)dataWithUInteger:(NSUInteger)data atDate:(NSDate *)date fromSamples:(NSUInteger)samples;
 + (id)dataWithUInteger:(NSUInteger)data;
-+ (id)dataWithFraction:(NSInteger)numerator denominator:(NSInteger)denominator;
 
 #pragma mark - accessor
 - (void)addInteger:(NSInteger)value;

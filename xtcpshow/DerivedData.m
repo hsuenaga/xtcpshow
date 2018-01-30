@@ -43,7 +43,7 @@
 @synthesize timestamp;
 @synthesize numberOfSamples;
 
-+ (id)dataWithoutSample
++ (id)dataWithoutValue
 {
 	DerivedData *new = [[[self class] alloc] init];
 	new->timestamp = [NSDate date];
@@ -51,7 +51,7 @@
 	return new;
 }
 
-+ (id)dataWithSingleDouble:(double)data
++ (id)dataWithDouble:(double)data
 {
 	DerivedData *new = [[[self class] alloc] init];
 
@@ -62,7 +62,7 @@
 	return new;
 }
 
-+ (id)dataWithSingleInt:(int)data
++ (id)dataWithInteger:(int)data
 {
 	DerivedData *new = [[[self class] alloc] init];
 
@@ -84,7 +84,7 @@
 	return new;
 }
 
-+ (id)dataWithInt:(int)data atDate:(NSDate *)date fromSamples:(NSUInteger)samples
++ (id)dataWithInteger:(int)data atDate:(NSDate *)date fromSamples:(NSUInteger)samples
 {
 	DerivedData *new = [[[self class] alloc] init];
 

@@ -48,7 +48,7 @@
     }
     else if ([data isMemberOfClass:[TrafficData class]]){
         TrafficData *tdata = (TrafficData *)data;
-        DerivedData *sdata = [DerivedData dataWithInt:(int)[tdata bytesReceived]
+        DerivedData *sdata = [DerivedData dataWithInteger:(int)[tdata bytesReceived]
                                                  atDate:[tdata timestamp]
                                             fromSamples:[tdata numberOfSamples]];
         self.data = sdata;
@@ -172,7 +172,7 @@
 {
 	self.head = self.tail = nil;
 	self.count = 0;
-    DerivedData *zero = [DerivedData dataWithSingleDouble:0.0];
+    DerivedData *zero = [DerivedData dataWithDouble:0.0];
     NSDate *now = [NSDate date];
     for (int i = 0; i < self.size; i++) {
         [self enqueue:zero withTimestamp:now];

@@ -13,6 +13,7 @@ static NSFileHandle *debugHandle = nil;
 
 @interface GenericData ()
 @property (nonatomic) NSUInteger objectID;
+@property (nonatomic) NSUInteger numberOfSamples;
 @end
 
 @implementation GenericData {
@@ -57,7 +58,7 @@ static NSFileHandle *debugHandle = nil;
     GenericData.debugHandle = [NSFileHandle fileHandleForWritingAtPath:path];
 }
 
-- (id)initWithMode:(enum enum_data_mode)mvalue numerator:(NSNumber *)nvalue denominator:(NSNumber *)dvalue
+- (id)initWithMode:(enum enum_data_mode)mvalue numerator:(NSNumber *)nvalue denominator:(NSNumber *)dvalue dataFrom:(NSDate *)from dataTo:(NSDate *)to fromSamples:(NSUInteger)samples
 {
     self = [super init];
     self.objectID = [self.class newID];
@@ -86,8 +87,9 @@ static NSFileHandle *debugHandle = nil;
             denominator.uinteger = 0;
             break;
     }
-    self.dataFrom = [NSDate date];
-    self.dataTo = self.dataFrom;
+    self.dataFrom = from ? from : [NSDate date];
+    self.dataTo = to ? to : self.dataFrom;
+    self.numberOfSamples = samples;
     return self;
 }
 
@@ -95,47 +97,74 @@ static NSFileHandle *debugHandle = nil;
 {
     return [self initWithMode:DATA_NOVALUE
                     numerator:nil
-                  denominator:nil];
+                  denominator:nil
+                     dataFrom:nil
+                       dataTo:nil
+                  fromSamples:0];
 }
 
 + (id)dataWithoutValue {
-    return [[self.class alloc] init];
+    GenericData *new = [self.class alloc];
+    return [new initWithMode:DATA_NOVALUE
+                   numerator:nil
+                 denominator:nil
+                    dataFrom:nil
+                      dataTo:nil
+                 fromSamples:0];
 }
 
-+ (id)dataWithDouble:(double)data
++ (id)dataWithDouble:(double)data atDate:(NSDate *)date fromSamples:(NSUInteger)samples
 {
     GenericData *new = [self.class alloc];
     return [new initWithMode:DATA_DOUBLE
                    numerator:[NSNumber numberWithDouble:data]
-                 denominator:nil];
+                 denominator:nil
+                    dataFrom:date
+                      dataTo:nil
+                 fromSamples:samples];
+    
 }
 
-+ (id)dataWithInteger:(NSInteger)data
++ (id)dataWithDouble:(double)data
+{
+    return [self.class dataWithDouble:data atDate:nil fromSamples:1];
+}
+
++ (id)dataWithInteger:(NSInteger)data atDate:(NSDate *)date fromSamples:(NSUInteger)samples
 {
     GenericData *new = [self.class alloc];
     return [new initWithMode:DATA_INTEGER
                    numerator:[NSNumber numberWithInteger:data]
-                 denominator:nil];
+                 denominator:nil
+                    dataFrom:date
+                      dataTo:nil
+                 fromSamples:samples];
 }
 
-+ (id)dataWithUInteger:(NSUInteger)data
++ (id)dataWithInteger:(NSInteger)data
+{
+    return [self.class dataWithInteger:data atDate:nil fromSamples:1];
+}
+
++ (id)dataWithUInteger:(NSUInteger)data atDate:(NSDate *)date fromSamples:(NSUInteger)samples
 {
     GenericData *new = [self.class alloc];
     return [new initWithMode:DATA_UINTEGER
                    numerator:[NSNumber numberWithInteger:data]
-                 denominator:nil];
+                 denominator:nil
+                    dataFrom:date
+                      dataTo:nil
+                 fromSamples:samples];
 }
 
-+ (id)dataWithFraction:(NSInteger)numerator denominator:(NSInteger)denominator
++ (id)dataWithUInteger:(NSUInteger)data
 {
-    GenericData *new = [self.class alloc];
-    if (denominator < 0) {
-        numerator = 0 - numerator;
-        denominator = 0 - denominator;
-    }
-    return [new initWithMode:DATA_FRACTION
-                   numerator:[NSNumber numberWithInteger:numerator]
-                 denominator:[NSNumber numberWithInteger:denominator]];
+    return [self.class dataWithUInteger:data atDate:nil fromSamples:1];
+}
+
+- (NSDate *)timestamp
+{
+    return self.dataFrom;
 }
 
 - (double)doubleValue
