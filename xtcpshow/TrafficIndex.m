@@ -41,8 +41,6 @@
 @interface TrafficIndex ()
 @property (assign, nonatomic, readwrite) uint64_t numberOfSamples;
 @property (assign, nonatomic, readwrite) uint64_t bytesReceived;
-@property (strong, nonatomic, readwrite) NSDate *Start;
-@property (strong, nonatomic, readwrite) NSDate *End;
 @property (strong, nonatomic, readwrite) id parent;
 
 @property (strong, atomic, readwrite) NSDate *lastDate;
@@ -64,8 +62,6 @@
 };
 @synthesize numberOfSamples;
 @synthesize bytesReceived;
-@synthesize Start;
-@synthesize End;
 @synthesize parent;
 @synthesize Resolution;
 @synthesize nextResolution;
@@ -81,9 +77,8 @@
     self.numberOfSamples = 0;
     self.bytesReceived = 0;
     self.lastDate = [NSDate date];
-
-    self.Start = start;
-    self.End = end;
+    self.dataFrom = start;
+    self.dataTo = end;
     [self updateResolution:resolution];
     dataRef = [NSPointerArray weakObjectsPointerArray];
     if (!isnan(self.nextResolution)) {
@@ -128,7 +123,7 @@
             *samples = 0;
         return TRUE; // no data
     }
-    if (!date || !self.Start || !self.End) {
+    if (!date || !self.dataFrom || !self.dataTo) {
         if (bytes)
             *bytes = self.bytesReceived;
         if (samples)
@@ -139,15 +134,15 @@
     // we have data window.
     struct timeval tv;
     date2tv(date, &tv);
-    if ([date earlierDate:self.Start] == date) {
+    if ([date earlierDate:self.dataFrom] == date) {
         if (bytes)
             *bytes = self.bytesBefore;
         if (samples)
             *samples = self.samplesBefore;
         return FALSE; // out of range
     }
-    if ([date isEqual:self.End] ||
-        [date laterDate:self.End] == date) {
+    if ([date isEqual:self.dataTo] ||
+        [date laterDate:self.dataTo] == date) {
         if (bytes)
             *bytes = self.bytesReceived;
         if (samples)
@@ -217,8 +212,8 @@
 //
 - (BOOL)acceptableTimeval:(struct timeval *)tv
 {
-    if (self.Start == nil || self.End == nil || tv == NULL) {
-        NSLog(@"obj%d time slot is not defined", self.objectID);
+    if (self.dataFrom == nil || self.dataTo == nil || tv == NULL) {
+        NSLog(@"obj%lu time slot is not defined", self.objectID);
         return false;
     }
     
@@ -226,7 +221,7 @@
     if ([self msStart] <= msTimestamp && msTimestamp < [self msEnd])
         return true;
 
-    NSLog(@"obj%d timestamp %lu is out of range: %lu - %lu", [self objectID],
+    NSLog(@"obj%lu timestamp %lu is out of range: %lu - %lu", [self objectID],
           msTimestamp, [self msStart], [self msEnd]);
     return false;
 }
@@ -269,23 +264,23 @@
         NSDate *start = nil, *end = nil;
         
         // copy parent's time marker
-        if (slot == 0 && self.Start) {
-            start = self.Start;
+        if (slot == 0 && self.dataFrom) {
+            start = self.dataFrom;
         }
-        if (slot == (NBRANCH - 1) && self.End) {
-            end = self.End;
+        if (slot == (NBRANCH - 1) && self.dataTo) {
+            end = self.dataTo;
         }
         
         // copy sibling's time marker
         if (!start && slot > 0) {
             TrafficIndex *prev = [dataRef pointerAtIndex:(slot - 1)];
             if (prev)
-                start = prev.End;
+                start = prev.dataTo;
         }
         if (!end && slot < (NBRANCH - 1)) {
             TrafficIndex *next = [dataRef pointerAtIndex:(slot + 1)];
             if (next)
-                end = next.Start;
+                end = next.dataFrom;
         }
         
         // allocatre new marker
@@ -319,7 +314,7 @@
 - (TrafficData *)addSampleAtTimeval:(struct timeval *)tv withBytes:(NSUInteger)bytes auxData:(id)aux
 {
     if (![self acceptableTimeval:tv]) {
-        NSLog(@"obj%d request is not acceptable", self.objectID);
+        NSLog(@"obj%lu request is not acceptable", self.objectID);
         return nil;
     }
     [super addSampleAtTimeval:tv withBytes:bytes auxData:aux];
@@ -337,12 +332,12 @@
     BOOL extend = false;
 
     if (![self msStart] || msTimestamp < [self msStart]) {
-        self.Start = msec2date(msTimestamp);
+        self.dataFrom = msec2date(msTimestamp);
         extend = true;
     }
     
     if (![self msEnd] || [self msEnd] < msTimestamp) {
-        self.End = msec2date(msTimestamp);
+        self.dataTo = msec2date(msTimestamp);
         extend = true;
     }
     if (extend)
@@ -360,8 +355,8 @@
     
     new.numberOfSamples = self.numberOfSamples;
     new.bytesReceived = self.bytesReceived;
-    new.Start = self.Start;
-    new.End = self.End;
+    new.dataFrom = self.dataFrom;
+    new.dataTo = self.dataTo;
     new.Resolution = self.Resolution;
     new.parent = nil;
 
@@ -377,24 +372,24 @@
 
     if (!msResolution)
         return;
-    if (self.Start) {
-        NSUInteger msStart = date2msec(self.Start);
+    if (self.dataFrom) {
+        NSUInteger msStart = date2msec(self.dataFrom);
         msStart = msStart - (msStart % msResolution);
-        self.Start = msec2date(msStart);
+        self.dataFrom = msec2date(msStart);
     }
-    if (self.End) {
-        NSUInteger msEnd = date2msec(self.End);
+    if (self.dataTo) {
+        NSUInteger msEnd = date2msec(self.dataTo);
         msEnd = msEnd - (msEnd % msResolution) + msResolution;
-        self.End = msec2date(msEnd);
+        self.dataTo = msec2date(msEnd);
     }
     while ([dataRef count] > 0 &&
-           [self.End timeIntervalSinceDate:self.Start] > (self.nextResolution * NBRANCH)) {
+           [self.dataTo timeIntervalSinceDate:self.dataFrom] > (self.nextResolution * NBRANCH)) {
         TrafficIndex *firstChild;
         [dataRef removePointerAtIndex:0];
         if ([dataRef count] > 0) {
             firstChild = [dataRef pointerAtIndex:0];
             if (firstChild)
-                self.Start = firstChild.Start;
+                self.dataFrom = firstChild.dataFrom;
         }
     }
 }
@@ -488,13 +483,13 @@
     
     NSArray *node = [dataRef allObjects];
     if ([node count] == 0) {
-        [self writeDebug:@"node%d [shape=doublecircle label=\"%llu [bytes]\"];\n",
+        [self writeDebug:@"node%lu [shape=doublecircle label=\"%llu [bytes]\"];\n",
          self.objectID, self.bytesReceived];
         return;
     }
 
     // create record def
-    [self writeDebug:@"node%d [shape=record label=\"{<obj%d> obj%d\\n%lu[msec]\\n%llu [pkts]\\n%llu [bytes]\\n%llu [bytes]|{",
+    [self writeDebug:@"node%lu [shape=record label=\"{<obj%lu> obj%lu\\n%lu[msec]\\n%llu [pkts]\\n%llu [bytes]\\n%llu [bytes]|{",
      self.objectID, self.objectID, self.objectID, [self msResolution], self.numberOfSamples, self.bytesBefore, self.bytesReceived];
     __block BOOL delim = false;
     [node
@@ -502,11 +497,11 @@
          if ([ptr isKindOfClass:[self class]]) {
              if (delim)
                  [self writeDebug:@"|"];
-             [self writeDebug:@"<obj%d> slot%lu", ptr.objectID, idx];
+             [self writeDebug:@"<obj%lu> slot%lu", ptr.objectID, idx];
              delim = true;
          }
          else {
-             [self writeDebug:@"<leaf%d> no child", self.objectID];
+             [self writeDebug:@"<leaf%lu> no child", self.objectID];
              *stop = true;
          }
      }];
@@ -516,11 +511,11 @@
     [node
      enumerateObjectsUsingBlock:^(TrafficData *ptr, NSUInteger idx, BOOL *stop) {
          if ([ptr isKindOfClass:[self class]]) {
-             [self writeDebug:@"node%d:obj%d -> node%d:obj%d;\n",
+             [self writeDebug:@"node%lu:obj%lu -> node%lu:obj%lu;\n",
               self.objectID, ptr.objectID, ptr.objectID, ptr.objectID];
          }
          else {
-             [self writeDebug:@"node%d:leaf%d -> obj%d;\n",
+             [self writeDebug:@"node%lu:leaf%lu -> obj%lu;\n",
               self.objectID, self.objectID, ptr.objectID];
          }
          [ptr dumpTree:false];

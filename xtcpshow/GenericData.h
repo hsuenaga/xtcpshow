@@ -17,12 +17,18 @@ enum enum_data_mode {
 };
 
 @interface GenericData : NSObject<NSCopying>
-@property NSDate *dataFrom;
-@property NSDate *dataTo;
-@property NSUInteger numberOfSamples;
-@property (nonatomic, readonly) double doubleValue;
-@property (nonatomic, readonly) int64_t int64Value;
-@property (nonatomic, readonly) uint64_t uint64Value;
+@property (readonly, atomic, class) NSUInteger newID;
+@property (nonatomic, class) NSFileHandle *debugHandle;
+
+@property (nonatomic, readonly) NSUInteger objectID;
+@property (nonatomic) NSDate *dataFrom;
+@property (nonatomic) NSDate *dataTo;
+@property (nonatomic) double doubleValue;
+@property (nonatomic) int64_t int64Value;
+@property (nonatomic) uint64_t uint64Value;
+
+#pragma mark - initializer
+- (id)initWithMode:(enum enum_data_mode)mode numerator:(NSNumber *)nvalue denominator:(NSNumber *)dvalue;
 
 #pragma mark - allocator
 + (id)dataWithoutValue;
@@ -38,4 +44,9 @@ enum enum_data_mode {
 - (void)mulInteger:(NSInteger)value;
 - (void)addData:(GenericData *)data;
 - (void)simplifyFraction;
+
+#pragma mark - debug
++ (void)openDebugFile:(NSString *)fileName;
+- (void)dumpTree:(BOOL)root;
+- (void)writeDebug:(NSString *)format, ... __attribute__((format(__NSString__, 1, 2)));
 @end

@@ -32,58 +32,48 @@
 
 #import "TrafficData.h"
 
-static int newID = 0;
-static NSFileHandle *debugHandle = nil;
-
-enum enumDataMode {
-    MODE_SAMPLE,
-    MODE_INTEGER,
-    MODE_DOUBLE,
-    MODE_FRACTION
-};
-
 //
 // base class of traffic data
 //
 @interface TrafficData ()
 @property (assign, nonatomic, readwrite) int objectID;
+@property (strong, nonatomic, readwrite) NSDate *dataFrom;
+@property (strong, nonatomic, readwrite) NSDate *dataTo;
+@property (assign, nonatomic) NSUInteger numberOfSamples;
 @property (strong, nonatomic, readwrite) id parent;
 @property (strong, nonatomic, readwrite) id next;
-@property (strong, nonatomic, readwrite) NSNumber *numerator;
-@property (strong, nonatomic, readwrite) NSNumber *denominator;
-@property (assign, nonatomic) uint64_t numberOfSamples;
-@property (strong, nonatomic, readwrite) NSDate *Start;
-@property (strong, nonatomic, readwrite) NSDate *End;
 @property (strong, nonatomic, readwrite) id aux;
 @property (weak, nonatomic) TrafficData *newerSample;
 @property (weak, nonatomic) TrafficData *olderSample;
-@property (assign, nonatomic) enum enumDataMode mode;
+@property (assign, nonatomic) BOOL samplingData;
 - (id)init;
 - (id)initAtTimeval:(struct timeval *)tv withPacketLength:(uint64_t)lengh;
 @end
 
-@implementation TrafficData
-@synthesize numberOfSamples;
-@synthesize objectID;
-@synthesize parent;
-@synthesize Start;
-@synthesize End;
+@implementation TrafficData {
+    BOOL sampling_data;
+}
+@synthesize objectID, dataFrom, dataTo, numberOfSamples;
+@synthesize parent, next, aux;
+@synthesize newerSample, olderSample;
+
 
 //
 // private initializer
 //
 - (id)initAtTimeval:(struct timeval *)tv withPacketLength:(uint64_t)length
 {
-    self = [super init];
-    parent = nil;
-    
-    objectID = [[self class] newID];
+    NSNumber *data = [NSNumber numberWithUnsignedInteger:length];
+    self = [super initWithMode:DATA_UINTEGER numerator:data denominator:nil];
+    self.parent = nil;
     if (tv) {
-        self.Start = self.End = tv2date(tv);
-        self.numberOfSamples = 1;
-        self.bytesReceived = length;
+        self.dataFrom = self.dataTo = tv2date(tv);
         [self alignStartEnd];
     }
+    if (length > 0) {
+        self.numberOfSamples = 1;
+    }
+    self.samplingData = TRUE;
     
     return self;
 }
@@ -103,30 +93,10 @@ enum enumDataMode {
 {
     TrafficData *new;
     
-    new = [[TrafficData alloc] initAtTimeval:tv withPacketLength:length];
+    new = [[self.class alloc] initAtTimeval:tv withPacketLength:length];
     new.parent = parent;
     new.aux = aux;
     return new;
-}
-
-+ (int)newID
-{
-    return newID++;
-}
-
-+ (NSFileHandle *)debugHandle
-{
-    return debugHandle;
-}
-
-+ (void)setDebugHandle:(NSFileHandle *)handle
-{
-    if (debugHandle) {
-        [debugHandle synchronizeFile];
-        [debugHandle closeFile];
-        debugHandle = nil;
-    }
-    debugHandle = handle;
 }
 
 //
@@ -134,9 +104,9 @@ enum enumDataMode {
 //
 - (TrafficData *)addSampleAtTimeval:(struct timeval *)tv withBytes:(NSUInteger)bytes auxData:(id)aux
 {
-    if (self.mode != MODE_SAMPLE) {
-        NSException *ex = [NSException exceptionWithName:@"Invalid mode"
-                                                  reason:@"Data is not sample"
+    if (!self.samplingData) {
+        NSException *ex = [NSException exceptionWithName:@"Invalid Data"
+                                                  reason:@"No sampling data held"
                                                 userInfo:nil];
         @throw ex;
     }
@@ -147,20 +117,18 @@ enum enumDataMode {
 
 -(BOOL)dataAtDate:(NSDate *)date withBytes:(NSUInteger *)bytes withSamples:(NSUInteger *)samples
 {
-    if (self.mode != MODE_SAMPLE) {
-        NSException *ex = [NSException exceptionWithName:@"Invalid mode"
-                                                  reason:@"Data is not sample"
+    if (!self.samplingData) {
+        NSException *ex = [NSException exceptionWithName:@"Invalid Data"
+                                                  reason:@"No sampling data held"
                                                 userInfo:nil];
         @throw ex;
     }
-    
-    if (!date || !self.Start) {
+    if (!date || !self.dataFrom) {
         *bytes = *samples = 0;
         return TRUE; // no date
     }
-    
-    if ([date isEqual:date] ||
-        ([date laterDate:self.Start] == date && [date earlierDate:self.End] == date)) {
+    if ([date isEqual:self.dataFrom] ||
+        ([date laterDate:self.dataFrom] == date && [date earlierDate:self.dataTo] == date)) {
         *bytes = self.bytesReceived;
         *samples = self.numberOfSamples;
         return TRUE;
@@ -169,71 +137,54 @@ enum enumDataMode {
     return FALSE;
 }
 
-- (uint64_t)bytesReceived
+- (NSUInteger)bytesReceived
 {
-    if (self.mode != MODE_SAMPLE) {
-        NSException *ex = [NSException exceptionWithName:@"Invalid mode"
-                                                  reason:@"Data is not sample"
+    if (!self.samplingData) {
+        NSException *ex = [NSException exceptionWithName:@"Invalid Data"
+                                                  reason:@"No sampling data held"
                                                 userInfo:nil];
         @throw ex;
     }
-    return (uint64_t)[self.numerator unsignedIntegerValue];
+    return (NSUInteger)self.uint64Value;
 }
 
-- (void)setBytesReceived:(uint64_t)bytesReceived
+- (void)setBytesReceived:(NSUInteger)bytesReceived
 {
-    if (self.mode != MODE_SAMPLE) {
-        NSException *ex = [NSException exceptionWithName:@"Invalid mode"
-                                                  reason:@"Data is not sample"
-                                                userInfo:nil];
-        @throw ex;
-    }
-    self.denominator = [NSNumber numberWithUnsignedInteger:1];
-    self.numerator = [NSNumber numberWithUnsignedInteger:bytesReceived];
-}
-
-- (double)doubleValue
-{
-    return [self.numerator doubleValue]/[self.denominator doubleValue];
-}
-
-- (int)intValue
-{
-    if ([self.denominator intValue] == 0) {
-        NSException *ex = [NSException exceptionWithName:@"Devid by zero."
-                                                  reason:@"denominator is zero."
-                                                userInfo:nil];
-        @throw ex;
-    }
-    
-    return (int)([self.numerator intValue]/[self.denominator intValue]);
-}
-
--(NSUInteger)bitsAtDate:(NSDate *)date
-{
-    
-    return ([self bytesAtDate:date] * 8);
+    self.samplingData = TRUE;
+    self.uint64Value = (uint64_t)bytesReceived;
 }
 
 -(NSUInteger)bytesAtDate:(NSDate *)date
 {
-    if ([date isEqual:Start] ||
-        ([date laterDate:Start] == date && [date earlierDate:End] == date))
+    if ([date isEqual:dataFrom] ||
+        ([date laterDate:dataFrom] == date && [date earlierDate:dataTo] == date))
         return self.bytesReceived;
     return 0;
 }
 
+-(NSUInteger)bitsAtDate:(NSDate *)date
+{
+    return ([self bytesAtDate:date] * 8);
+}
+
+
 -(NSUInteger)samplesAtDate:(NSDate *)date
 {
-    if ([date isEqual:Start] ||
-        ([date laterDate:Start] == date && [date earlierDate:End] == date))
+    if (!self.samplingData) {
+        NSException *ex = [NSException exceptionWithName:@"Invalid Data"
+                                                  reason:@"No sampling data held"
+                                                userInfo:nil];
+        @throw ex;
+    }
+    if ([date isEqual:dataFrom] ||
+        ([date laterDate:dataFrom] == date && [date earlierDate:dataTo] == date))
         return self.numberOfSamples;
     return 0;
 }
 
 -(NSDate *)timestamp
 {
-    return self.Start;
+    return self.dataFrom;
 }
 
 //
@@ -241,34 +192,22 @@ enum enumDataMode {
 //
 - (NSString *)bytesString
 {
-    switch (self.mode) {
-        case MODE_SAMPLE:
-            if (self.bytesReceived < 1000)
-                return [NSString stringWithFormat:@"%3llu [bytes]",
-                        self.bytesReceived];
-            else if (self.bytesReceived < 1000000)
-                return [NSString stringWithFormat:@"%4.1f [kbytes]",
-                        (double)self.bytesReceived * 1.0E-3];
-            else if (self.bytesReceived < 1000000000)
-                return [NSString stringWithFormat:@"%4.1f [Mbytes]",
-                        (double)self.bytesReceived * 1.0E-6];
-            
-            return [NSString stringWithFormat:@"%.1f [Gbytes]",
-                    (double)self.bytesReceived * 1.0E-9];
-            break;
-        case MODE_DOUBLE:
-            return [NSString stringWithFormat:@"%4.1f [doubleValue]", [self doubleValue]];
-            break;
-        case MODE_INTEGER:
-            return [NSString stringWithFormat:@"%d [intergerValue]", [self intValue]];
-            break;
-        case MODE_FRACTION:
-            return [NSString stringWithFormat:@"%ld/%ld [fraction]",
-                    [self.numerator integerValue], [self.denominator integerValue]];
-            break;
-        default:
-            return @"Not Supported";
+    if (self.samplingData) {
+        if (self.bytesReceived < 1000)
+            return [NSString stringWithFormat:@"%3lu [bytes]",
+                    self.bytesReceived];
+        else if (self.bytesReceived < 1000000)
+            return [NSString stringWithFormat:@"%4.1f [kbytes]",
+                    (double)self.bytesReceived * 1.0E-3];
+        else if (self.bytesReceived < 1000000000)
+            return [NSString stringWithFormat:@"%4.1f [Mbytes]",
+                    (double)self.bytesReceived * 1.0E-6];
+        
+        return [NSString stringWithFormat:@"%.1f [Gbytes]",
+                (double)self.bytesReceived * 1.0E-9];
     }
+    
+    return @"(Not A Sampling Data)";
 }
 
 //
@@ -286,23 +225,23 @@ enum enumDataMode {
 
 - (void)alignStartEnd
 {
-    self.End = self.Start;
+    self.dataTo = self.dataFrom;
 }
 
 - (NSUInteger)msStart
 {
-    if (!self.Start)
+    if (!self.dataFrom)
         return 0;
     
-    return date2msec(self.Start);
+    return date2msec(self.dataFrom);
 }
 
 - (NSUInteger)msEnd
 {
-    if (!self.End)
+    if (!self.dataTo)
         return 0;
     
-    return date2msec(self.End);
+    return date2msec(self.dataTo);
 }
 
 //
@@ -310,14 +249,15 @@ enum enumDataMode {
 //
 - (id)copyWithZone:(NSZone *)zone
 {
-    TrafficData *new = [[TrafficData alloc] init];
-    
-    
+    TrafficData *new = [super copyWithZone:zone];
+
+    new.samplingData = self.samplingData;
     new.numberOfSamples = self.numberOfSamples;
-    new.bytesReceived = self.bytesReceived;
-    new.Start = self.Start;
-    new.End = self.End;
     new.parent = nil;
+    new.next = nil;
+    new.aux = self.aux;
+    new.newerSample = nil;
+    new.olderSample = nil;
     
     return new;
 }
@@ -327,51 +267,27 @@ enum enumDataMode {
 //
 - (NSString *)description
 {
-    return [NSString stringWithFormat:@"TrafficData(%llu samples, %@)",
-            self.numberOfSamples, [self bytesString]];
+    if (self.samplingData) {
+        return [NSString stringWithFormat:@"TrafficData(%lu samples, %@)",
+                self.numberOfSamples, [self bytesString]];
+    }
+    return [super description];
 }
 
 - (NSString *)debugDescription
 {
-    return [NSString stringWithFormat:@"TrafficData: %llu samples, %@, From %@ To %@, parent=%@",
-            self.numberOfSamples, [self bytesString],
-            [self.Start description],
-            [self.End description],
-            [self.parent description]];
+    if (self.samplingData) {
+        return [NSString stringWithFormat:@"TrafficData: %lu samples, %@, From %@ To %@, parent=%@",
+                self.numberOfSamples, [self bytesString],
+                [self.dataFrom description],
+                [self.dataTo description],
+                [self.parent description]];
+    }
+    return [super debugDescription];
 }
 
 - (void)dumpTree:(BOOL)root
 {
     [self writeDebug:@"obj%d [shape=point];\n", self.objectID];
-}
-
-- (void)openDebugFile:(NSString *)fileName
-{
-    NSString *path;
-    path = [NSString stringWithFormat:@"%@/%@", NSHomeDirectory(), fileName];
-    
-    NSFileManager *fmgr = [NSFileManager defaultManager];
-    [fmgr createFileAtPath:path contents:nil attributes:nil];
-    if (debugHandle) {
-        [debugHandle synchronizeFile];
-        [debugHandle closeFile];
-        debugHandle = nil;
-    }
-    debugHandle = [NSFileHandle fileHandleForWritingAtPath:path];
-    [debugHandle truncateFileAtOffset:0];
-}
-
-- (void)writeDebug:(NSString *)format, ...
-{
-    if (!debugHandle) {
-        NSLog(@"No debug handle.");
-    }
-    NSString *contents;
-    va_list args;
-    
-    va_start(args, format);
-    contents = [[NSString alloc] initWithFormat:format arguments:args];
-    va_end(args);
-    [debugHandle writeData:[contents dataUsingEncoding:NSUTF8StringEncoding]];
 }
 @end

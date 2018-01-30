@@ -128,7 +128,7 @@ NSString *const PREFER_DEVICE=@"en";
 	[capture_cue cancelAllOperations];
 	[capture_cue waitUntilAllOperationsAreFinished];
 #ifdef DEBUG
-    [dataBase openDebugFile:@"debug_tree.dot"];
+    [dataBase.class openDebugFile:@"debug_tree.dot"];
     [dataBase dumpTree:TRUE];
 #endif
 }

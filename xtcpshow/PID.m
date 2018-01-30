@@ -101,7 +101,7 @@
     NSUInteger nbits = [dataBase bitsAtDate:next];
     if (pbits > nbits) {
 #ifdef DEBUG
-        [dataBase openDebugFile:@"inconsistent_tree.dot"];
+        [dataBase.class openDebugFile:@"inconsistent_tree.dot"];
         [dataBase dumpTree:TRUE];
 #endif
         NSException *ex = [NSException exceptionWithName:@"Inconsistent Data" reason:@"Data is decreadsed." userInfo:NULL];

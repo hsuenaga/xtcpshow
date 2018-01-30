@@ -32,24 +32,20 @@
 #import <sys/time.h>
 
 #import <Foundation/Foundation.h>
+
+#import "GenericData.h"
 #import "TimeConverter.h"
 // precision used by smart string representations.
 #define PRECISION 1
 
-@interface TrafficData : NSObject<NSCopying>
-@property (assign, readonly, class) int newID;
-@property (strong, nonatomic, class) NSFileHandle *debugHandle;
-
-@property (assign, nonatomic, readonly) int objectID;
+@interface TrafficData : GenericData
 @property (strong, nonatomic, readonly) id parent;
 @property (strong, nonatomic, readonly) id next;
-@property (assign, nonatomic, readonly) uint64_t numberOfSamples;
-@property (assign, nonatomic, readonly) uint64_t bytesReceived;
-@property (strong, nonatomic, readonly) NSDate *Start;
-@property (strong, nonatomic, readonly) NSDate *End;
 @property (strong, nonatomic, readonly) id aux;
+@property (assign, nonatomic, readonly) NSUInteger numberOfSamples;
 
 #pragma mark - initializer
+- (id)initAtTimeval:(struct timeval *)tv withPacketLength:(uint64_t)length;
 + (TrafficData *)sampleOf:(id)parent atTimeval:(struct timeval *)tv withPacketLength:(uint64_t)length auxData:(id)aux;
 
 #pragma mark - basic acessor
@@ -59,6 +55,7 @@
 - (NSUInteger)bytesAtDate:(NSDate *)date;
 - (NSUInteger)samplesAtDate:(NSDate *)date;
 - (NSDate *)timestamp;
+- (NSUInteger)bytesReceived;
 
 #pragma mark - smart string representations
 - (NSString *)bytesString;
@@ -68,7 +65,4 @@
 - (void)alignStartEnd;
 - (NSUInteger)msStart;
 - (NSUInteger)msEnd;
-- (void)dumpTree:(BOOL)root;
-- (void)openDebugFile:(NSString *)fileName;
-- (void)writeDebug:(NSString *)format, ... __attribute__((format(__NSString__, 1, 2)));
 @end

@@ -8,6 +8,13 @@
 
 #import "GenericData.h"
 
+static NSUInteger newID = 0;
+static NSFileHandle *debugHandle = nil;
+
+@interface GenericData ()
+@property (nonatomic) NSUInteger objectID;
+@end
+
 @implementation GenericData {
     enum enum_data_mode mode;
     union union_numerators {
@@ -20,10 +27,41 @@
     } denominator;
 }
 
-- (id)initWithMode:(enum enum_data_mode)mode numerator:(NSNumber *)nvalue denominator:(NSNumber *)dvalue
++ (NSUInteger)newID
+{
+    return newID++;
+}
+
++ (NSFileHandle *)debugHandle
+{
+    return debugHandle;
+}
+
++ (void)setDebugHandle:(NSFileHandle *)handle
+{
+    if (debugHandle) {
+        [debugHandle synchronizeFile];
+        [debugHandle closeFile];
+        debugHandle = nil;
+    }
+    debugHandle = handle;
+    [debugHandle truncateFileAtOffset:0];
+}
+
++ (void)openDebugFile:(NSString *)fileName
+{
+    NSString *path = [NSString stringWithFormat:@"%@/%@", NSHomeDirectory(), fileName];
+    
+    NSFileManager *fmgr = [NSFileManager defaultManager];
+    [fmgr createFileAtPath:path contents:nil attributes:nil];
+    GenericData.debugHandle = [NSFileHandle fileHandleForWritingAtPath:path];
+}
+
+- (id)initWithMode:(enum enum_data_mode)mvalue numerator:(NSNumber *)nvalue denominator:(NSNumber *)dvalue
 {
     self = [super init];
-    mode = mode;
+    self.objectID = [self.class newID];
+    mode = mvalue;
     switch (mode) {
         case DATA_DOUBLE:
             numerator.real = nvalue ? [nvalue doubleValue] : 0.0;
@@ -48,7 +86,6 @@
             denominator.uinteger = 0;
             break;
     }
-    self.numberOfSamples = 0;
     self.dataFrom = [NSDate date];
     self.dataTo = self.dataFrom;
     return self;
@@ -62,12 +99,12 @@
 }
 
 + (id)dataWithoutValue {
-    return [[GenericData alloc] init];
+    return [[self.class alloc] init];
 }
 
 + (id)dataWithDouble:(double)data
 {
-    GenericData *new = [GenericData alloc];
+    GenericData *new = [self.class alloc];
     return [new initWithMode:DATA_DOUBLE
                    numerator:[NSNumber numberWithDouble:data]
                  denominator:nil];
@@ -75,7 +112,7 @@
 
 + (id)dataWithInteger:(NSInteger)data
 {
-    GenericData *new = [GenericData alloc];
+    GenericData *new = [self.class alloc];
     return [new initWithMode:DATA_INTEGER
                    numerator:[NSNumber numberWithInteger:data]
                  denominator:nil];
@@ -83,7 +120,7 @@
 
 + (id)dataWithUInteger:(NSUInteger)data
 {
-    GenericData *new = [GenericData alloc];
+    GenericData *new = [self.class alloc];
     return [new initWithMode:DATA_UINTEGER
                    numerator:[NSNumber numberWithInteger:data]
                  denominator:nil];
@@ -91,7 +128,7 @@
 
 + (id)dataWithFraction:(NSInteger)numerator denominator:(NSInteger)denominator
 {
-    GenericData *new = [GenericData alloc];
+    GenericData *new = [self.class alloc];
     if (denominator < 0) {
         numerator = 0 - numerator;
         denominator = 0 - denominator;
@@ -121,6 +158,13 @@
     @throw ex;
 }
 
+- (void)setDoubleValue:(double)doubleValue
+{
+    mode = DATA_DOUBLE;
+    numerator.real = doubleValue;
+    denominator.uinteger = 1;
+}
+
 - (int64_t)int64Value
 {
     switch (mode) {
@@ -139,6 +183,13 @@
                                               reason:@"Unknown Data Type encoded"
                                             userInfo:nil];
     @throw ex;
+}
+
+- (void)setInt64Value:(int64_t)int64Value
+{
+    mode = DATA_INTEGER;
+    numerator.integer = int64Value;
+    denominator.uinteger = 1;
 }
 
 - (uint64_t)uint64Value
@@ -163,10 +214,18 @@
         default:
             break;
     }
+    NSLog(@"Unknwon mode: %d", mode);
     NSException *ex = [NSException exceptionWithName:@"Invalid Value"
                                               reason:@"Unknown Data Type encoded"
                                             userInfo:nil];
     @throw ex;
+}
+
+- (void)setUint64Value:(uint64_t)uint64Value
+{
+    mode = DATA_UINTEGER;
+    numerator.uinteger = uint64Value;
+    denominator.uinteger = 1;
 }
 
 - (void)addInteger:(NSInteger)value
@@ -403,7 +462,6 @@
     
     new.dataFrom = self.dataFrom;
     new.dataTo = self.dataTo;
-    new.numberOfSamples = self.numberOfSamples;
     
     new->mode = mode;
     new->numerator = numerator;
@@ -419,7 +477,7 @@
 {
     switch (mode) {
         case DATA_NOVALUE:
-            return @"No value";
+            return @"(No Value)";
         case DATA_DOUBLE:
             return [NSString stringWithFormat:@"%f", numerator.real];
         case DATA_INTEGER:
@@ -427,13 +485,61 @@
         case DATA_UINTEGER:
             return [NSString stringWithFormat:@"%llu", numerator.uinteger];
         case DATA_FRACTION:
-        {
             return [NSString stringWithFormat:@"%lld/%llu",
                     numerator.integer, denominator.uinteger];
+        default:
+            break;
+    }
+    return @"(Unkown)";
+}
+
+- (NSString *)debugDescription
+{
+    switch (mode) {
+        case DATA_NOVALUE:
+            return [NSString stringWithFormat:@"NOVALUE: dataFrom:%@, dataTo:%@",
+                    self.dataFrom, self.dataTo];
+        case DATA_DOUBLE:
+            return [NSString stringWithFormat:@"DOUBLE: numerator:%f, denominator:%llu, dataFrom:%@, dataTo:%@",
+                    numerator.real, denominator.uinteger, self.dataFrom, self.dataTo];
+        case DATA_INTEGER:
+            return [NSString stringWithFormat:@"INTEGER: numerator:%lld, denominator:%llu, dataFrom:%@, dataTo:%@",
+                    numerator.integer, denominator.uinteger, self.dataFrom, self.dataTo];
+        case DATA_UINTEGER:
+            return [NSString stringWithFormat:@"UINTEGER: numerator:%llu, denominator:%llu, dataFrom:%@, dataTo:%@",
+                    numerator.uinteger, denominator.uinteger, self.dataFrom, self.dataTo];
+        case DATA_FRACTION:
+        {
+            return [NSString stringWithFormat:@"FRACTION: numerator:%lld, denominator:%llu, dataFrom:%@, dataTo:%@",
+                    numerator.integer, denominator.uinteger, self.dataFrom, self.dataTo];
         }
         default:
             break;
     }
-    return @"Unkown";
+    return [NSString stringWithFormat:@"Unknown: mode %d, dataFrom:%@, dataTo:%@",
+            mode, self.dataFrom, self.dataTo];
+}
+
+//
+// debug
+//
+- (void)dumpTree:(BOOL)root
+{
+    [self writeDebug:@"obj%lu [shape=point];\n", self.objectID];
+}
+
+- (void)writeDebug:(NSString *)format, ...
+{
+    if (!debugHandle) {
+        NSLog(@"%@ [obj%lu] No debug handle.", self.class, self.objectID);
+        return;
+    }
+
+    NSString *contents;
+    va_list args;
+    va_start(args, format);
+    contents = [[NSString alloc] initWithFormat:format arguments:args];
+    va_end(args);
+    [debugHandle writeData:[contents dataUsingEncoding:NSUTF8StringEncoding]];
 }
 @end
