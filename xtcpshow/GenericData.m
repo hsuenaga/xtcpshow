@@ -592,13 +592,12 @@ retry:
 
 - (void)roundFraction:(uint64_t)denominator;
 {
-    if (value.frac.numerator == 0)
+    if (value.frac.numerator == 0) {
+        value.frac.denominator = denominator;
         return;
+    }
     
-    double dValue = [self doubleValue];
-
-
-    uint64_t numerator = (uint64_t)round(dValue * (double)denominator);
+    uint64_t numerator = (uint64_t)round([self doubleValue] * (double)denominator);
 #ifdef DEBUG_EUCLID
     NSLog(@"round fraction: %llu/%llu -> %llu/%llu",
           value.frac.numerator, value.frac.denominator,
