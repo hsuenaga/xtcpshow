@@ -80,6 +80,8 @@ enum enum_data_mode {
 - (BOOL)simplifyNumerator:(uint64_t *)np denominator:(uint64_t *)qp;
 - (BOOL)simplifyFraction;
 
+- (void)roundFraction:(uint64_t)denominator;
+
 #pragma mark - debug
 + (void)openDebugFile:(NSString *)fileName;
 - (void)dumpTree:(BOOL)root;

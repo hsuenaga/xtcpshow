@@ -87,6 +87,7 @@
 - (id)enqueue:(id)data withTimestamp:(NSDate *)ts
 {
     if (data && [data isKindOfClass:[GenericData class]]) {
+        [data roundFraction:FRAC_RES];
         [self->sumData addData:data];
     }
     

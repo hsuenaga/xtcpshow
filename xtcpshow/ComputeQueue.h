@@ -34,6 +34,8 @@
 #import "GenericData.h"
 #import "Queue.h"
 
+#define FRAC_RES (10000) // resolution > 1/10000
+
 @interface ComputeQueue : Queue {
     GenericData *sumData;
 }

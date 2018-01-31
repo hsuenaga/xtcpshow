@@ -41,7 +41,7 @@ static NSFileHandle *debugHandle = nil;
 #define LOG_CONVERT_FRACTION(x) /* nothing */
 #endif
 
-#define DEBUG_EUCLID
+#undef DEBUG_EUCLID
 
 @interface GenericData ()
 @property (nonatomic) NSUInteger objectID;
@@ -588,6 +588,24 @@ retry:
     }
     
     return [self simplifyNumerator:&value.frac.numerator denominator:&value.frac.denominator];
+}
+
+- (void)roundFraction:(uint64_t)denominator;
+{
+    if (value.frac.numerator == 0)
+        return;
+    
+    double dValue = [self doubleValue];
+
+
+    uint64_t numerator = (uint64_t)round(dValue * (double)denominator);
+#ifdef DEBUG_EUCLID
+    NSLog(@"round fraction: %llu/%llu -> %llu/%llu",
+          value.frac.numerator, value.frac.denominator,
+          numerator, denominator);
+#endif
+    value.frac.numerator = numerator;
+    value.frac.denominator = denominator;
 }
 
 //
