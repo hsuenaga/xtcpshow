@@ -41,6 +41,7 @@
 #undef DEBUG_SAMPLE
 
 @interface PID ()
+- (void)doPIDat:(NSDate *)date prev:(NSDate *)prev next:(NSDate *)next onDataBase:(TrafficDB *)dataBase;
 - (NSDate *)roundDate:(NSDate *)date toTick:(NSTimeInterval)tick;
 - (void)dumpParams;
 - (void)invalidValueException;
@@ -76,10 +77,11 @@
     tick = outputTimeLength / outputSamples; // [sec/sample]
     dataLength = outputTimeLength + FIRTimeLength;
     
-    // fraction tick [usec]
+    // Ts: fraction tick [usec]
     NSInteger outputUsec = (NSUInteger)round(outputTimeLength * 1.0E6);
     tickDataUsec = [GenericData dataWithInteger:outputUsec];
     [tickDataUsec divInteger:outputSamples];
+    [tickDataUsec mulInteger:2]; // 2 * Ts
     
     // allocate FIR
     filterFIR = [FIR FIRwithTap:ceil(FIRTimeLength/tick) withStage:self.kzStage];
@@ -100,15 +102,12 @@
     output.last_used = nil;
 }
 
-- (void)doPIDatTime:(NSDate *)date onDataBase:(TrafficDB *)dataBase
+- (void)doPIDat:(NSDate *)cur prev:(NSDate *)prev next:(NSDate *)next onDataBase:(TrafficDB *)dataBase
 {
-    NSDate *prev = [date dateByAddingTimeInterval:(-tick)];
-    NSDate *next = [date dateByAddingTimeInterval:(tick)];
-    
     // Step1: get differential value
-    NSUInteger pbits = [dataBase bitsAtDate:prev];
-    NSUInteger nbits = [dataBase bitsAtDate:next];
-    if (pbits > nbits) {
+    NSUInteger bitsPrev = [dataBase bitsAtDate:prev];
+    NSUInteger bitsNext = [dataBase bitsAtDate:next];
+    if (bitsPrev > bitsNext) {
 #ifdef DEBUG
         [dataBase.class openDebugFile:@"inconsistent_tree.dot"];
         [dataBase dumpTree:TRUE];
@@ -117,12 +116,11 @@
         [self.outputLock unlock];
         @throw ex;
     }
-    NSUInteger bits = nbits - pbits;
-    NSUInteger pkts = [dataBase samplesAtDate:date] - [dataBase samplesAtDate:prev];
-    GenericData *sample = [GenericData dataWithInteger:bits atDate:date  fromSamples:pkts];
-    [sample divData:tickDataUsec]; // bits per micro seconds == Mbits per seconds
-    [sample divInteger:2]; // u[k] = u[k+1] - u[k-1] / (2 * Ts)
-    
+    NSUInteger bits = bitsNext - bitsPrev;
+    NSUInteger pkts = [dataBase samplesAtDate:cur] - [dataBase samplesAtDate:prev];
+    GenericData *sample = [GenericData dataWithInteger:bits atDate:cur  fromSamples:pkts];
+    [sample divData:tickDataUsec]; // u[k+1] - u[k-1] / (2*Ts)
+
     // Step2: FIR
     sample = [filterFIR filter:sample];
 #ifdef DEBUG_SAMPLE
@@ -130,9 +128,9 @@
 #endif
 
     // Step3: finalize and output sample
-    sample.timestamp = date;
-    [output enqueue:sample withTimestamp:date];
-    output.last_used = date;
+    sample.timestamp = cur;
+    [output enqueue:sample withTimestamp:cur];
+    output.last_used = cur;
 }
 
 - (void)resampleDataBase:(TrafficDB *)dataBase atDate:(NSDate *)date;
@@ -146,6 +144,7 @@
     
     // get range of time
     end = [self roundDate:[date dateByAddingTimeInterval:outputTimeOffset] toTick:tick];
+    end = [end dateByAddingTimeInterval:(-tick)];
     start = [self roundDate:[end dateByAddingTimeInterval:(-dataLength)] toTick:tick];
     if (output.last_used) {
         if ([start laterDate:output.last_used] == output.last_used) {
@@ -159,10 +158,16 @@
     
     // PID block
     @autoreleasepool {
-        for (NSDate *slot = start;
-             [slot laterDate:end] == end;
-             slot = [slot dateByAddingTimeInterval:tick]) {
-            [self doPIDatTime:slot onDataBase:dataBase];
+        NSDate *prev = nil;
+        NSDate *cur = nil;
+        NSDate *next = nil;
+        for (cur = start; [cur laterDate:end] == end; cur = next) {
+            if (!prev) {
+                prev = [cur dateByAddingTimeInterval:-tick];
+            }
+            next = [cur dateByAddingTimeInterval:tick];
+            [self doPIDat:cur prev:prev next:next onDataBase:dataBase];
+            prev = cur;
         }
     }
     

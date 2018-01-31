@@ -35,9 +35,6 @@
 #import "Queue.h"
 
 @interface ComputeQueue : Queue {
-    double prec;
-	double sumState;
-	double add_remain;
     GenericData *sumData;
 }
 
@@ -46,10 +43,7 @@
 //
 - (ComputeQueue *)initWithZeroFill:(size_t)size;
 - (ComputeQueue *)init;
-- (void)addSumState:(double)value;
-- (void)subSumState:(double)sub;
 - (void)clearSumState;
-- (double)sum;
 
 //
 // allocator

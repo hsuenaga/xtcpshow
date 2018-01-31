@@ -66,10 +66,10 @@ enum enum_data_mode {
 + (id)dataWithUInteger:(NSUInteger)data;
 
 #pragma mark - accessor
-- (void)addInteger:(NSInteger)value;
-- (void)subInteger:(NSInteger)value;
-- (void)divInteger:(NSInteger)value;
-- (void)mulInteger:(NSInteger)value;
+- (void)addInteger:(int64_t)iValue;
+- (void)subInteger:(int64_t)iValue;
+- (void)divInteger:(int64_t)iValue;
+- (void)mulInteger:(int64_t)iValue;
 
 - (void)addData:(GenericData *)data withSign:(int)sign;
 - (void)addData:(GenericData *)data;
@@ -77,7 +77,8 @@ enum enum_data_mode {
 - (void)mulData:(GenericData *)data;
 - (void)divData:(GenericData *)data;
 
-- (void)simplifyFraction;
+- (BOOL)simplifyNumerator:(uint64_t *)np denominator:(uint64_t *)qp;
+- (BOOL)simplifyFraction;
 
 #pragma mark - debug
 + (void)openDebugFile:(NSString *)fileName;

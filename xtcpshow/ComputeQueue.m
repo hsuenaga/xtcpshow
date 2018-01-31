@@ -34,22 +34,8 @@
 #import "ComputeQueue.h"
 #import "TrafficData.h"
 
-#define ROUND (0.001)
-
-@interface ComputeQueue ()
-- (double)roundDouble:(double)value;
-@end
-
 @implementation ComputeQueue
 @synthesize count;
-
-- (double)roundDouble:(double)value
-{
-    double rvalue = floor(value / prec) * prec;
-    if (rvalue == -0.0)
-        rvalue = fabs(rvalue);
-    return rvalue;
-}
 
 - (ComputeQueue *)initWithZeroFill:(size_t)size
 {
@@ -58,7 +44,6 @@
     
     self = [super initWithSize:size];
     [self zeroFill];
-    prec = ROUND;
     sumData = [GenericData dataWithoutValue];
     return self;
 }
@@ -82,54 +67,12 @@
 }
 
 //
-// protected
-//
-- (void)addSumState:(double)value
-{
-	double new_value;
-	double delta;
-	
-    if (isnan(value) || isinf(value)) {
-		[self invalidValueException];
-        return;
-    }
-	
-	if (value == 0.0)
-		return;
-
-	value = value + add_remain;
-	new_value = sumState + value;
-    if (isinf(new_value) || isnan(new_value)) {
-        [self invalidValueException];
-        return;
-    }
-    delta = new_value - sumState;
-	add_remain = value - delta;
-	sumState = new_value;
-}
-
-- (void)subSumState:(double)value
-{
-    return [self addSumState:(-value)];
-}
-
-- (void)clearSumState
-{
-	sumState = 0.0;
-	add_remain = 0.0;
-    sumData = [GenericData dataWithoutValue];
-}
-
-- (double)sum
-{
-	double sum;
-	sum = sumState + add_remain;
-    return sum;
-}
-
-//
 // public
 //
+- (void)clearSumState {
+    self->sumData = [GenericData dataWithoutValue];
+}
+
 - (void)zeroFill
 {
 	self.head = self.tail = nil;
@@ -144,7 +87,6 @@
 - (id)enqueue:(id)data withTimestamp:(NSDate *)ts
 {
     if (data && [data isKindOfClass:[GenericData class]]) {
-        [self addSumState:[data doubleValue]];
         [self->sumData addData:data];
     }
     
@@ -160,7 +102,6 @@
         @throw ex;
     }
     if ([sub.content isKindOfClass:[GenericData class]]) {
-        [self subSumState:[sub.content doubleValue]];
         [self->sumData subData:sub.content];
     }
     
@@ -173,7 +114,6 @@
 
     entry = (QueueEntry *)[self dequeueEntry];
     if (entry.content && [entry.content isKindOfClass:[GenericData class]]) {
-        [self subSumState:[entry.content doubleValue]];
         [self->sumData subData:entry.content];
     }
 	return entry.content;
@@ -183,9 +123,7 @@
 {
     ComputeQueue *new = [super copyWithZone:zone];
 
-    new->prec = self->prec;
-    new->sumState = self->sumState;
-    new->add_remain = self->add_remain;
+    new->sumData = [self->sumData copy];
     
 	return new;
 }
@@ -251,10 +189,9 @@
             variance += pow((avg - [entry.content doubleValue]), 2.0);
         }
     }
-	variance /= (self.count - 1);
+	variance /= (double)(self.count - 1);
 
-    double deviation = sqrt(variance);
-    return [self roundDouble:deviation];
+    return sqrt(variance);
 }
 
 - (void)invalidValueException
