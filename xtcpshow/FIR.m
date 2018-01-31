@@ -74,7 +74,7 @@
     return new;
 }
 
-- (DerivedData *)filter:(DerivedData *)sample
+- (GenericData *)filter:(GenericData *)sample
 {
     if (!self.stage)
         return sample;
@@ -84,7 +84,7 @@
         NSUInteger samples = [sample numberOfSamples];
         [[self.stage objectAtIndex:i] enqueue:sample withTimestamp:timestamp];
         float value = [[self.stage objectAtIndex:i] averageDoubleValue];
-        sample = [DerivedData dataWithDouble:value atDate:timestamp fromSamples:samples];
+        sample = [GenericData dataWithDouble:value atDate:timestamp fromSamples:samples];
     }
     
     return sample;

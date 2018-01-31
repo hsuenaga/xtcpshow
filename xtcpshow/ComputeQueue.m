@@ -33,47 +33,8 @@
 
 #import "ComputeQueue.h"
 #import "TrafficData.h"
-#import "DerivedData.h"
 
 #define ROUND (0.001)
-
-@implementation ComputeQueueEntry
-@synthesize data;
-
-- (ComputeQueueEntry *)initWithData:(id)data withTimestamp:(NSDate *)ts
-{
-    self = [super initWithData:data withTimestamp:ts];
-    if ([data isMemberOfClass:[DerivedData class]]) {
-        self.data = data;
-    }
-    else if ([data isMemberOfClass:[TrafficData class]]){
-        TrafficData *tdata = (TrafficData *)data;
-        DerivedData *sdata = [DerivedData dataWithInteger:(int)[tdata bytesReceived]
-                                                 atDate:[tdata timestamp]
-                                            fromSamples:[tdata numberOfSamples]];
-        self.data = sdata;
-    }
-    else {
-        NSException *ex = [NSException exceptionWithName:@"Invalid Data"
-                                                  reason:@"class of data is unknown"
-                                                userInfo:nil];
-        @throw ex;
-    }
-    return self;
-}
-
-+ (ComputeQueueEntry *)entryWithData:(id)data withTimestamp:(NSDate *)ts
-{
-    return [[ComputeQueueEntry alloc] initWithData:data withTimestamp:ts];
-}
-
-- (id)copyWithZone:(NSZone *)zone
-{
-    return [[ComputeQueueEntry alloc]
-            initWithData:[self.data copy]
-            withTimestamp:self.timestamp];
-}
-@end
 
 @interface ComputeQueue ()
 - (double)roundDouble:(double)value;
@@ -172,53 +133,56 @@
 {
 	self.head = self.tail = nil;
 	self.count = 0;
-    DerivedData *zero = [DerivedData dataWithDouble:0.0];
-    NSDate *now = [NSDate date];
+    GenericData *zero = [GenericData dataWithDouble:0.0 atDate:[NSDate date] fromSamples:0];
     for (int i = 0; i < self.size; i++) {
-        [self enqueue:zero withTimestamp:now];
+        [self enqueue:zero withTimestamp:[zero timestamp]];
     }
     [self clearSumState];
 }
 
-- (DerivedData *)enqueue:(DerivedData *)data withTimestamp:(NSDate *)ts
+- (id)enqueue:(id)data withTimestamp:(NSDate *)ts
 {
-    if (data) {
+    if (data && [data isKindOfClass:[GenericData class]]) {
         [self addSumState:[data doubleValue]];
     }
     
-    ComputeQueueEntry *add = [ComputeQueueEntry entryWithData:data withTimestamp:ts];
-    ComputeQueueEntry *sub = (ComputeQueueEntry *)[self enqueueEntry:add];
+    QueueEntry *add = [QueueEntry entryWithData:data withTimestamp:ts];
+    QueueEntry *sub = [self enqueueEntry:add];
     if (sub == nil)
         return nil;
-    if (![sub isMemberOfClass:[ComputeQueueEntry class]]) {
+    if (![sub isKindOfClass:[add class]]) {
         NSException *ex = [NSException
                            exceptionWithName:@"inconsitent queue"
-                           reason:@"not a DataQueueEntry"
+                           reason:@"unknown entry in queue"
                            userInfo:nil];
         @throw ex;
     }
-    [self subSumState:[sub.data doubleValue]];
-    
-    return sub.data;
-}
-
-- (DerivedData *)dequeue
-{
-    ComputeQueueEntry *entry;
-
-    entry = (ComputeQueueEntry *)[self dequeueEntry];
-	[self subSumState:[entry.data doubleValue]];
-	return entry.data;
-}
-
-- (ComputeQueue *)copy
-{
-    ComputeQueue *new = [ComputeQueue queueWithSize:self.size];
-
-    for (QueueEntry *entry = self.head; entry; entry = entry.next) {
-        [new enqueue:[entry copy] withTimestamp:[entry timestamp]];
+    if ([sub.content isKindOfClass:[GenericData class]]) {
+        [self subSumState:[sub.content doubleValue]];
     }
+    
+    return sub.content;
+}
 
+- (id)dequeue
+{
+    QueueEntry *entry;
+
+    entry = (QueueEntry *)[self dequeueEntry];
+    if (entry.content && [entry.content isKindOfClass:[GenericData class]]) {
+        [self subSumState:[entry.content doubleValue]];
+    }
+	return entry.content;
+}
+
+- (id)copyWithZone:(NSZone *)zone
+{
+    ComputeQueue *new = [super copyWithZone:zone];
+
+    new->prec = self->prec;
+    new->sumState = self->sumState;
+    new->add_remain = self->add_remain;
+    
 	return new;
 }
 
@@ -236,9 +200,10 @@
 	NSUInteger max = 0;
 
 	for (entry = self.head; entry; entry = entry.next) {
-        DerivedData *walk = entry.content;
-		if (max < walk.numberOfSamples)
-			max = walk.numberOfSamples;
+        if ([entry.content isKindOfClass:[GenericData class]]) {
+            if (max < [entry.content numberOfSamples])
+                max = [entry.content numberOfSamples];
+        }
 	}
 	return max;
 }
@@ -249,14 +214,15 @@
 	double max = 0.0;
 
 	for (entry = self.head; entry; entry = entry.next) {
-        DerivedData *walk = entry.content;
-		double value = [walk doubleValue];
+        if ([entry.content isKindOfClass:[GenericData class]]) {
+            double value = [entry.content doubleValue];
 
-		if (isnan(value))
-			[self invalidValueException];
+            if (isnan(value))
+                [self invalidValueException];
 
-		if (max < value)
-			max = value;
+            if (max < value)
+                max = value;
+        }
 	}
     return max;
 }
@@ -281,10 +247,10 @@
     if (self.count < 1)
         return 0.0;
     
-    for (QueueEntry *entry = self.head; entry;
-         entry = entry.next) {
-        DerivedData *walk = entry.content;
-		variance += pow((avg - walk.doubleValue), 2.0);
+    for (QueueEntry *entry = self.head; entry; entry = entry.next) {
+        if ([entry.content isKindOfClass:[GenericData class]]) {
+            variance += pow((avg - [entry.content doubleValue]), 2.0);
+        }
     }
 	variance /= (self.count - 1);
 

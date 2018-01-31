@@ -32,7 +32,6 @@
 		466DD1731FEB6D8300A58CB1 /* TrafficData.m in Sources */ = {isa = PBXBuildFile; fileRef = 466DD1721FEB6D8300A58CB1 /* TrafficData.m */; };
 		466E550717AB2AA500C978C9 /* ComputeQueue.m in Sources */ = {isa = PBXBuildFile; fileRef = 466E550617AB2AA500C978C9 /* ComputeQueue.m */; };
 		466E550A17AB491800C978C9 /* PID.m in Sources */ = {isa = PBXBuildFile; fileRef = 466E550917AB491800C978C9 /* PID.m */; };
-		4682948417B4634D008AC9D4 /* DerivedData.m in Sources */ = {isa = PBXBuildFile; fileRef = 4682948317B4634D008AC9D4 /* DerivedData.m */; };
 		4696050E17CDD2DB00798814 /* ServiceManagement.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4696050D17CDD2DB00798814 /* ServiceManagement.framework */; };
 		4696051017CDD2EC00798814 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4696050F17CDD2EC00798814 /* Security.framework */; };
 		46A10AD117CEF4A50011A9E8 /* CaptureBPF.m in Sources */ = {isa = PBXBuildFile; fileRef = 46A10AD017CEF4A50011A9E8 /* CaptureBPF.m */; };
@@ -118,8 +117,6 @@
 		466E550617AB2AA500C978C9 /* ComputeQueue.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ComputeQueue.m; sourceTree = "<group>"; };
 		466E550817AB491800C978C9 /* PID.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PID.h; sourceTree = "<group>"; };
 		466E550917AB491800C978C9 /* PID.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PID.m; sourceTree = "<group>"; };
-		4682948217B4634D008AC9D4 /* DerivedData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DerivedData.h; sourceTree = "<group>"; };
-		4682948317B4634D008AC9D4 /* DerivedData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DerivedData.m; sourceTree = "<group>"; };
 		469604FC17CDD02300798814 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		4696050D17CDD2DB00798814 /* ServiceManagement.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ServiceManagement.framework; path = System/Library/Frameworks/ServiceManagement.framework; sourceTree = SDKROOT; };
 		4696050F17CDD2EC00798814 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
@@ -239,8 +236,6 @@
 				46C08CBB200875200006E8D5 /* Queue.m */,
 				466E550517AB2AA500C978C9 /* ComputeQueue.h */,
 				466E550617AB2AA500C978C9 /* ComputeQueue.m */,
-				4682948217B4634D008AC9D4 /* DerivedData.h */,
-				4682948317B4634D008AC9D4 /* DerivedData.m */,
 				4620811D1FECE93C003B3C74 /* TimeConverter.h */,
 				465805472020051300169963 /* GenericData.h */,
 				465805482020051300169963 /* GenericData.m */,
@@ -439,7 +434,6 @@
 				46C08CBF20089CB00006E8D5 /* FIR.m in Sources */,
 				46CB9010201B971B00E470C8 /* GraphViewOperation.m in Sources */,
 				466E550A17AB491800C978C9 /* PID.m in Sources */,
-				4682948417B4634D008AC9D4 /* DerivedData.m in Sources */,
 				46A10AD117CEF4A50011A9E8 /* CaptureBPF.m in Sources */,
 				46DE97A917D2D15B009E0A16 /* BPFService.m in Sources */,
 			);

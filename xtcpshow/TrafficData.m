@@ -64,7 +64,7 @@
 - (id)initAtTimeval:(struct timeval *)tv withPacketLength:(uint64_t)length
 {
     NSNumber *data = [NSNumber numberWithUnsignedInteger:length];
-    NSDate *date = tv2date(tv);
+    NSDate *date = tv ? tv2date(tv) : nil;
     self = [super initWithMode:DATA_UINTEGER
                      numerator:data
                    denominator:nil

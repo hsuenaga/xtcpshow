@@ -31,14 +31,7 @@
 //
 #include <sys/queue.h>
 #import <Foundation/Foundation.h>
-#import "DerivedData.h"
 #import "Queue.h"
-
-@interface ComputeQueueEntry : QueueEntry
-@property DerivedData *data;
-- (ComputeQueueEntry *)initWithData:(id)data withTimestamp:(NSDate *)ts;
-+ (ComputeQueueEntry *)entryWithData:(id)data withTimestamp:(NSDate *)ts;
-@end
 
 @interface ComputeQueue : Queue {
     double prec;
@@ -64,10 +57,6 @@
 
 // initizlize
 - (void)zeroFill;
-
-// queue op
-- (DerivedData *)enqueue:(DerivedData *)data withTimestamp:(NSDate *)ts;
-- (DerivedData *)dequeue;
 
 // queue status
 - (double)maxDoubleValue;

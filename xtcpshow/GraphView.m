@@ -36,7 +36,6 @@
 #import "GraphViewOperation.h"
 #import "ComputeQueue.h"
 #import "PID.h"
-#import "DerivedData.h"
 #import "TrafficIndex.h"
 #import "TrafficDB.h"
 

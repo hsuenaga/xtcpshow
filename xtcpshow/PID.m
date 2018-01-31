@@ -35,7 +35,6 @@
 #import "TrafficIndex.h"
 #import "TrafficData.h"
 #import "TrafficDB.h"
-#import "DerivedData.h"
 #import "ComputeQueue.h"
 #import "FIR.h"
 
@@ -111,7 +110,7 @@
     NSUInteger bits = nbits - pbits;
     NSUInteger pkts = [dataBase samplesAtDate:date] - [dataBase samplesAtDate:prev];
     double mbps = (double)bits / (tick * 2.0) * 1.0E-6;
-    DerivedData *sample = [DerivedData dataWithDouble:mbps atDate:date fromSamples:pkts];
+    GenericData *sample = [GenericData dataWithDouble:mbps atDate:date fromSamples:pkts];
     
     // Step2: FIR
     sample = [filterFIR filter:sample];

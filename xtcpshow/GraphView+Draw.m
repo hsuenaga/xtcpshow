@@ -58,8 +58,9 @@
 {
     [self.colorBPS set];
     
-    [self.viewData enumerateDataUsingBlock:^(DerivedData *data, NSUInteger idx, BOOL *stop) {
-        NSRect bar;
+    [self.viewData enumerateDataUsingBlock:^(id data, NSUInteger idx, BOOL *stop) {
+        if (![data isKindOfClass:[GenericData class]])
+            return;
         CGFloat value = (CGFloat)[data doubleValue];
         
         if (idx < self.GraphOffset)
@@ -70,10 +71,16 @@
             *stop = YES;
             return;
         }
-        bar.origin.x = (CGFloat)idx;
-        bar.origin.y = 0;
-        bar.size.width = 1.0;
-        bar.size.height = value * rect.size.height / self.y_range;
+        NSRect bar = {
+            .origin = {
+                .x = (CGFloat)idx,
+                .y = 0
+            },
+            .size = {
+                .width = 1.0,
+                .height = value * rect.size.height / self.y_range
+            }
+        };
         if (bar.size.height < 1.0)
             return;
         NSRectFill(bar);
@@ -94,7 +101,9 @@
     // make path
     double scaler = (double)rect.size.height / (double)self.y_range;
     BOOL __block pathOpen = false;
-    [self.viewData enumerateDataUsingBlock:^(DerivedData *data, NSUInteger idx, BOOL *stop) {
+    [self.viewData enumerateDataUsingBlock:^(id data, NSUInteger idx, BOOL *stop) {
+        if (![data isKindOfClass:[GenericData class]])
+            return;
         if (idx < self.GraphOffset)
             return;
         idx -= self.GraphOffset;
@@ -118,12 +127,16 @@
         
         // fill background
         if (self.fillMode == E_FILL_RICH && value > 0.0) {
-            NSRect histgram;
-            
-            histgram.origin.x = plot.x;
-            histgram.origin.y = 0;
-            histgram.size.width = 1.0;
-            histgram.size.height = plot.y;
+            NSRect histgram = {
+                .origin = {
+                    .x = plot.x,
+                    .y = 0
+                },
+                .size = {
+                    .width = 1.0,
+                    .height = plot.y
+                }
+            };
             [self.gradGraph drawInRect:histgram angle:90.0];
         }
         
@@ -180,7 +193,9 @@
     [self.colorPPS set];
     
     double scaler = (double)rect.size.height / (double)self.pps_range;
-    [self.viewData enumerateDataUsingBlock:^(DerivedData *data, NSUInteger idx, BOOL *stop) {
+    [self.viewData enumerateDataUsingBlock:^(id data, NSUInteger idx, BOOL *stop) {
+        if (![data isKindOfClass:[GenericData class]])
+            return;
         if (idx < self.XmarkOffset)
             return;
         idx -= self.XmarkOffset;

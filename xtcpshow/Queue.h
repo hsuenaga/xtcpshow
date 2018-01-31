@@ -45,7 +45,7 @@
 - (id)copyWithZone:(NSZone *)zone;
 @end
 
-@interface Queue : NSObject
+@interface Queue : NSObject<NSCopying>
 @property (atomic) NSDate *last_used;
 @property (nonatomic) NSUInteger count;
 @property (nonatomic) size_t size;
@@ -85,9 +85,6 @@
 
 // enumerate all data
 - (void)enumerateDataUsingBlock:(void(^)(id data, NSUInteger idx, BOOL *stop))block;
-
-// copy/clipping queue
-- (Queue *)copy;
 
 // queue status
 - (BOOL)isEmpty;

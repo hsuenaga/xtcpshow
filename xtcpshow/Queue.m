@@ -66,7 +66,7 @@
 
 - (id)copyWithZone:(NSZone *)zone
 {
-    return [[QueueEntry alloc]
+    return [[self.class allocWithZone:zone]
             initWithData:self.content
             withTimestamp:self.timestamp];
 }
@@ -247,13 +247,15 @@
     ASSERT_COUNTER(self);
 }
 
-- (Queue *)copy
+- (id)copyWithZone:(NSZone *)zone
 {
     QueueEntry *entry;
-    Queue *new = [Queue queueWithSize:_size];
+    Queue *new = [self.class allocWithZone:zone];
+
+    new.size = self.size;
     
     for (entry = self.head; entry; entry = entry.next)
-        [new enqueue:[entry copy] withTimestamp:[entry timestamp]];
+        [new enqueue:[entry copyWithZone:zone] withTimestamp:[entry timestamp]];
     ASSERT_COUNTER(self);
     return new;
 }
