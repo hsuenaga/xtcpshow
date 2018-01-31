@@ -59,7 +59,7 @@
     self = [super initWithSize:size];
     [self zeroFill];
     prec = ROUND;
-    
+    sumData = [GenericData dataWithoutValue];
     return self;
 }
 
@@ -117,6 +117,7 @@
 {
 	sumState = 0.0;
 	add_remain = 0.0;
+    sumData = [GenericData dataWithoutValue];
 }
 
 - (double)sum
@@ -133,7 +134,7 @@
 {
 	self.head = self.tail = nil;
 	self.count = 0;
-    GenericData *zero = [GenericData dataWithDouble:0.0 atDate:[NSDate date] fromSamples:0];
+    GenericData *zero = [GenericData dataWithInteger:0 atDate:[NSDate date] fromSamples:0];
     for (int i = 0; i < self.size; i++) {
         [self enqueue:zero withTimestamp:[zero timestamp]];
     }
@@ -144,6 +145,7 @@
 {
     if (data && [data isKindOfClass:[GenericData class]]) {
         [self addSumState:[data doubleValue]];
+        [self->sumData addData:data];
     }
     
     QueueEntry *add = [QueueEntry entryWithData:data withTimestamp:ts];
@@ -159,6 +161,7 @@
     }
     if ([sub.content isKindOfClass:[GenericData class]]) {
         [self subSumState:[sub.content doubleValue]];
+        [self->sumData subData:sub.content];
     }
     
     return sub.content;
@@ -171,6 +174,7 @@
     entry = (QueueEntry *)[self dequeueEntry];
     if (entry.content && [entry.content isKindOfClass:[GenericData class]]) {
         [self subSumState:[entry.content doubleValue]];
+        [self->sumData subData:entry.content];
     }
 	return entry.content;
 }
@@ -227,21 +231,16 @@
     return max;
 }
 
-- (double)averageDoubleValue
+- (GenericData *)averageData
 {
-    if (self.count == 0) {
-        NSLog(@"queue is empty");
-        NSLog(@"queue size is %zu", self.size);
-		return 0.0;
-
-    }
-    double avg = [self sum] / (double)self.count;
-    return [self roundDouble:avg];
+    GenericData *data = [self->sumData copy];
+    [data divInteger:self.count];
+    return data;
 }
 
 - (double)standardDeviation
 {
-	double avg = [self averageDoubleValue];
+	double avg = [[self averageData] doubleValue];
 	double variance = 0.0;
 
     if (self.count < 1)

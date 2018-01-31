@@ -38,6 +38,8 @@
 #import "ComputeQueue.h"
 #import "FIR.h"
 
+#undef DEBUG_SAMPLE
+
 @interface PID ()
 - (NSDate *)roundDate:(NSDate *)date toTick:(NSTimeInterval)tick;
 - (void)dumpParams;
@@ -49,6 +51,7 @@
     BOOL write_protect;
     BOOL running;
     double tick;
+    GenericData *tickDataUsec;
     NSTimeInterval dataLength;
 }
 @synthesize output;
@@ -63,6 +66,7 @@
     self = [super init];
     self->_outputLock = [NSRecursiveLock new];
     self->_kzStage = 3;
+    self->tickDataUsec = [GenericData dataWithoutValue];
     return self;
 }
 
@@ -72,11 +76,17 @@
     tick = outputTimeLength / outputSamples; // [sec/sample]
     dataLength = outputTimeLength + FIRTimeLength;
     
+    // fraction tick [usec]
+    NSInteger outputUsec = (NSUInteger)round(outputTimeLength * 1.0E6);
+    tickDataUsec = [GenericData dataWithInteger:outputUsec];
+    [tickDataUsec divInteger:outputSamples];
+    
     // allocate FIR
     filterFIR = [FIR FIRwithTap:ceil(FIRTimeLength/tick) withStage:self.kzStage];
     
     NSUInteger maxSamples = outputSamples + [filterFIR tap];
     output = [ComputeQueue queueWithZero:maxSamples];
+    output.last_used = nil;
 
 #ifdef DEBUG
     [self dumpParams];
@@ -109,13 +119,18 @@
     }
     NSUInteger bits = nbits - pbits;
     NSUInteger pkts = [dataBase samplesAtDate:date] - [dataBase samplesAtDate:prev];
-    double mbps = (double)bits / (tick * 2.0) * 1.0E-6;
-    GenericData *sample = [GenericData dataWithDouble:mbps atDate:date fromSamples:pkts];
+    GenericData *sample = [GenericData dataWithInteger:bits atDate:date  fromSamples:pkts];
+    [sample divData:tickDataUsec]; // bits per micro seconds == Mbits per seconds
+    [sample divInteger:2]; // u[k] = u[k+1] - u[k-1] / (2 * Ts)
     
     // Step2: FIR
     sample = [filterFIR filter:sample];
-    
-    // finalize and output sample
+#ifdef DEBUG_SAMPLE
+    NSLog(@"New sample: %@", sample);
+#endif
+
+    // Step3: finalize and output sample
+    sample.timestamp = date;
     [output enqueue:sample withTimestamp:date];
     output.last_used = date;
 }
@@ -176,6 +191,7 @@
     NSLog(@"Duration: %f [sec]", outputTimeLength);
     NSLog(@"Plot: %lu [point]", (unsigned long)outputSamples);
     NSLog(@"Tick: %f [sec/point]", tick);
+    NSLog(@"TickUsec: %@ [sec/usec]", tickDataUsec);
     NSLog(@"FIR Duration: %f [sec]", FIRTimeLength);
     NSLog(@"FIR Taps: %lu [point]", [filterFIR tap]);
     NSLog(@"Output samples: %lu [point]", outputSamples + [filterFIR tap]);

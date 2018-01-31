@@ -45,8 +45,8 @@ enum enum_data_mode {
 @property (nonatomic, class) NSFileHandle *debugHandle;
 
 @property (nonatomic, readonly) NSUInteger objectID;
-@property (nonatomic, readonly) NSDate *timestamp;
-@property (nonatomic, readonly) NSUInteger numberOfSamples;
+@property (nonatomic) NSDate *timestamp;
+@property (nonatomic) NSUInteger numberOfSamples;
 @property (nonatomic) NSDate *dataFrom;
 @property (nonatomic) NSDate *dataTo;
 @property (nonatomic) double doubleValue;
@@ -67,10 +67,16 @@ enum enum_data_mode {
 
 #pragma mark - accessor
 - (void)addInteger:(NSInteger)value;
-- (void)addFracNumerator:(NSInteger)value;
+- (void)subInteger:(NSInteger)value;
 - (void)divInteger:(NSInteger)value;
 - (void)mulInteger:(NSInteger)value;
+
+- (void)addData:(GenericData *)data withSign:(int)sign;
 - (void)addData:(GenericData *)data;
+- (void)subData:(GenericData *)data;
+- (void)mulData:(GenericData *)data;
+- (void)divData:(GenericData *)data;
+
 - (void)simplifyFraction;
 
 #pragma mark - debug

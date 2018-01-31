@@ -29,14 +29,16 @@
 //  Created by SUENAGA Hiroki on 2013/08/02.
 //  Copyright (c) 2013 SUENAGA Hiroki. All rights reserved.
 //
-#include <sys/queue.h>
 #import <Foundation/Foundation.h>
+
+#import "GenericData.h"
 #import "Queue.h"
 
 @interface ComputeQueue : Queue {
     double prec;
 	double sumState;
 	double add_remain;
+    GenericData *sumData;
 }
 
 //
@@ -61,7 +63,7 @@
 // queue status
 - (double)maxDoubleValue;
 - (NSUInteger)maxSamples;
-- (double)averageDoubleValue;
+- (GenericData *)averageData;
 - (double)standardDeviation;
 
 // debug & exception

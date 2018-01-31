@@ -451,7 +451,7 @@ double const time_round = 0.05;
 	self.viewData = [self.PID output];
 	self->_maxSamples = [self.viewData maxSamples];
 	self->_maxValue = [self.viewData maxDoubleValue];
-	self->_averageValue = [self.viewData averageDoubleValue];
+	self->_averageValue = [[self.viewData averageData] doubleValue];
 	self.GraphOffset = [self.PID overSample];
 	self.XmarkOffset = [self.PID overSample] / 2;
     
