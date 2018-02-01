@@ -70,7 +70,8 @@
                    denominator:nil
                       dataFrom:date
                         dataTo:nil
-                   fromSamples:0];
+                   fromSamples:0
+              enableSaturation:TRUE];
     self.parent = nil;
     if (tv) {
         [self alignStartEnd];

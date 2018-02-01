@@ -49,12 +49,13 @@ enum enum_data_mode {
 @property (nonatomic) NSUInteger numberOfSamples;
 @property (nonatomic) NSDate *dataFrom;
 @property (nonatomic) NSDate *dataTo;
+@property (nonatomic) BOOL saturateValue;
 @property (nonatomic) double doubleValue;
 @property (nonatomic) int64_t int64Value;
 @property (nonatomic) uint64_t uint64Value;
 
 #pragma mark - initializer
-- (id)initWithMode:(enum enum_data_mode)mode numerator:(NSNumber *)nvalue denominator:(NSNumber *)dvalue dataFrom:(NSDate *)from dataTo:(NSDate *)to fromSamples:(NSUInteger)samples;
+- (id)initWithMode:(enum enum_data_mode)mode numerator:(NSNumber *)nvalue denominator:(NSNumber *)dvalue dataFrom:(NSDate *)from dataTo:(NSDate *)to fromSamples:(NSUInteger)samples enableSaturation:(BOOL)saturation;
 
 #pragma mark - allocator
 + (id)dataWithoutValue;
@@ -66,10 +67,10 @@ enum enum_data_mode {
 + (id)dataWithUInteger:(NSUInteger)data;
 
 #pragma mark - accessor
-- (void)addInteger:(int64_t)iValue;
-- (void)subInteger:(int64_t)iValue;
-- (void)divInteger:(int64_t)iValue;
-- (void)mulInteger:(int64_t)iValue;
+- (void)addInteger:(NSInteger)iValue;
+- (void)subInteger:(NSInteger)iValue;
+- (void)divInteger:(NSInteger)iValue;
+- (void)mulInteger:(NSInteger)iValue;
 
 - (void)addData:(GenericData *)data withSign:(int)sign;
 - (void)addData:(GenericData *)data;
@@ -77,10 +78,11 @@ enum enum_data_mode {
 - (void)mulData:(GenericData *)data;
 - (void)divData:(GenericData *)data;
 
-- (BOOL)simplifyNumerator:(uint64_t *)np denominator:(uint64_t *)qp;
+- (BOOL)simplifyNumerator:(uint32_t *)np denominator:(uint32_t *)qp;
 - (BOOL)simplifyFraction;
 
-- (void)roundFraction:(uint64_t)denominator;
+- (void)castToFractionWithDenominator:(uint32_t)denominator;
+- (void)castToReal;
 
 #pragma mark - debug
 + (void)openDebugFile:(NSString *)fileName;

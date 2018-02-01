@@ -29,22 +29,37 @@
 //  Created by SUENAGA Hiroki on 2018/01/30.
 //  Copyright © 2018年 SUENAGA Hiroki. All rights reserved.
 //
-
+#import <stdint.h>
 #import "GenericData.h"
 
 static NSUInteger newID = 0;
 static NSFileHandle *debugHandle = nil;
-
-#ifdef DEBUG
-#define LOG_CONVERT_FRACTION(x) NSLog(@"Fraction is converted: %@", x)
-#else
-#define LOG_CONVERT_FRACTION(x) /* nothing */
-#endif
+static NSException *overflowException = nil;
+static NSException *invalidValueException = nil;
 
 #undef DEBUG_EUCLID
+#undef DEBUG_CAST
+#define DEBUG_SAT
+
+#if defined(DEBUG) && defined(DEBUG_CAST)
+#define LOG_CAST_F2R(x) NSLog(@"Cast Fraction To Real: %@", x)
+#else
+#define LOG_CAST_F2R(x) /* nothing */
+#endif
+
+#if defined(DEBUG) && defined(DEBUG_SAT)
+#define LOG_SAT(x) NSLog(@"Value is saturated: %@", x);
+#else
+#define LOG_SAT(x) /* nothing */
+#endif
 
 @interface GenericData ()
 @property (nonatomic) NSUInteger objectID;
+
+- (uint32_t)uint32add:(NSUInteger)n to:(NSUInteger)q;
+- (uint32_t)uint32sub:(NSUInteger)n from:(NSUInteger)q;
+- (uint32_t)uint32mul:(NSUInteger)n with:(NSUInteger)q;
+- (uint32_t)uint32div:(NSUInteger)n by:(NSUInteger)q;
 @end
 
 @implementation GenericData {
@@ -52,11 +67,23 @@ static NSFileHandle *debugHandle = nil;
     union {
         struct {
             BOOL negative;
-            uint64_t numerator;
-            uint64_t denominator;
+            uint32_t numerator;
+            uint32_t denominator;
         } frac;
         double real;
     } value;
+}
+
++ (void)initialize
+{
+    newID = 0;
+    debugHandle = nil;
+    overflowException = [NSException exceptionWithName:@"overflow"
+                                                reason:@"generic overflow"
+                                              userInfo:nil];
+    invalidValueException = [NSException exceptionWithName:@"invalidValue"
+                                                    reason:@"cannot compute the value"
+                                                  userInfo:nil];
 }
 
 + (NSUInteger)newID
@@ -89,59 +116,90 @@ static NSFileHandle *debugHandle = nil;
     GenericData.debugHandle = [NSFileHandle fileHandleForWritingAtPath:path];
 }
 
-- (id)initWithMode:(enum enum_data_mode)mvalue numerator:(NSNumber *)nvalue denominator:(NSNumber *)dvalue dataFrom:(NSDate *)from dataTo:(NSDate *)to fromSamples:(NSUInteger)samples
+- (id)initWithMode:(enum enum_data_mode)mvalue numerator:(NSNumber *)nvalue denominator:(NSNumber *)dvalue dataFrom:(NSDate *)from dataTo:(NSDate *)to fromSamples:(NSUInteger)samples enableSaturation:(BOOL)saturation;
 {
+    int64_t iValue;
+    uint64_t uValue;
+    
     self = [super init];
     self.objectID = [self.class newID];
+    self.saturateValue = saturation;
     switch (mvalue) {
         case DATA_DOUBLE:
             mode = DATA_DOUBLE;
             value.real = nvalue ? [nvalue doubleValue] : 0.0;
             break;
         case DATA_INTEGER:
-        {
             mode = DATA_FRACTION;
-            int64_t ivalue = nvalue ? [nvalue integerValue] : 0;
-            if (ivalue < 0) {
+            iValue = nvalue ? [nvalue integerValue] : 0;
+            if (iValue < 0) {
                 value.frac.negative = TRUE;
-                value.frac.numerator = (uint64_t)(0 - ivalue);
+                iValue = (-iValue);
             }
             else {
                 value.frac.negative = FALSE;
-                value.frac.numerator = (uint64_t)ivalue;
             }
+            if (iValue > UINT32_MAX) {
+                if (self.saturateValue) {
+                    LOG_SAT(self);
+                    iValue = UINT32_MAX;
+                }
+                else
+                    @throw overflowException;
+            }
+            value.frac.numerator = (uint32_t)iValue;
             value.frac.denominator = 1;
             break;
-        }
         case DATA_UINTEGER:
             mode = DATA_FRACTION;
             value.frac.negative = FALSE;
-            value.frac.numerator = nvalue ? [nvalue unsignedIntegerValue] : 0;
+            uValue = nvalue ? [nvalue unsignedIntegerValue] : 0;
+            if (uValue > UINT32_MAX) {
+                if (self.saturateValue) {
+                    LOG_SAT(self);
+                    uValue = UINT32_MAX;
+                }
+                else
+                    @throw overflowException;
+            }
+            value.frac.numerator = (uint32_t)uValue;
             value.frac.denominator = 1;
             break;
         case DATA_FRACTION:
-        {
             mode = DATA_FRACTION;
-            int64_t ivalue = nvalue ? [nvalue integerValue] : 0;
-            if (ivalue < 0) {
+            iValue = nvalue ? [nvalue integerValue] : 0;
+            if (iValue < 0) {
                 value.frac.negative = TRUE;
-                value.frac.numerator = (uint64_t)(0 - ivalue);
+                iValue = -iValue;
             }
             else {
                 value.frac.negative = FALSE;
-                value.frac.numerator = (uint64_t)ivalue;
             }
+            if (iValue > UINT32_MAX) {
+                if (self.saturateValue) {
+                    LOG_SAT(self);
+                    iValue = UINT32_MAX;
+                }
+                else
+                    @throw overflowException;
+            }
+            value.frac.numerator = (uint32_t)iValue;
             
-            ivalue = dvalue ? [dvalue integerValue] : 1;
-            if (ivalue < 0) {
+            iValue = dvalue ? [dvalue integerValue] : 1;
+            if (iValue < 0) {
                 value.frac.negative = !value.frac.negative;
-                value.frac.denominator = (uint64_t)(0 - ivalue);
+                iValue = -iValue;
             }
-            else {
-                value.frac.denominator = (uint64_t)ivalue;
+            if (iValue > UINT32_MAX) {
+                if (self.saturateValue) {
+                    LOG_SAT(self);
+                    iValue = UINT32_MAX;
+                }
+                else
+                    @throw overflowException;
             }
+            value.frac.denominator = (uint32_t)iValue;
             break;
-        }
         case DATA_NOVALUE:
         default:
             mode = DATA_NOVALUE;
@@ -161,7 +219,8 @@ static NSFileHandle *debugHandle = nil;
                   denominator:nil
                      dataFrom:nil
                        dataTo:nil
-                  fromSamples:0];
+                  fromSamples:0
+             enableSaturation:TRUE];
 }
 
 + (id)dataWithoutValue {
@@ -171,7 +230,8 @@ static NSFileHandle *debugHandle = nil;
                  denominator:nil
                     dataFrom:nil
                       dataTo:nil
-                 fromSamples:0];
+                 fromSamples:0
+            enableSaturation:TRUE];
 }
 
 + (id)dataWithDouble:(double)data atDate:(NSDate *)date fromSamples:(NSUInteger)samples
@@ -182,7 +242,8 @@ static NSFileHandle *debugHandle = nil;
                  denominator:nil
                     dataFrom:date
                       dataTo:nil
-                 fromSamples:samples];
+                 fromSamples:samples
+            enableSaturation:TRUE];
     
 }
 
@@ -199,7 +260,8 @@ static NSFileHandle *debugHandle = nil;
                  denominator:nil
                     dataFrom:date
                       dataTo:nil
-                 fromSamples:samples];
+                 fromSamples:samples
+            enableSaturation:TRUE];
 }
 
 + (id)dataWithInteger:(NSInteger)data
@@ -215,7 +277,8 @@ static NSFileHandle *debugHandle = nil;
                  denominator:nil
                     dataFrom:date
                       dataTo:nil
-                 fromSamples:samples];
+                 fromSamples:samples
+            enableSaturation:TRUE];
 }
 
 + (id)dataWithUInteger:(NSUInteger)data
@@ -278,12 +341,20 @@ static NSFileHandle *debugHandle = nil;
     mode = DATA_FRACTION;
     if (int64Value < 0) {
         value.frac.negative = TRUE;
-        value.frac.numerator = (uint64_t)(0 - int64Value);
+        int64Value = (-int64Value);
     }
     else {
         value.frac.negative = FALSE;
-        value.frac.numerator = (uint64_t)int64Value;
     }
+    if (int64Value > UINT32_MAX) {
+        if (self.saturateValue == TRUE) {
+            LOG_SAT(self);
+            int64Value = UINT32_MAX;
+        }
+        else
+            @throw overflowException;
+    }
+    value.frac.numerator = (uint32_t)int64Value;
     value.frac.denominator = 1;
 }
 
@@ -291,15 +362,25 @@ static NSFileHandle *debugHandle = nil;
 {
     switch (mode) {
         case DATA_DOUBLE:
-            if (value.real < 0.0)
-                return 0; // Saturation
+            if (value.real < 0.0) {
+                if (self.saturateValue) {
+                    LOG_SAT(self);
+                    return 0;
+                }
+                else
+                    @throw overflowException;
+            }
             return (uint64_t)round(value.real);
         case DATA_FRACTION:
-        {
-            if (value.frac.negative)
-                return 0; // Saturation
+            if (value.frac.negative) {
+                if (self.saturateValue) {
+                    LOG_SAT(self);
+                    return 0;
+                }
+                else
+                    @throw overflowException;
+            }
             return (uint64_t)round([self doubleValue]);
-        }
         default:
             break;
     }
@@ -314,14 +395,22 @@ static NSFileHandle *debugHandle = nil;
 {
     mode = DATA_FRACTION;
     value.frac.negative = FALSE;
-    value.frac.numerator = uint64Value;
+    if (uint64Value > UINT32_MAX) {
+        if (self.saturateValue) {
+            LOG_SAT(self);
+            uint64Value = UINT32_MAX;
+        }
+        else
+            @throw overflowException;
+    }
+    value.frac.numerator = (uint32_t)uint64Value;
     value.frac.denominator = 1;
 }
 
-- (void)addInteger:(int64_t)iValue
+- (void)addInteger:(NSInteger)iValue
 {
     BOOL vNegative;
-    uint64_t uValue;
+    uint32_t uValue;
 
     switch (mode) {
         case DATA_DOUBLE:
@@ -330,21 +419,22 @@ static NSFileHandle *debugHandle = nil;
         case DATA_FRACTION:
             if (iValue < 0) {
                 vNegative = TRUE;
-                uValue = (uint64_t)((0 - iValue) * value.frac.denominator);
+                iValue = (-iValue);
             }
             else {
                 vNegative = FALSE;
-                uValue = (uint64_t)(iValue * value.frac.denominator);
             }
+            uValue = [self uint32mul:iValue with:value.frac.denominator];
+
             if (vNegative == value.frac.negative) {
-                value.frac.numerator = value.frac.numerator + uValue;
+                value.frac.numerator = [self uint32add:uValue to:value.frac.numerator];
             }
             else if (value.frac.numerator >= uValue) {
-                value.frac.numerator = value.frac.numerator - uValue;
+                value.frac.numerator = [self uint32sub:uValue from:value.frac.numerator];
             }
             else {
-                value.frac.negative = !value.frac.negative;
-                value.frac.numerator = uValue - value.frac.numerator;
+                value.frac.negative = (!value.frac.negative);
+                value.frac.numerator = [self uint32sub:value.frac.numerator from:uValue];
             }
             [self simplifyFraction];
             return;
@@ -357,28 +447,23 @@ static NSFileHandle *debugHandle = nil;
     @throw ex;
 }
 
-- (void)subInteger:(int64_t)iValue
+- (void)subInteger:(NSInteger)iValue
 {
-    return [self addInteger:(0 - iValue)];
+    return [self addInteger:(-iValue)];
 }
 
-- (void)divInteger:(int64_t)iValue
+- (void)mulInteger:(NSInteger)iValue
 {
-    uint64_t uValue;
-    
     switch (mode) {
         case DATA_DOUBLE:
-            value.real /= (double)iValue;
+            value.real *= (double)iValue;
             return;
         case DATA_FRACTION:
             if (iValue < 0) {
-                value.frac.negative = !value.frac.negative;
-                uValue = (uint64_t)(0 - iValue);
+                value.frac.negative = (!value.frac.negative);
+                iValue = (-iValue);
             }
-            else {
-                uValue = (uint64_t)iValue;
-            }
-            value.frac.denominator *= uValue;
+            value.frac.numerator = [self uint32mul:iValue with:value.frac.numerator];
             [self simplifyFraction];
             return;
         default:
@@ -386,23 +471,19 @@ static NSFileHandle *debugHandle = nil;
     }
 }
 
-- (void)mulInteger:(int64_t)iValue
+
+- (void)divInteger:(NSInteger)iValue
 {
-    uint64_t uValue;
-    
     switch (mode) {
         case DATA_DOUBLE:
-            value.real *= (double)iValue;
+            value.real /= (double)iValue;
             return;
         case DATA_FRACTION:
             if (iValue < 0) {
-                value.frac.negative = !value.frac.negative;
-                uValue = (uint64_t)(0 - iValue);
+                value.frac.negative = (!value.frac.negative);
+                iValue = (-iValue);
             }
-            else {
-                uValue = (uint64_t)iValue;
-            }
-            value.frac.numerator *= uValue;
+            value.frac.denominator = [self uint32mul:iValue with:value.frac.denominator];
             [self simplifyFraction];
             return;
         default:
@@ -412,16 +493,14 @@ static NSFileHandle *debugHandle = nil;
 
 - (void)addData:(GenericData *)data withSign:(int)sign
 {
-    uint64_t uValue;
+    uint32_t uValue;
     BOOL vNegative;
+    BOOL simplify = FALSE;
     
     if (data->mode == DATA_NOVALUE)
         return;
     
     sign = sign < 0 ? -1 : 1;
-    self.dataFrom = [self.dataFrom earlierDate:data.dataFrom];
-    self.dataTo = [self.dataTo laterDate:data.dataTo];
-
     switch (mode) {
         case DATA_NOVALUE:
             mode = data->mode;
@@ -432,49 +511,75 @@ static NSFileHandle *debugHandle = nil;
                     return;
                 case DATA_FRACTION:
                     if (sign < 0)
-                        value.frac.negative = !value.frac.negative;
-                    return;
+                        value.frac.negative = (!value.frac.negative);
+                    break;
                 default:
                     break;
             }
             break;
         case DATA_DOUBLE:
             value.real += ([data doubleValue] * (double)sign);
-            return;
+            break;
         case DATA_FRACTION:
             if (data->mode == DATA_DOUBLE) {
-                LOG_CONVERT_FRACTION(self);
-                mode = DATA_DOUBLE;
-                value.real = [self doubleValue];
+                [self castToReal];
                 return [self addData:data withSign:sign];
             }
             
-            /* FRACTION against FRACTION */
+            // check signness
             vNegative = data->value.frac.negative ? TRUE : FALSE;
             if (sign < 0)
-                vNegative = !vNegative;
-            uValue = data->value.frac.numerator * value.frac.denominator;
-            value.frac.numerator *= data->value.frac.denominator;
-            value.frac.denominator *= data->value.frac.denominator;
-            if (!vNegative) {
-                value.frac.numerator += uValue;
-            }
-            else if (value.frac.numerator >= uValue) {
-                value.frac.numerator -= uValue;
+                vNegative = (!vNegative);
+
+            // align denominator
+            if (value.frac.denominator != data->value.frac.denominator) {
+                uValue = [self uint32mul:data->value.frac.numerator
+                                    with:value.frac.denominator];
+                value.frac.numerator = [self uint32mul:value.frac.numerator
+                                                  with:data->value.frac.denominator];
+                value.frac.denominator = [self uint32mul:value.frac.denominator
+                                                    with:data->value.frac.denominator];
+                simplify = TRUE;
             }
             else {
-                value.frac.negative = !value.frac.negative;
-                value.frac.numerator = uValue - value.frac.numerator;
+                uValue = data->value.frac.numerator;
             }
-            [self simplifyFraction];
-            return;
-        default:
+            
+            // add numerator
+            if (value.frac.negative == vNegative) {
+                value.frac.numerator = [self uint32add:uValue to:value.frac.numerator];
+            }
+            else if (value.frac.numerator >= uValue) {
+                value.frac.numerator = [self uint32sub:uValue from:value.frac.numerator];
+            }
+            else {
+                value.frac.numerator = [self uint32sub:value.frac.numerator from:uValue];
+            }
+            
+            if (simplify)
+                [self simplifyFraction];
             break;
+        default:
+        {
+            NSException *ex = [NSException exceptionWithName:@"Invalid Value"
+                                                      reason:@"Data is not a kind of fraction"
+                                                    userInfo:nil];
+            @throw ex;
+            break;
+        }
     }
-    NSException *ex = [NSException exceptionWithName:@"Invalid Value"
-                                              reason:@"Data is not a kind of fraction"
-                                            userInfo:nil];
-    @throw ex;
+    
+    self.dataFrom = [self.dataFrom earlierDate:data.dataFrom];
+    self.dataTo = [self.dataTo laterDate:data.dataTo];
+    if (sign > 0) {
+        self.numberOfSamples += data.numberOfSamples;
+    }
+    else if (self.numberOfSamples >= data.numberOfSamples) {
+        self.numberOfSamples -= data.numberOfSamples;
+    }
+    else {
+        self.numberOfSamples = 0;
+    }
 }
 
 - (void)addData:(GenericData *)data
@@ -495,17 +600,17 @@ static NSFileHandle *debugHandle = nil;
             return;
         case DATA_FRACTION:
             if (data->mode == DATA_DOUBLE) {
-                LOG_CONVERT_FRACTION(self);
-                mode = DATA_DOUBLE;
-                value.real = [self doubleValue];
+                [self castToReal];
                 return [self mulData:data];
             }
             
             // FRACTION against FRACTION
             if (data->value.frac.negative)
                 value.frac.negative = !value.frac.negative;
-            value.frac.numerator *= data->value.frac.numerator;
-            value.frac.denominator *= data->value.frac.denominator;
+            value.frac.numerator = [self uint32mul:value.frac.numerator
+                                              with:data->value.frac.numerator];
+            value.frac.denominator = [self uint32mul:value.frac.denominator
+                                                with:data->value.frac.denominator];
             [self simplifyFraction];
             return;
         default:
@@ -525,17 +630,17 @@ static NSFileHandle *debugHandle = nil;
             return;
         case DATA_FRACTION:
             if (data->mode == DATA_DOUBLE) {
-                LOG_CONVERT_FRACTION(self);
-                mode = DATA_DOUBLE;
-                value.real = [self doubleValue];
+                [self castToReal];
                 return [self divData:data];
             }
             
             // FRACTION against FRACTION
             if (data->value.frac.negative)
                 value.frac.negative = !value.frac.negative;
-            value.frac.numerator *= data->value.frac.denominator;
-            value.frac.denominator *= data->value.frac.numerator;
+            value.frac.numerator = [self uint32mul:value.frac.numerator
+                                              with:data->value.frac.denominator];
+            value.frac.denominator = [self uint32mul:value.frac.denominator
+                                                with:data->value.frac.numerator];
             [self simplifyFraction];
             return;
         default:
@@ -547,15 +652,15 @@ static NSFileHandle *debugHandle = nil;
     @throw ex;
 }
 
-- (BOOL)simplifyNumerator:(uint64_t *)np denominator:(uint64_t *)qp
+- (BOOL)simplifyNumerator:(uint32_t *)np denominator:(uint32_t *)qp
 {
-    uint64_t n0 = *np;
-    uint64_t q0 = *qp;
-    uint64_t n = n0;
-    uint64_t q = q0;
+    uint32_t n0 = *np;
+    uint32_t q0 = *qp;
+    uint32_t n = n0;
+    uint32_t q = q0;
 retry:
     while (q > 1) {
-        uint64_t r = n % q;
+        uint32_t r = n % q;
         if (r == 0) {
             n = n0 = (n0 / q);
             q = q0 = (q0 / q);
@@ -590,21 +695,66 @@ retry:
     return [self simplifyNumerator:&value.frac.numerator denominator:&value.frac.denominator];
 }
 
-- (void)roundFraction:(uint64_t)denominator;
+- (void)castToFractionWithDenominator:(uint32_t)denominator;
 {
-    if (value.frac.numerator == 0) {
-        value.frac.denominator = denominator;
-        return;
+    double dValue;
+    
+    switch (mode) {
+        case DATA_DOUBLE:
+            dValue = value.real * (double)denominator;
+            break;
+        case DATA_FRACTION:
+            if (value.frac.numerator == 0) {
+                value.frac.denominator = denominator;
+                return;
+            }
+            dValue = [self doubleValue] * (double)denominator;
+            break;
+        default:
+            return;
     }
     
-    uint64_t numerator = (uint64_t)round([self doubleValue] * (double)denominator);
-#ifdef DEBUG_EUCLID
-    NSLog(@"round fraction: %llu/%llu -> %llu/%llu",
-          value.frac.numerator, value.frac.denominator,
-          numerator, denominator);
+    BOOL negative;
+    if (dValue < 0.0) {
+        negative = TRUE;
+        dValue = (-dValue);
+    }
+    else {
+        negative = FALSE;
+    }
+    if (dValue > (double)UINT32_MAX) {
+        if (self.saturateValue) {
+            mode = DATA_FRACTION;
+            value.frac.negative = negative;
+            value.frac.numerator = UINT32_MAX;
+            value.frac.denominator = denominator;
+            LOG_SAT(self);
+            return;
+        }
+        @throw overflowException;
+    }
+    
+    uint32_t numerator = (uint32_t)round(dValue);
+#ifdef DEBUG_CAST
+    NSLog(@"round fraction: %s%llu/%llu -> %s%llu/%llu",
+          value.frac.negative ? "-" : "", value.frac.numerator, value.frac.denominator,
+          negative ? "-" : "", numerator, denominator);
 #endif
+    mode = DATA_FRACTION;
+    value.frac.negative = negative;
     value.frac.numerator = numerator;
     value.frac.denominator = denominator;
+}
+
+- (void)castToReal
+{
+    if (mode == DATA_DOUBLE)
+        return;
+
+    LOG_CAST_F2R(self);
+    double dValue = [self doubleValue];
+    mode = DATA_DOUBLE;
+    value.real = dValue;
 }
 
 //
@@ -635,12 +785,12 @@ retry:
             return [NSString stringWithFormat:@"%f", value.real];
         case DATA_FRACTION:
             if (value.frac.denominator == 1) {
-                return [NSString stringWithFormat:@"%s%llu",
+                return [NSString stringWithFormat:@"%s%u",
                         value.frac.negative ? "-" : "",
                         value.frac.numerator];
             }
             else {
-                return [NSString stringWithFormat:@"%s%llu/%llu",
+                return [NSString stringWithFormat:@"%s%u/%u",
                         value.frac.negative ? "-" : "",
                         value.frac.numerator, value.frac.denominator];
             }
@@ -662,7 +812,7 @@ retry:
                     value.real, self.dataFrom, self.dataTo];
         case DATA_FRACTION:
         {
-            return [NSString stringWithFormat:@"FRACTION: sign:%s, numerator:%llu, denominator:%llu, dataFrom:%@, dataTo:%@",
+            return [NSString stringWithFormat:@"FRACTION: sign:%s, numerator:%u, denominator:%u, dataFrom:%@, dataTo:%@",
                     value.frac.negative ? "-" : "+",
                     value.frac.numerator, value.frac.denominator,
                     self.dataFrom, self.dataTo];
@@ -672,6 +822,68 @@ retry:
     }
     return [NSString stringWithFormat:@"Unknown: mode %d, dataFrom:%@, dataTo:%@",
             mode, self.dataFrom, self.dataTo];
+}
+
+//
+// utilities
+//
+- (uint32_t)uint32add:(NSUInteger)n to:(NSUInteger)q
+{
+    if (n > (UINT32_MAX - q)) {
+        if (self.saturateValue) {
+            LOG_SAT(self);
+            return UINT32_MAX;
+        }
+        else
+            @throw overflowException;
+    }
+    return (uint32_t)(q + n);
+}
+
+- (uint32_t)uint32sub:(NSUInteger)n from:(NSUInteger)q
+{
+    if (q < n) {
+        if (self.saturateValue) {
+            LOG_SAT(self);
+            return 0;
+        }
+        else
+            @throw overflowException;
+    }
+    
+    return (uint32_t)(q - n);
+}
+
+- (uint32_t)uint32mul:(NSUInteger)n with:(NSUInteger)q
+{
+    uint64_t v = (uint64_t)n * (uint64_t)q;
+    
+    if (v > UINT32_MAX) {
+        if (self.saturateValue) {
+            LOG_SAT(self);
+            return UINT32_MAX;
+        }
+        else
+            @throw overflowException;
+    }
+    return (uint32_t)(v & 0xffffffff);
+}
+
+- (uint32_t)uint32div:(NSUInteger)n by:(NSUInteger)q
+{
+    if (n == 0) {
+        @throw invalidValueException;
+    }
+    uint64_t v = (uint64_t)q / (uint64_t)n;
+    if (v > UINT32_MAX) {
+        if (self.saturateValue) {
+            LOG_SAT(self);
+            return UINT32_MAX;
+        }
+        else
+            @throw overflowException;
+    }
+    return (uint32_t)(v & 0xffffffff);
 }
 
 //
