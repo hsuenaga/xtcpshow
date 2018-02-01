@@ -36,6 +36,7 @@ static NSUInteger newID = 0;
 static NSFileHandle *debugHandle = nil;
 static NSException *overflowException = nil;
 static NSException *invalidValueException = nil;
+static BOOL defaultSaturation;
 
 #undef DEBUG_EUCLID
 #undef DEBUG_CAST
@@ -84,6 +85,17 @@ static NSException *invalidValueException = nil;
     invalidValueException = [NSException exceptionWithName:@"invalidValue"
                                                     reason:@"cannot compute the value"
                                                   userInfo:nil];
+    defaultSaturation = TRUE;
+}
+
++ (BOOL)defaultSaturation
+{
+    return defaultSaturation;
+}
+
++ (void)setDefaultSaturation:(BOOL)val
+{
+    defaultSaturation = val;
 }
 
 + (NSUInteger)newID
@@ -220,7 +232,7 @@ static NSException *invalidValueException = nil;
                      dataFrom:nil
                        dataTo:nil
                   fromSamples:0
-             enableSaturation:TRUE];
+             enableSaturation:defaultSaturation];
 }
 
 + (id)dataWithoutValue {
@@ -231,7 +243,7 @@ static NSException *invalidValueException = nil;
                     dataFrom:nil
                       dataTo:nil
                  fromSamples:0
-            enableSaturation:TRUE];
+            enableSaturation:defaultSaturation];
 }
 
 + (id)dataWithDouble:(double)data atDate:(NSDate *)date fromSamples:(NSUInteger)samples
@@ -243,8 +255,7 @@ static NSException *invalidValueException = nil;
                     dataFrom:date
                       dataTo:nil
                  fromSamples:samples
-            enableSaturation:TRUE];
-    
+            enableSaturation:defaultSaturation];
 }
 
 + (id)dataWithDouble:(double)data
@@ -261,7 +272,7 @@ static NSException *invalidValueException = nil;
                     dataFrom:date
                       dataTo:nil
                  fromSamples:samples
-            enableSaturation:TRUE];
+            enableSaturation:defaultSaturation];
 }
 
 + (id)dataWithInteger:(NSInteger)data
@@ -278,7 +289,7 @@ static NSException *invalidValueException = nil;
                     dataFrom:date
                       dataTo:nil
                  fromSamples:samples
-            enableSaturation:TRUE];
+            enableSaturation:defaultSaturation];
 }
 
 + (id)dataWithUInteger:(NSUInteger)data

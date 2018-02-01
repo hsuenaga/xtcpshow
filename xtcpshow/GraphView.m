@@ -116,6 +116,8 @@ double const time_round = 0.05;
     self.pathSolid = [NSBezierPath bezierPath];
     self.pathBold = [NSBezierPath bezierPath];
     [self.pathBold setLineWidth:2.0];
+    [self.pathBold setLineJoinStyle:NSBevelLineJoinStyle];
+    [self.pathBold setLineCapStyle:NSRoundLineCapStyle];
     self.pathDash = [NSBezierPath bezierPath];
     const CGFloat dash[2] = {5.0, 5.0};
     const NSUInteger count = sizeof(dash)/sizeof(dash[0]);

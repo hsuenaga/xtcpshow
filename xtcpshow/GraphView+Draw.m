@@ -101,6 +101,8 @@
     // make path
     double scaler = (double)rect.size.height / (double)self.y_range;
     BOOL __block pathOpen = false;
+    BOOL __block skip = true;
+    NSPoint __block plotPrev;
     [self.viewData enumerateDataUsingBlock:^(id data, NSUInteger idx, BOOL *stop) {
         if (![data isKindOfClass:[GenericData class]])
             return;
@@ -146,7 +148,8 @@
         if (!pathOpen) {
             if (plot.y > 0.0) {
                 // create new shape
-                [self.pathBold lineToPoint:plot];
+                plotPrev = plot;
+                skip = false;
                 pathOpen = true;
                 return;
             }
@@ -156,7 +159,10 @@
         else {
             if (plot.y == 0.0) {
                 // close the shape
-                [self.pathBold lineToPoint:plot];
+                //[self.pathBold lineToPoint:plot];
+                [self.pathBold curveToPoint:plot
+                              controlPoint1:plotPrev
+                              controlPoint2:plotPrev];
                 if (self.fillMode == E_FILL_SIMPLE)
                     [self.gradGraph drawInBezierPath:self.pathBold angle:90.0];
                 if (self.useOutline)
@@ -168,7 +174,15 @@
                 pathOpen = false;
                 return;
             }
-            [self.pathBold lineToPoint:plot];
+            if (skip) {
+                skip = false;
+            }
+            else {
+                [self.pathBold curveToPoint:plot
+                              controlPoint1:plotPrev
+                              controlPoint2:plotPrev];
+            }
+            plotPrev = plot;
             return;
         }
     }];

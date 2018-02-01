@@ -43,6 +43,7 @@ enum enum_data_mode {
 @interface GenericData : NSObject<NSCopying>
 @property (readonly, atomic, class) NSUInteger newID;
 @property (nonatomic, class) NSFileHandle *debugHandle;
+@property (atomic, class) BOOL defaultSaturation;
 
 @property (nonatomic, readonly) NSUInteger objectID;
 @property (nonatomic) NSDate *timestamp;
