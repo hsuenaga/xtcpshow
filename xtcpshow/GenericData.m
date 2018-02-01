@@ -37,6 +37,7 @@ static NSFileHandle *debugHandle = nil;
 static NSException *overflowException = nil;
 static NSException *invalidValueException = nil;
 static BOOL defaultSaturation;
+static BOOL preferReal;
 
 #undef DEBUG_EUCLID
 #undef DEBUG_CAST
@@ -86,6 +87,7 @@ static BOOL defaultSaturation;
                                                     reason:@"cannot compute the value"
                                                   userInfo:nil];
     defaultSaturation = TRUE;
+    preferReal = FALSE;
 }
 
 + (BOOL)defaultSaturation
@@ -96,6 +98,16 @@ static BOOL defaultSaturation;
 + (void)setDefaultSaturation:(BOOL)val
 {
     defaultSaturation = val;
+}
+
++ (BOOL)preferReal
+{
+    return preferReal;
+}
+
++ (void)setPreferReal:(BOOL)val
+{
+    preferReal = val;
 }
 
 + (NSUInteger)newID
@@ -221,6 +233,8 @@ static BOOL defaultSaturation;
     self.dataFrom = from ? from : [NSDate date];
     self.dataTo = to ? to : self.dataFrom;
     self.numberOfSamples = samples;
+    if (preferReal && mode != DATA_NOVALUE)
+        [self castToReal];
     return self;
 }
 
@@ -527,6 +541,8 @@ static BOOL defaultSaturation;
                 default:
                     break;
             }
+            if (preferReal)
+                [self castToReal];
             break;
         case DATA_DOUBLE:
             value.real += ([data doubleValue] * (double)sign);
@@ -669,7 +685,7 @@ static BOOL defaultSaturation;
     uint32_t q0 = *qp;
     uint32_t n = n0;
     uint32_t q = q0;
-retry:
+
     while (q > 1) {
         uint32_t r = n % q;
         if (r == 0) {
@@ -712,9 +728,15 @@ retry:
     
     switch (mode) {
         case DATA_DOUBLE:
+            if (preferReal)
+                return;
             dValue = value.real * (double)denominator;
             break;
         case DATA_FRACTION:
+            if (preferReal) {
+                [self castToReal];
+                return;
+            }
             if (value.frac.numerator == 0) {
                 value.frac.denominator = denominator;
                 return;
