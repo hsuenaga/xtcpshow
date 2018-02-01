@@ -53,6 +53,8 @@
 @property (weak) IBOutlet NSPopUpButton *kzDepth;
 @property (weak) IBOutlet NSButton *bpsOutlineEnable;
 @property (weak) IBOutlet NSPopUpButton *bpsFillMode;
+@property (weak) IBOutlet NSPopUpButton *fpsRate;
+
 
 /* Status TAB */
 @property (weak) IBOutlet NSTextField *snapshotField;

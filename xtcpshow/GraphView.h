@@ -142,11 +142,13 @@ enum e_fill_mode {
 - (int)stepValueFromRange:(float)range;
 - (void)setFIRMode:(NSString *)mode;
 - (void)setBPSFillMode:(NSString *)mode;
+- (void)setFPSRate:(NSString *)rate;
 
 // UI helper
 - (void)createFIRButton:(NSPopUpButton *)btn;
 - (void)createRangeButton:(NSPopUpButton *)btn;
 - (void)createFillButton:(NSPopUpButton *)btn;
+- (void)createFPSButton:(NSPopUpButton *)btn;
 
 // Action from window server
 - (void)magnifyWithEvent:(NSEvent *)event;

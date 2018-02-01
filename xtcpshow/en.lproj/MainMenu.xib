@@ -988,20 +988,50 @@
                                                 <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="e8o-hJ-FuT">
+                                            <rect key="frame" x="191" y="53" width="28" height="17"/>
+                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="FPS" id="6W9-b6-lbu">
+                                                <font key="font" metaFont="system"/>
+                                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                        <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="rVE-1i-HJ7">
+                                            <rect key="frame" x="223" y="48" width="53" height="26"/>
+                                            <popUpButtonCell key="cell" type="push" title="20" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="xMb-cC-NfB" id="9j8-b7-4YT">
+                                                <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                                <font key="font" metaFont="menu"/>
+                                                <menu key="menu" id="PBQ-bU-6NB">
+                                                    <items>
+                                                        <menuItem title="5" id="aZI-6K-f6m"/>
+                                                        <menuItem title="10" id="uz6-Bk-hcK"/>
+                                                        <menuItem title="20" state="on" id="xMb-cC-NfB"/>
+                                                    </items>
+                                                </menu>
+                                            </popUpButtonCell>
+                                            <connections>
+                                                <action selector="changeFPS:" target="494" id="tGb-ux-wZZ"/>
+                                            </connections>
+                                        </popUpButton>
                                     </subviews>
                                     <constraints>
                                         <constraint firstItem="Fhx-ST-ejE" firstAttribute="leading" secondItem="p6Z-mr-OaP" secondAttribute="leading" id="1iq-7v-u8y"/>
+                                        <constraint firstItem="rVE-1i-HJ7" firstAttribute="centerY" secondItem="e8o-hJ-FuT" secondAttribute="centerY" id="6s1-DD-Mqs"/>
                                         <constraint firstItem="s8D-Rh-tGR" firstAttribute="centerY" secondItem="ebP-HP-3Nm" secondAttribute="centerY" id="7Kv-ZF-d5s"/>
                                         <constraint firstItem="ebP-HP-3Nm" firstAttribute="leading" secondItem="Fhx-ST-ejE" secondAttribute="leading" id="7NQ-UH-Yjm"/>
                                         <constraint firstItem="Fhx-ST-ejE" firstAttribute="trailing" secondItem="s8D-Rh-tGR" secondAttribute="trailing" id="Bh2-8W-FjL"/>
+                                        <constraint firstItem="e8o-hJ-FuT" firstAttribute="leading" secondItem="PGV-3y-ubd" secondAttribute="trailing" constant="8" symbolic="YES" id="FaP-Rg-u40"/>
                                         <constraint firstItem="s8D-Rh-tGR" firstAttribute="leading" secondItem="ebP-HP-3Nm" secondAttribute="trailing" constant="8" symbolic="YES" id="IKp-7A-xwQ"/>
+                                        <constraint firstItem="rVE-1i-HJ7" firstAttribute="leading" secondItem="e8o-hJ-FuT" secondAttribute="trailing" constant="8" symbolic="YES" id="LEg-5w-iPx"/>
                                         <constraint firstItem="p6Z-mr-OaP" firstAttribute="leading" secondItem="EpS-Zl-4Rl" secondAttribute="leading" constant="20" symbolic="YES" id="TsD-LP-Xwh"/>
+                                        <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="rVE-1i-HJ7" secondAttribute="trailing" constant="20" symbolic="YES" id="YUi-0d-PUh"/>
                                         <constraint firstItem="PGV-3y-ubd" firstAttribute="leading" secondItem="p6Z-mr-OaP" secondAttribute="trailing" constant="8" symbolic="YES" id="dAL-ux-jYa"/>
                                         <constraint firstItem="Fhx-ST-ejE" firstAttribute="top" secondItem="p6Z-mr-OaP" secondAttribute="bottom" constant="8" symbolic="YES" id="gSz-Ls-lFb"/>
                                         <constraint firstItem="PGV-3y-ubd" firstAttribute="trailing" secondItem="Fhx-ST-ejE" secondAttribute="trailing" id="iHv-Cf-nmR"/>
                                         <constraint firstItem="p6Z-mr-OaP" firstAttribute="top" secondItem="EpS-Zl-4Rl" secondAttribute="top" constant="20" symbolic="YES" id="o9i-PZ-10e"/>
                                         <constraint firstItem="PGV-3y-ubd" firstAttribute="centerY" secondItem="p6Z-mr-OaP" secondAttribute="centerY" id="ox6-8a-MDH"/>
                                         <constraint firstItem="ebP-HP-3Nm" firstAttribute="top" secondItem="Fhx-ST-ejE" secondAttribute="bottom" constant="8" symbolic="YES" id="pwM-dE-mEO"/>
+                                        <constraint firstItem="e8o-hJ-FuT" firstAttribute="centerY" secondItem="PGV-3y-ubd" secondAttribute="centerY" id="uds-Ep-3yY"/>
                                     </constraints>
                                 </view>
                             </tabViewItem>
@@ -1240,6 +1270,7 @@
                 <outlet property="bpsOutlineEnable" destination="Fhx-ST-ejE" id="Of3-VX-Gov"/>
                 <outlet property="deviceSelector" destination="1204" id="1447"/>
                 <outlet property="filterField" destination="863" id="971"/>
+                <outlet property="fpsRate" destination="rVE-1i-HJ7" id="O1m-UM-l00"/>
                 <outlet property="graphView" destination="658" id="1036"/>
                 <outlet property="kzDepth" destination="PGV-3y-ubd" id="rVH-xg-WSF"/>
                 <outlet property="maxField" destination="1396" id="1449"/>

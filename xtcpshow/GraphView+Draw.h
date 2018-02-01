@@ -26,5 +26,6 @@
 - (void)drawLayerToGC;
 
 - (void)startPlot:(BOOL)repeat;
+- (void)restartPlot;
 - (void)stopPlot;
 @end

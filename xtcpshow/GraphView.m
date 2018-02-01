@@ -55,6 +55,10 @@ NSString *const FILL_NONE = @"None";
 NSString *const FILL_SIMPLE = @"Simple";
 NSString *const FILL_RICH = @"Rich";
 
+NSString *const FPS_LOW = @"Low(5 [fps])";
+NSString *const FPS_MID = @"Mid(10 [fps])";
+NSString *const FPS_HIGH = @"High(20 [fps])";
+
 NSString *const CAP_MAX_SMPL = @" Max %lu [packets/sample]";
 NSString *const CAP_MAX_MBPS = @" Max %6.3f [Mbps]";
 NSString *const CAP_AVG_MBPS = @" Avg %6.3f [Mbps], StdDev %6.3f [Mbps]";
@@ -271,6 +275,20 @@ double const time_round = 0.05;
     [self purgeData];
 }
 
+- (void)setFPSRate:(NSString *)rate
+{
+    if (rate == FPS_LOW) {
+        self.animationFPS = 5.0;
+    }
+    else if (rate == FPS_MID) {
+        self.animationFPS = 10.0;
+    }
+    else if (rate == FPS_HIGH) {
+        self.animationFPS = 20.0;
+    }
+    [self restartPlot];
+}
+
 - (void)createRangeButton:(NSPopUpButton *)btn
 {
     [btn removeAllItems];
@@ -298,6 +316,15 @@ double const time_round = 0.05;
     [btn addItemWithTitle:FILL_SIMPLE];
     [btn addItemWithTitle:FILL_RICH];
     [btn selectItemWithTitle:FILL_RICH];
+}
+
+- (void)createFPSButton:(NSPopUpButton *)btn
+{
+    [btn removeAllItems];
+    [btn addItemWithTitle:FPS_LOW];
+    [btn addItemWithTitle:FPS_MID];
+    [btn addItemWithTitle:FPS_HIGH];
+    [btn selectItemWithTitle:FPS_HIGH];
 }
 
 - (NSTimeInterval)viewTimeLength

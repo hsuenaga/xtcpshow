@@ -67,6 +67,7 @@ static NSString *const LBL_CAP_ERROR=@"CAPTURE ERROR";
     [self.graphView createRangeButton:self.rangeSelector];
     [self.graphView createFillButton:self.bpsFillMode];
     [self.graphView createFIRButton:self.kzDepth];
+    [self.graphView createFPSButton:self.fpsRate];
     [self.graphView setNeedsDisplay:YES];
 
     // setup intrface labels
@@ -143,6 +144,11 @@ static NSString *const LBL_CAP_ERROR=@"CAPTURE ERROR";
 
 - (IBAction)changeBPSFillMode:(id)sender {
     [self.graphView setBPSFillMode:[self.bpsFillMode titleOfSelectedItem]];
+    [self.graphView setNeedsDisplay:YES];
+}
+
+- (IBAction)changeFPS:(id)sender {
+    [self.graphView setFPSRate:[self.fpsRate titleOfSelectedItem]];
     [self.graphView setNeedsDisplay:YES];
 }
 

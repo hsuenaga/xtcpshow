@@ -30,8 +30,8 @@
         [self drawInBackground];
         return;
     }
-    NSLog(@"Start animiation...");
     double interval = 1.0 / self.animationFPS;
+    NSLog(@"Start animiation. interval = %f [sec]", interval);
     self.timerAnimation = [NSTimer timerWithTimeInterval:interval
                                                   target:self selector:@selector(drawInBackground)
                                                 userInfo:nil
@@ -39,6 +39,14 @@
     [[NSRunLoop currentRunLoop] addTimer:self.timerAnimation
                                  forMode:NSRunLoopCommonModes];
     self.cueActive = TRUE;
+}
+
+- (void)restartPlot
+{
+    if (!self.cueActive)
+        return;
+    [self stopPlot];
+    [self startPlot:TRUE];
 }
 
 - (void)stopPlot
