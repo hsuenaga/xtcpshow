@@ -41,7 +41,7 @@
 /* Main window */
 @property (assign) IBOutlet NSWindow *window;
 
-/* Configuration TAB */
+/* Configuration TAB(CH1) */
 @property (weak) IBOutlet NSPopUpButton *deviceSelector;
 @property (weak) IBOutlet NSTextField *filterField;
 @property (weak) IBOutlet NSTextField *rangeField;
@@ -49,12 +49,19 @@
 @property (weak) IBOutlet NSPopUpButton *rangeSelector;
 @property (weak) IBOutlet NSButton *promiscCheck;
 
+/* Configuration TAB(CH2) */
+@property (weak) IBOutlet NSPopUpButton *deviceSelectorCH2;
+@property (weak) IBOutlet NSTextField *filterFieldCH2;
+@property (weak) IBOutlet NSTextField *rangeFieldCH2;
+@property (weak) IBOutlet NSStepper *rangeStepperCH2;
+@property (weak) IBOutlet NSPopUpButton *rangeSelectorCH2;
+@property (weak) IBOutlet NSButton *promiscCheckCH2;
+
 /* Graphics TAB */
 @property (weak) IBOutlet NSPopUpButton *kzDepth;
 @property (weak) IBOutlet NSButton *bpsOutlineEnable;
 @property (weak) IBOutlet NSPopUpButton *bpsFillMode;
 @property (weak) IBOutlet NSPopUpButton *fpsRate;
-
 
 /* Status TAB */
 @property (weak) IBOutlet NSTextField *snapshotField;
@@ -68,6 +75,7 @@
 @property (weak) IBOutlet NSButton *startButton;
 @property (weak) IBOutlet NSSlider *zoomBar;
 @property (weak) IBOutlet NSSlider *smoothBar;
+
 // Graph Tab
 @property (weak) IBOutlet NSTabView *GraphTab;
 @property (weak) IBOutlet NSView *GraphTabSingleView;

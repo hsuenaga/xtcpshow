@@ -65,6 +65,7 @@ static NSString *const LBL_CAP_ERROR=@"CAPTURE ERROR";
 	[self.graphView setMinFIRTimeLength:[self.smoothBar minValue]];
 	[self.graphView setFIRTimeLength:[self.smoothBar floatValue]];
     [self.graphView createRangeButton:self.rangeSelector];
+    [self.graphView createRangeButton:self.rangeSelectorCH2];
     [self.graphView createFillButton:self.bpsFillMode];
     [self.graphView createFIRButton:self.kzDepth];
     [self.graphView createFPSButton:self.fpsRate];
@@ -80,6 +81,7 @@ static NSString *const LBL_CAP_ERROR=@"CAPTURE ERROR";
 
     // setup intrface labels
     [self.model createInterfaceButton:self.deviceSelector];
+    [self.model createInterfaceButton:self.deviceSelectorCH2];
     
 	// notification center
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(closeNotify:) name:NSWindowWillCloseNotification object:self.window];

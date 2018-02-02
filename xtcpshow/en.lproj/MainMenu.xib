@@ -672,11 +672,19 @@
                         </constraints>
                         <font key="font" metaFont="system"/>
                         <tabViewItems>
-                            <tabViewItem label="Config" identifier="1" id="1237">
+                            <tabViewItem label="CH1" identifier="1" id="1237">
                                 <view key="view" id="1240">
                                     <rect key="frame" x="10" y="33" width="754" height="90"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
+                                        <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="890">
+                                            <rect key="frame" x="18" y="53" width="59" height="17"/>
+                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Interface" usesSingleLineMode="YES" id="891">
+                                                <font key="font" metaFont="system"/>
+                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
                                         <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="1204">
                                             <rect key="frame" x="81" y="48" width="76" height="26"/>
                                             <popUpButtonCell key="cell" type="push" title="en0" bezelStyle="rounded" alignment="right" scrollable="YES" lineBreakMode="clipping" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" selectedItem="1207" id="1205">
@@ -691,6 +699,41 @@
                                                 </menu>
                                             </popUpButtonCell>
                                         </popUpButton>
+                                        <button translatesAutoresizingMaskIntoConstraints="NO" id="1627">
+                                            <rect key="frame" x="160" y="53" width="101" height="18"/>
+                                            <buttonCell key="cell" type="check" title="Promiscuous" bezelStyle="regularSquare" imagePosition="left" inset="2" id="1628">
+                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                <font key="font" metaFont="system"/>
+                                            </buttonCell>
+                                        </button>
+                                        <button translatesAutoresizingMaskIntoConstraints="NO" id="1619">
+                                            <rect key="frame" x="265" y="53" width="119" height="18"/>
+                                            <buttonCell key="cell" type="check" title="Packets/Sample" bezelStyle="regularSquare" imagePosition="left" inset="2" id="1620">
+                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                <font key="font" metaFont="system"/>
+                                            </buttonCell>
+                                            <connections>
+                                                <action selector="togglePacketMarker:" target="494" id="1623"/>
+                                            </connections>
+                                        </button>
+                                        <button translatesAutoresizingMaskIntoConstraints="NO" id="1662">
+                                            <rect key="frame" x="388" y="53" width="79" height="18"/>
+                                            <buttonCell key="cell" type="check" title="Deviation" bezelStyle="regularSquare" imagePosition="left" inset="2" id="1663">
+                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                <font key="font" metaFont="system"/>
+                                            </buttonCell>
+                                            <connections>
+                                                <action selector="toggleDeviation:" target="494" id="1667"/>
+                                            </connections>
+                                        </button>
+                                        <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="895">
+                                            <rect key="frame" x="18" y="28" width="40" height="17"/>
+                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Filter:" id="896">
+                                                <font key="font" size="13" name="AquaKana"/>
+                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
                                         <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="863">
                                             <rect key="frame" x="64" y="27" width="670" height="20"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="border" alignment="right" title="tcp" drawsBackground="YES" usesSingleLineMode="YES" id="864">
@@ -699,18 +742,10 @@
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="890">
-                                            <rect key="frame" x="18" y="53" width="59" height="17"/>
-                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Interface" usesSingleLineMode="YES" id="891">
+                                        <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="1541">
+                                            <rect key="frame" x="18" y="3" width="84" height="17"/>
+                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Range Select" id="1542">
                                                 <font key="font" metaFont="system"/>
-                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                            </textFieldCell>
-                                        </textField>
-                                        <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="895">
-                                            <rect key="frame" x="18" y="28" width="40" height="17"/>
-                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Filter:" id="896">
-                                                <font key="font" size="13" name="AquaKana"/>
                                                 <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
@@ -744,14 +779,13 @@
                                                 <action selector="enterRange:" target="494" id="1599"/>
                                             </connections>
                                         </textField>
-                                        <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="1541">
-                                            <rect key="frame" x="18" y="3" width="84" height="17"/>
-                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Range Select" id="1542">
-                                                <font key="font" metaFont="system"/>
-                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                            </textFieldCell>
-                                        </textField>
+                                        <stepper horizontalHuggingPriority="750" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="1536">
+                                            <rect key="frame" x="676" y="-2" width="19" height="27"/>
+                                            <stepperCell key="cell" continuous="YES" enabled="NO" alignment="left" maxValue="100" id="1537"/>
+                                            <connections>
+                                                <action selector="changeRange:" target="494" id="1598"/>
+                                            </connections>
+                                        </stepper>
                                         <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="1558">
                                             <rect key="frame" x="698" y="3" width="38" height="17"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Mbps" id="1559">
@@ -760,40 +794,6 @@
                                                 <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <button translatesAutoresizingMaskIntoConstraints="NO" id="1619">
-                                            <rect key="frame" x="265" y="53" width="119" height="18"/>
-                                            <buttonCell key="cell" type="check" title="Packets/Sample" bezelStyle="regularSquare" imagePosition="left" inset="2" id="1620">
-                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                <font key="font" metaFont="system"/>
-                                            </buttonCell>
-                                            <connections>
-                                                <action selector="togglePacketMarker:" target="494" id="1623"/>
-                                            </connections>
-                                        </button>
-                                        <button translatesAutoresizingMaskIntoConstraints="NO" id="1627">
-                                            <rect key="frame" x="160" y="53" width="101" height="18"/>
-                                            <buttonCell key="cell" type="check" title="Promiscuous" bezelStyle="regularSquare" imagePosition="left" inset="2" id="1628">
-                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                <font key="font" metaFont="system"/>
-                                            </buttonCell>
-                                        </button>
-                                        <stepper horizontalHuggingPriority="750" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="1536">
-                                            <rect key="frame" x="676" y="-2" width="19" height="27"/>
-                                            <stepperCell key="cell" continuous="YES" enabled="NO" alignment="left" maxValue="100" id="1537"/>
-                                            <connections>
-                                                <action selector="changeRange:" target="494" id="1598"/>
-                                            </connections>
-                                        </stepper>
-                                        <button translatesAutoresizingMaskIntoConstraints="NO" id="1662">
-                                            <rect key="frame" x="388" y="53" width="79" height="18"/>
-                                            <buttonCell key="cell" type="check" title="Deviation" bezelStyle="regularSquare" imagePosition="left" inset="2" id="1663">
-                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                <font key="font" metaFont="system"/>
-                                            </buttonCell>
-                                            <connections>
-                                                <action selector="toggleDeviation:" target="494" id="1667"/>
-                                            </connections>
-                                        </button>
                                     </subviews>
                                     <constraints>
                                         <constraint firstItem="863" firstAttribute="leading" secondItem="895" secondAttribute="trailing" constant="8" symbolic="YES" id="1294"/>
@@ -824,6 +824,161 @@
                                         <constraint firstItem="1522" firstAttribute="centerY" secondItem="1541" secondAttribute="centerY" id="umg-HE-Z9Q"/>
                                         <constraint firstItem="895" firstAttribute="top" secondItem="890" secondAttribute="bottom" constant="8" symbolic="YES" id="yiD-Qg-imn"/>
                                         <constraint firstItem="1531" firstAttribute="leading" secondItem="1522" secondAttribute="trailing" constant="8" symbolic="YES" id="ytt-K9-nq7"/>
+                                    </constraints>
+                                </view>
+                            </tabViewItem>
+                            <tabViewItem label="CH2" identifier="" id="ef9-mu-pTt">
+                                <view key="view" id="zOR-bE-uyL">
+                                    <rect key="frame" x="10" y="33" width="754" height="90"/>
+                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                    <subviews>
+                                        <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="RRK-ET-bkI">
+                                            <rect key="frame" x="18" y="53" width="59" height="17"/>
+                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Interface" usesSingleLineMode="YES" id="Mic-w7-XRk">
+                                                <font key="font" metaFont="system"/>
+                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                        <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="57B-3g-gRI">
+                                            <rect key="frame" x="81" y="48" width="76" height="26"/>
+                                            <popUpButtonCell key="cell" type="push" title="en0" bezelStyle="rounded" alignment="right" scrollable="YES" lineBreakMode="clipping" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" selectedItem="9iB-8w-9NP" id="S5Q-8K-xBs">
+                                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                <font key="font" metaFont="menu"/>
+                                                <menu key="menu" title="OtherViews" id="FzA-bO-lOs">
+                                                    <items>
+                                                        <menuItem title="en0" state="on" id="9iB-8w-9NP"/>
+                                                        <menuItem title="Item 2" id="bnC-xX-YYU"/>
+                                                        <menuItem title="Item 3" id="cl4-5O-rxa"/>
+                                                    </items>
+                                                </menu>
+                                            </popUpButtonCell>
+                                        </popUpButton>
+                                        <button translatesAutoresizingMaskIntoConstraints="NO" id="hit-Fi-fSf">
+                                            <rect key="frame" x="160" y="53" width="101" height="18"/>
+                                            <buttonCell key="cell" type="check" title="Promiscuous" bezelStyle="regularSquare" imagePosition="left" inset="2" id="lzv-QN-RMk">
+                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                <font key="font" metaFont="system"/>
+                                            </buttonCell>
+                                        </button>
+                                        <button translatesAutoresizingMaskIntoConstraints="NO" id="XnE-TO-0bY">
+                                            <rect key="frame" x="265" y="53" width="119" height="18"/>
+                                            <buttonCell key="cell" type="check" title="Packets/Sample" bezelStyle="regularSquare" imagePosition="left" inset="2" id="VYi-7h-hlp">
+                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                <font key="font" metaFont="system"/>
+                                            </buttonCell>
+                                            <connections>
+                                                <action selector="togglePacketMarker:" target="494" id="ubi-0U-tv5"/>
+                                            </connections>
+                                        </button>
+                                        <button translatesAutoresizingMaskIntoConstraints="NO" id="vpq-hW-9Wy">
+                                            <rect key="frame" x="388" y="53" width="79" height="18"/>
+                                            <buttonCell key="cell" type="check" title="Deviation" bezelStyle="regularSquare" imagePosition="left" inset="2" id="M0U-9z-ztE">
+                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                <font key="font" metaFont="system"/>
+                                            </buttonCell>
+                                            <connections>
+                                                <action selector="toggleDeviation:" target="494" id="OoC-1h-meP"/>
+                                            </connections>
+                                        </button>
+                                        <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="xvD-Jh-Ukc">
+                                            <rect key="frame" x="18" y="28" width="40" height="17"/>
+                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Filter:" id="Wz1-uy-WF5">
+                                                <font key="font" size="13" name="AquaKana"/>
+                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                        <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="s0B-N4-8qb">
+                                            <rect key="frame" x="64" y="27" width="670" height="20"/>
+                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="border" alignment="right" title="tcp" drawsBackground="YES" usesSingleLineMode="YES" id="hVz-Xu-jhn">
+                                                <font key="font" metaFont="cellTitle"/>
+                                                <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                        <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="jKC-Yk-jep">
+                                            <rect key="frame" x="18" y="3" width="84" height="17"/>
+                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Range Select" id="thb-WG-WIe">
+                                                <font key="font" metaFont="system"/>
+                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                        <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="kSe-Bo-tjN">
+                                            <rect key="frame" x="106" y="-2" width="76" height="26"/>
+                                            <popUpButtonCell key="cell" type="push" title="Auto" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="0aX-IM-MPL" id="KOf-XH-LGT">
+                                                <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                                <font key="font" metaFont="menu"/>
+                                                <menu key="menu" title="OtherViews" id="vaH-Ha-kCK">
+                                                    <items>
+                                                        <menuItem title="Auto" state="on" id="0aX-IM-MPL"/>
+                                                        <menuItem title="Item 2" id="XT8-MT-s7D"/>
+                                                        <menuItem title="Item 3" id="YZo-86-qWn"/>
+                                                    </items>
+                                                </menu>
+                                                <connections>
+                                                    <action selector="setRangeType:" target="494" id="H2x-SP-xgC"/>
+                                                </connections>
+                                            </popUpButtonCell>
+                                        </popUpButton>
+                                        <textField verticalHuggingPriority="750" mirrorLayoutDirectionWhenInternationalizing="never" translatesAutoresizingMaskIntoConstraints="NO" id="rbf-we-o2n">
+                                            <rect key="frame" x="187" y="0.0" width="484" height="22"/>
+                                            <textFieldCell key="cell" lineBreakMode="truncatingTail" selectable="YES" editable="YES" enabled="NO" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" baseWritingDirection="leftToRight" alignment="right" title="0.0" placeholderString="10000" drawsBackground="YES" usesSingleLineMode="YES" id="mi4-X5-H1d">
+                                                <numberFormatter key="formatter" formatterBehavior="custom10_4" usesGroupingSeparator="NO" groupingSize="0" minimumIntegerDigits="1" maximumIntegerDigits="42" minimumFractionDigits="1" maximumFractionDigits="1" id="wOu-Xh-jGT"/>
+                                                <font key="font" metaFont="system"/>
+                                                <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                <connections>
+                                                    <action selector="enterRange:" target="494" id="so8-bu-uOS"/>
+                                                </connections>
+                                            </textFieldCell>
+                                        </textField>
+                                        <stepper horizontalHuggingPriority="750" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="J6p-OQ-vNf">
+                                            <rect key="frame" x="676" y="-3" width="19" height="27"/>
+                                            <stepperCell key="cell" continuous="YES" enabled="NO" alignment="left" maxValue="100" id="sM0-ay-4bg">
+                                                <connections>
+                                                    <action selector="changeRange:" target="494" id="DR8-6F-nQ8"/>
+                                                </connections>
+                                            </stepperCell>
+                                        </stepper>
+                                        <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="1Wf-z9-NX5">
+                                            <rect key="frame" x="698" y="2" width="38" height="17"/>
+                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Mbps" id="3ox-0M-1WH">
+                                                <font key="font" metaFont="system"/>
+                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                    </subviews>
+                                    <constraints>
+                                        <constraint firstItem="57B-3g-gRI" firstAttribute="leading" secondItem="RRK-ET-bkI" secondAttribute="trailing" constant="8" symbolic="YES" id="3aR-Jv-SXk"/>
+                                        <constraint firstItem="rbf-we-o2n" firstAttribute="centerY" secondItem="kSe-Bo-tjN" secondAttribute="centerY" id="625-cf-B4H"/>
+                                        <constraint firstItem="1Wf-z9-NX5" firstAttribute="leading" secondItem="J6p-OQ-vNf" secondAttribute="trailing" constant="8" id="7Lv-w2-qCJ"/>
+                                        <constraint firstItem="hit-Fi-fSf" firstAttribute="leading" secondItem="57B-3g-gRI" secondAttribute="trailing" constant="8" symbolic="YES" id="83i-o2-rsK"/>
+                                        <constraint firstAttribute="trailing" secondItem="s0B-N4-8qb" secondAttribute="trailing" constant="20" symbolic="YES" id="JRx-rX-PH7"/>
+                                        <constraint firstItem="vpq-hW-9Wy" firstAttribute="centerY" secondItem="XnE-TO-0bY" secondAttribute="centerY" id="JeY-wH-hQR"/>
+                                        <constraint firstItem="hit-Fi-fSf" firstAttribute="centerY" secondItem="57B-3g-gRI" secondAttribute="centerY" id="Km1-a2-zv4"/>
+                                        <constraint firstItem="J6p-OQ-vNf" firstAttribute="leading" secondItem="rbf-we-o2n" secondAttribute="trailing" constant="8" symbolic="YES" id="N0v-T7-pX8"/>
+                                        <constraint firstItem="rbf-we-o2n" firstAttribute="leading" secondItem="kSe-Bo-tjN" secondAttribute="trailing" constant="8" symbolic="YES" id="Odp-KX-C7u"/>
+                                        <constraint firstItem="XnE-TO-0bY" firstAttribute="leading" secondItem="hit-Fi-fSf" secondAttribute="trailing" constant="8" symbolic="YES" id="QLX-ms-sw3"/>
+                                        <constraint firstItem="RRK-ET-bkI" firstAttribute="top" secondItem="zOR-bE-uyL" secondAttribute="top" constant="20" symbolic="YES" id="T3x-LS-DDf"/>
+                                        <constraint firstItem="57B-3g-gRI" firstAttribute="centerY" secondItem="RRK-ET-bkI" secondAttribute="centerY" id="TiR-Kk-5n7"/>
+                                        <constraint firstItem="RRK-ET-bkI" firstAttribute="leading" secondItem="zOR-bE-uyL" secondAttribute="leading" constant="20" symbolic="YES" id="WUm-HH-0Hm"/>
+                                        <constraint firstItem="kSe-Bo-tjN" firstAttribute="leading" secondItem="jKC-Yk-jep" secondAttribute="trailing" constant="8" symbolic="YES" id="YfS-hX-MlC"/>
+                                        <constraint firstItem="jKC-Yk-jep" firstAttribute="top" secondItem="xvD-Jh-Ukc" secondAttribute="bottom" constant="8" symbolic="YES" id="Yfn-DS-oZh"/>
+                                        <constraint firstItem="J6p-OQ-vNf" firstAttribute="centerY" secondItem="rbf-we-o2n" secondAttribute="centerY" id="bZc-EZ-sde"/>
+                                        <constraint firstItem="1Wf-z9-NX5" firstAttribute="trailing" secondItem="s0B-N4-8qb" secondAttribute="trailing" id="cBT-jw-Ykd"/>
+                                        <constraint firstItem="xvD-Jh-Ukc" firstAttribute="leading" secondItem="RRK-ET-bkI" secondAttribute="leading" id="gXd-7g-15L"/>
+                                        <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="vpq-hW-9Wy" secondAttribute="trailing" constant="20" symbolic="YES" id="oCq-ih-xfS"/>
+                                        <constraint firstItem="vpq-hW-9Wy" firstAttribute="leading" secondItem="XnE-TO-0bY" secondAttribute="trailing" constant="8" symbolic="YES" id="okJ-ia-vK1"/>
+                                        <constraint firstItem="xvD-Jh-Ukc" firstAttribute="top" secondItem="RRK-ET-bkI" secondAttribute="bottom" constant="8" symbolic="YES" id="qqK-gc-p4E"/>
+                                        <constraint firstItem="kSe-Bo-tjN" firstAttribute="centerY" secondItem="jKC-Yk-jep" secondAttribute="centerY" id="rLo-f6-m67"/>
+                                        <constraint firstItem="s0B-N4-8qb" firstAttribute="leading" secondItem="xvD-Jh-Ukc" secondAttribute="trailing" constant="8" symbolic="YES" id="rXN-fA-IU4"/>
+                                        <constraint firstItem="XnE-TO-0bY" firstAttribute="centerY" secondItem="hit-Fi-fSf" secondAttribute="centerY" id="uWb-pJ-ctg"/>
+                                        <constraint firstItem="s0B-N4-8qb" firstAttribute="centerY" secondItem="xvD-Jh-Ukc" secondAttribute="centerY" id="ufB-qL-xw6"/>
+                                        <constraint firstItem="1Wf-z9-NX5" firstAttribute="centerY" secondItem="J6p-OQ-vNf" secondAttribute="centerY" id="vPu-5b-E0J"/>
+                                        <constraint firstItem="jKC-Yk-jep" firstAttribute="leading" secondItem="xvD-Jh-Ukc" secondAttribute="leading" id="xD3-Zr-Hbc"/>
                                     </constraints>
                                 </view>
                             </tabViewItem>
@@ -1302,7 +1457,9 @@
                 <outlet property="bpsFillMode" destination="s8D-Rh-tGR" id="l4b-QG-Og4"/>
                 <outlet property="bpsOutlineEnable" destination="Fhx-ST-ejE" id="Of3-VX-Gov"/>
                 <outlet property="deviceSelector" destination="1204" id="1447"/>
+                <outlet property="deviceSelectorCH2" destination="57B-3g-gRI" id="i4N-1C-P6g"/>
                 <outlet property="filterField" destination="863" id="971"/>
+                <outlet property="filterFieldCH2" destination="s0B-N4-8qb" id="zmP-Ch-nFF"/>
                 <outlet property="fpsRate" destination="rVE-1i-HJ7" id="O1m-UM-l00"/>
                 <outlet property="graphView" destination="658" id="1036"/>
                 <outlet property="graphViewSplit1" destination="dSQ-sx-g9L" id="9JK-Fu-E53"/>
@@ -1310,9 +1467,13 @@
                 <outlet property="kzDepth" destination="PGV-3y-ubd" id="rVH-xg-WSF"/>
                 <outlet property="maxField" destination="1396" id="1449"/>
                 <outlet property="promiscCheck" destination="1627" id="1633"/>
+                <outlet property="promiscCheckCH2" destination="hit-Fi-fSf" id="9rt-Ue-KSo"/>
                 <outlet property="rangeField" destination="1531" id="1601"/>
+                <outlet property="rangeFieldCH2" destination="rbf-we-o2n" id="euh-8O-6U7"/>
                 <outlet property="rangeSelector" destination="1522" id="1603"/>
+                <outlet property="rangeSelectorCH2" destination="kSe-Bo-tjN" id="1Dz-Nf-QyB"/>
                 <outlet property="rangeStepper" destination="1536" id="1602"/>
+                <outlet property="rangeStepperCH2" destination="J6p-OQ-vNf" id="ZE8-cM-Ole"/>
                 <outlet property="samplingField" destination="1465" id="1515"/>
                 <outlet property="samplingTargetField" destination="1497" id="1516"/>
                 <outlet property="smoothBar" destination="1039" id="1062"/>
