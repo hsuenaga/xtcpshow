@@ -660,7 +660,7 @@
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES"/>
             <rect key="contentRect" x="58" y="211" width="800" height="600"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1680" height="1050"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1280" height="800"/>
             <value key="minSize" type="size" width="640" height="480"/>
             <view key="contentView" id="372">
                 <rect key="frame" x="0.0" y="0.0" width="800" height="600"/>
@@ -672,11 +672,8 @@
                             <rect key="frame" x="1" y="1" width="764" height="428"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
-                                <customView translatesAutoresizingMaskIntoConstraints="NO" id="658" customClass="GraphView">
-                                    <rect key="frame" x="20" y="49" width="694" height="359"/>
-                                </customView>
                                 <slider horizontalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="1039">
-                                    <rect key="frame" x="720" y="46" width="24" height="340"/>
+                                    <rect key="frame" x="720" y="64" width="24" height="330"/>
                                     <sliderCell key="cell" continuous="YES" alignment="left" minValue="0.10000000000000001" maxValue="10" doubleValue="0.5" tickMarkPosition="right" numberOfTickMarks="5" sliderType="linear" id="1040"/>
                                     <connections>
                                         <action selector="changeSmooth:" target="494" id="1063"/>
@@ -700,7 +697,7 @@
                                     </connections>
                                 </button>
                                 <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="1160">
-                                    <rect key="frame" x="720" y="392" width="26" height="16"/>
+                                    <rect key="frame" x="720" y="400" width="26" height="16"/>
                                     <constraints>
                                         <constraint firstAttribute="height" constant="16" id="e3G-t8-r7l"/>
                                     </constraints>
@@ -731,34 +728,87 @@
                                         <action selector="copyGraphView:" target="494" id="1661"/>
                                     </connections>
                                 </button>
+                                <tabView translatesAutoresizingMaskIntoConstraints="NO" id="qQL-2s-b61">
+                                    <rect key="frame" x="13" y="57" width="708" height="365"/>
+                                    <font key="font" metaFont="system"/>
+                                    <tabViewItems>
+                                        <tabViewItem label="Single" identifier="" id="hWd-up-nF5">
+                                            <view key="view" id="GxE-jb-Wkw">
+                                                <rect key="frame" x="10" y="33" width="688" height="319"/>
+                                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                                <subviews>
+                                                    <customView translatesAutoresizingMaskIntoConstraints="NO" id="658" customClass="GraphView">
+                                                        <rect key="frame" x="20" y="20" width="648" height="279"/>
+                                                    </customView>
+                                                </subviews>
+                                                <constraints>
+                                                    <constraint firstAttribute="trailing" secondItem="658" secondAttribute="trailing" constant="20" symbolic="YES" id="84S-fI-1QT"/>
+                                                    <constraint firstAttribute="bottom" secondItem="658" secondAttribute="bottom" constant="20" symbolic="YES" id="8MR-fC-dxc"/>
+                                                    <constraint firstItem="658" firstAttribute="leading" secondItem="GxE-jb-Wkw" secondAttribute="leading" constant="20" symbolic="YES" id="Gbu-TV-qH5"/>
+                                                    <constraint firstItem="658" firstAttribute="top" secondItem="GxE-jb-Wkw" secondAttribute="top" constant="20" symbolic="YES" id="RPR-0j-WKV"/>
+                                                </constraints>
+                                            </view>
+                                        </tabViewItem>
+                                        <tabViewItem label="Split" identifier="" id="hgc-Gi-YNq">
+                                            <view key="view" id="2sg-2J-C6S">
+                                                <rect key="frame" x="10" y="33" width="688" height="319"/>
+                                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                                <subviews>
+                                                    <splitView dividerStyle="paneSplitter" translatesAutoresizingMaskIntoConstraints="NO" id="Vhl-rq-WDj">
+                                                        <rect key="frame" x="20" y="20" width="648" height="279"/>
+                                                        <subviews>
+                                                            <customView fixedFrame="YES" id="dSQ-sx-g9L" customClass="GraphView">
+                                                                <rect key="frame" x="0.0" y="0.0" width="648" height="131"/>
+                                                                <autoresizingMask key="autoresizingMask"/>
+                                                            </customView>
+                                                            <customView fixedFrame="YES" id="TsY-Dp-eAh" customClass="GraphView">
+                                                                <rect key="frame" x="0.0" y="141" width="648" height="138"/>
+                                                                <autoresizingMask key="autoresizingMask"/>
+                                                            </customView>
+                                                        </subviews>
+                                                        <holdingPriorities>
+                                                            <real value="250"/>
+                                                            <real value="250"/>
+                                                        </holdingPriorities>
+                                                    </splitView>
+                                                </subviews>
+                                                <constraints>
+                                                    <constraint firstItem="Vhl-rq-WDj" firstAttribute="leading" secondItem="2sg-2J-C6S" secondAttribute="leading" constant="20" symbolic="YES" id="2Db-Uf-P0I"/>
+                                                    <constraint firstItem="Vhl-rq-WDj" firstAttribute="top" secondItem="2sg-2J-C6S" secondAttribute="top" constant="20" symbolic="YES" id="heS-Mx-wJU"/>
+                                                    <constraint firstAttribute="bottom" secondItem="Vhl-rq-WDj" secondAttribute="bottom" constant="20" symbolic="YES" id="nrf-K8-Wqs"/>
+                                                    <constraint firstAttribute="trailing" secondItem="Vhl-rq-WDj" secondAttribute="trailing" constant="20" symbolic="YES" id="yYq-0M-FMn"/>
+                                                </constraints>
+                                            </view>
+                                        </tabViewItem>
+                                    </tabViewItems>
+                                </tabView>
                             </subviews>
                             <constraints>
                                 <constraint firstItem="983" firstAttribute="centerY" secondItem="974" secondAttribute="centerY" id="2dh-Tx-Fhg"/>
-                                <constraint firstItem="974" firstAttribute="top" secondItem="658" secondAttribute="bottom" constant="8" symbolic="YES" id="6WF-31-IvK"/>
-                                <constraint firstItem="1160" firstAttribute="top" secondItem="658" secondAttribute="top" id="DDq-hM-RFG"/>
-                                <constraint firstItem="658" firstAttribute="top" secondItem="Oru-LO-3qb" secondAttribute="top" constant="20" symbolic="YES" id="EIx-em-2dV"/>
+                                <constraint firstItem="1160" firstAttribute="leading" secondItem="1039" secondAttribute="leading" id="3lc-me-RL2"/>
+                                <constraint firstItem="1160" firstAttribute="top" secondItem="qQL-2s-b61" secondAttribute="top" id="Csa-Xs-MBo"/>
                                 <constraint firstAttribute="trailing" secondItem="1039" secondAttribute="trailing" constant="20" symbolic="YES" id="FCc-hg-zMd"/>
-                                <constraint firstItem="983" firstAttribute="top" relation="greaterThanOrEqual" secondItem="658" secondAttribute="bottom" constant="8" symbolic="YES" id="Ffy-FI-KwC"/>
                                 <constraint firstItem="1635" firstAttribute="centerY" secondItem="974" secondAttribute="centerY" id="HFa-X3-NgG"/>
                                 <constraint firstAttribute="bottom" secondItem="983" secondAttribute="bottom" constant="20" symbolic="YES" id="MdI-39-1XO"/>
-                                <constraint firstItem="1039" firstAttribute="bottom" secondItem="658" secondAttribute="bottom" id="O14-xC-Adw"/>
                                 <constraint firstItem="974" firstAttribute="height" secondItem="1635" secondAttribute="height" id="Sbv-TN-emW"/>
+                                <constraint firstItem="qQL-2s-b61" firstAttribute="leading" secondItem="Oru-LO-3qb" secondAttribute="leading" constant="20" symbolic="YES" id="YlT-P0-LcG"/>
                                 <constraint firstAttribute="trailing" secondItem="1160" secondAttribute="trailing" constant="20" symbolic="YES" id="alo-LU-Fw6"/>
-                                <constraint firstItem="658" firstAttribute="leading" secondItem="Oru-LO-3qb" secondAttribute="leading" constant="20" symbolic="YES" id="dYr-WA-Ad4"/>
+                                <constraint firstItem="qQL-2s-b61" firstAttribute="top" secondItem="Oru-LO-3qb" secondAttribute="top" constant="12" symbolic="YES" id="cEd-vw-aJ8"/>
                                 <constraint firstItem="983" firstAttribute="leading" secondItem="Oru-LO-3qb" secondAttribute="leading" constant="20" symbolic="YES" id="ho4-j8-Le5"/>
+                                <constraint firstItem="1039" firstAttribute="leading" secondItem="qQL-2s-b61" secondAttribute="trailing" constant="8" symbolic="YES" id="lZ1-m0-gkn"/>
                                 <constraint firstItem="570" firstAttribute="centerY" secondItem="1635" secondAttribute="centerY" id="moX-hU-CL7"/>
+                                <constraint firstItem="1039" firstAttribute="bottom" secondItem="qQL-2s-b61" secondAttribute="bottom" id="nm4-jl-mHG"/>
                                 <constraint firstItem="983" firstAttribute="height" secondItem="974" secondAttribute="height" id="ogm-bw-3xq"/>
                                 <constraint firstItem="1635" firstAttribute="height" secondItem="570" secondAttribute="height" id="w4M-lJ-JUS"/>
                                 <constraint firstAttribute="trailing" secondItem="570" secondAttribute="trailing" constant="20" symbolic="YES" id="xoG-9w-Xk2"/>
+                                <constraint firstItem="974" firstAttribute="top" secondItem="qQL-2s-b61" secondAttribute="bottom" constant="26" id="z1B-YE-aGQ"/>
                             </constraints>
                         </view>
                         <constraints>
                             <constraint firstItem="570" firstAttribute="leading" secondItem="1635" secondAttribute="trailing" constant="12" symbolic="YES" id="NzC-oh-Cwe"/>
-                            <constraint firstItem="1039" firstAttribute="leading" secondItem="658" secondAttribute="trailing" constant="8" symbolic="YES" id="XA3-Rt-dV6"/>
                             <constraint firstItem="1635" firstAttribute="leading" secondItem="974" secondAttribute="trailing" constant="8" symbolic="YES" id="emL-k7-nmN"/>
                             <constraint firstItem="1039" firstAttribute="top" secondItem="1160" secondAttribute="bottom" constant="8" symbolic="YES" id="iLm-Wx-7Ww"/>
                             <constraint firstItem="974" firstAttribute="leading" secondItem="983" secondAttribute="trailing" constant="8" symbolic="YES" id="l3F-Bs-sog"/>
-                            <constraint firstItem="1039" firstAttribute="centerX" secondItem="1160" secondAttribute="centerX" id="o0p-R3-UXP"/>
                         </constraints>
                     </box>
                     <tabView initialItem="1237" translatesAutoresizingMaskIntoConstraints="NO" id="1236">
@@ -1265,6 +1315,9 @@
         </window>
         <customObject id="494" customClass="AppDelegate">
             <connections>
+                <outlet property="GraphTab" destination="qQL-2s-b61" id="q9V-RN-dyo"/>
+                <outlet property="GraphTabSingleView" destination="GxE-jb-Wkw" id="SuH-wc-4Wz"/>
+                <outlet property="GraphTabSplitView" destination="2sg-2J-C6S" id="eZe-h8-fXn"/>
                 <outlet property="averageField" destination="1404" id="1450"/>
                 <outlet property="bpsFillMode" destination="s8D-Rh-tGR" id="l4b-QG-Og4"/>
                 <outlet property="bpsOutlineEnable" destination="Fhx-ST-ejE" id="Of3-VX-Gov"/>
@@ -1272,6 +1325,8 @@
                 <outlet property="filterField" destination="863" id="971"/>
                 <outlet property="fpsRate" destination="rVE-1i-HJ7" id="O1m-UM-l00"/>
                 <outlet property="graphView" destination="658" id="1036"/>
+                <outlet property="graphViewSplit1" destination="dSQ-sx-g9L" id="9JK-Fu-E53"/>
+                <outlet property="graphViewSplit2" destination="TsY-Dp-eAh" id="t7x-hA-ua9"/>
                 <outlet property="kzDepth" destination="PGV-3y-ubd" id="rVH-xg-WSF"/>
                 <outlet property="maxField" destination="1396" id="1449"/>
                 <outlet property="promiscCheck" destination="1627" id="1633"/>

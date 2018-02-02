@@ -68,6 +68,7 @@ enum e_fill_mode {
 
 @interface GraphView : NSView {
     NSTimeInterval _viewTimeLength;
+    NSTimeInterval _viewTimeOffset;
     NSTimeInterval _FIRTimeLength;
 }
 @property (weak) AppDelegate *controller;
@@ -82,6 +83,10 @@ enum e_fill_mode {
 @property (assign) NSTimeInterval viewTimeLength;
 @property (assign) NSTimeInterval maxViewTimeLength;
 
+@property (assign) NSTimeInterval minViewTimeOffset;
+@property (assign) NSTimeInterval viewTimeOffset;
+@property (assign) NSTimeInterval maxViewTimeOffset;
+
 @property (assign) NSTimeInterval minFIRTimeLength;
 @property (assign) NSTimeInterval FIRTimeLength;
 @property (assign) NSTimeInterval maxFIRTimeLength;
@@ -94,11 +99,6 @@ enum e_fill_mode {
 
 // Animation
 @property (assign) double animationFPS;
-@property (atomic) NSTimer *timerAnimation;
-@property (atomic) NSOperationQueue *cueAnimation;
-@property (atomic) BOOL cueActive;
-@property (atomic) BOOL bgReady;
-@property (atomic) NSRect lastBounds;
 
 // Graphic Components
 @property (nonatomic) CGLayerRef CGBackbuffer;
@@ -120,6 +120,11 @@ enum e_fill_mode {
 @property (nonatomic) NSColor *colorGradStart;
 @property (nonatomic) NSColor *colorGradEnd;
 @property (nonatomic) NSDateFormatter *dateFormatter;
+@property (atomic) NSTimer *timerAnimation;
+@property (atomic) NSOperationQueue *cueAnimation;
+@property (atomic) BOOL cueActive;
+@property (atomic) BOOL bgReady;
+@property (atomic) NSRect lastBounds;
 
 // Range adjustment
 @property (nonatomic) NSString *range_mode;
@@ -163,4 +168,7 @@ enum e_fill_mode {
 - (void)saveFile:(TrafficDB *)dataBase;
 
 - (double)saturateDouble:(double)value withMax:(double)max withMin:(double)min roundBy:(double)round;
+
+//
+- (void)copyConfiguration:(GraphView *)graph;
 @end

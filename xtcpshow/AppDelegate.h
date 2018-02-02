@@ -68,7 +68,13 @@
 @property (weak) IBOutlet NSButton *startButton;
 @property (weak) IBOutlet NSSlider *zoomBar;
 @property (weak) IBOutlet NSSlider *smoothBar;
+// Graph Tab
+@property (weak) IBOutlet NSTabView *GraphTab;
+@property (weak) IBOutlet NSView *GraphTabSingleView;
 @property (weak) IBOutlet GraphView *graphView;
+@property (weak) IBOutlet NSView *GraphTabSplitView;
+@property (weak) IBOutlet GraphView *graphViewSplit1;
+@property (weak) IBOutlet GraphView *graphViewSplit2;
 
 /* Action from view */
 - (IBAction)startCapture:(id)sender;

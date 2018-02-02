@@ -69,6 +69,14 @@ static NSString *const LBL_CAP_ERROR=@"CAPTURE ERROR";
     [self.graphView createFIRButton:self.kzDepth];
     [self.graphView createFPSButton:self.fpsRate];
     [self.graphView setNeedsDisplay:YES];
+    
+    [self.graphViewSplit1 setController:self];
+    [self.graphViewSplit1 copyConfiguration:self.graphView];
+    [self.graphViewSplit1 setNeedsDisplay:YES];
+    
+    [self.graphViewSplit2 setController:self];
+    [self.graphViewSplit2 copyConfiguration:self.graphView];
+    [self.graphViewSplit2 setNeedsDisplay:YES];
 
     // setup intrface labels
     [self.model createInterfaceButton:self.deviceSelector];
@@ -101,6 +109,8 @@ static NSString *const LBL_CAP_ERROR=@"CAPTURE ERROR";
 		/* stop capture */
 		[self.model stopCapture];
         [self.graphView stopPlot];
+        [self.graphViewSplit1 stopPlot];
+        [self.graphViewSplit2 stopPlot];
         [self setInput:TRUE];
         return;
 	}
@@ -117,7 +127,11 @@ static NSString *const LBL_CAP_ERROR=@"CAPTURE ERROR";
         return;
     }
     [self.graphView importData:self.model.dataBase];
+    [self.graphViewSplit1 importData:self.model.dataBase];
+    [self.graphViewSplit2 importData:self.model.dataBase];
     [self.graphView startPlot:TRUE];
+    [self.graphViewSplit1 startPlot:TRUE];
+    [self.graphViewSplit2 startPlot:TRUE];
     [self setInput:FALSE];
 }
 

@@ -78,17 +78,10 @@ double const time_round = 0.05;
 //
 // Private Properties
 //
-@interface GraphView () {
-    NSTimeInterval _viewTimeOffset;
-}
+@interface GraphView ()
 // Internal Configuration.
 @property (nonatomic) float magnifySense;
 @property (nonatomic) float scrollSense;
-
-// Offset of viewport. changed by scroll controll.
-@property (nonatomic) NSTimeInterval minViewTimeOffset;
-@property (nonatomic) NSTimeInterval viewTimeOffset;
-@property (nonatomic) NSTimeInterval maxViewTimeOffset;
 
 // Status Update
 - (BOOL)updateRangeY;
@@ -515,5 +508,36 @@ double const time_round = 0.05;
     [panel runModal];
     NSLog(@"save to %@", [panel URL]);
     [pdfData writeToURL:[panel URL] atomically:TRUE];
+}
+
+- (void)copyConfiguration:(GraphView *)graph
+{
+    self.minViewTimeLength = graph.minViewTimeLength;
+    self.maxViewTimeLength = graph.maxViewTimeLength;
+    self.viewTimeLength = graph.viewTimeLength;
+
+    self.minViewTimeOffset = graph.minViewTimeOffset;
+    self.maxViewTimeOffset = graph.maxViewTimeOffset;
+    self.viewTimeOffset = graph.viewTimeOffset;
+
+    self.minFIRTimeLength = graph.minFIRTimeLength;
+    self.maxFIRTimeLength = graph.maxFIRTimeLength;
+    self.FIRTimeLength = graph.FIRTimeLength;
+    
+    self.showPacketMarker = graph.showPacketMarker;
+    self.showDeviationBand = graph.showDeviationBand;
+    self.useHistgram = graph.useHistgram;
+    self.useOutline = graph.useOutline;
+    self.fillMode = graph.fillMode;
+    
+    self.animationFPS = graph.animationFPS;
+
+    self.range_mode = graph.range_mode;
+    self.manual_range = graph.manual_range;
+    self.peak_range = graph.peak_range;
+    self.GraphOffset = graph.GraphOffset;
+    self.y_range = graph.y_range;
+
+    self.inputData = graph.inputData;
 }
 @end
