@@ -33,7 +33,7 @@
 
 #import "AppDelegate.h"
 #import "GraphView.h"
-#import "GraphViewOperation.h"
+#import "GraphView+Draw.h"
 #import "ComputeQueue.h"
 #import "PID.h"
 #import "TrafficIndex.h"
@@ -446,7 +446,13 @@ double const time_round = 0.05;
         return FALSE;
     }
     
-	// fix up _viewTimeOffset
+    // check output resolution
+    if (self.PID.outputSamples != rect.size.width) {
+        [self.PID purgeData];
+        self.lastResample = nil;
+    }
+
+    // check new data
 	end = [self.inputData lastDate];
     if (end == nil) {
         NSLog(@"No timestamp");

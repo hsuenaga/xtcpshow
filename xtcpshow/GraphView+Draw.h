@@ -19,11 +19,7 @@
 - (void)drawRange:(NSRect)rect;
 - (void)drawDate:(NSRect)rect;
 - (void)drawAllWithSize:(NSRect)rect OffScreen:(BOOL)off;
-- (void)setLayerContext;
-- (void)drawToLayer;
 - (void)drawRect:(NSRect)rect;
-- (void)refreshData;
-- (void)drawLayerToGC;
 
 - (void)startPlot:(BOOL)repeat;
 - (void)restartPlot;

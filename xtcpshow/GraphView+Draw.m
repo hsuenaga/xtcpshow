@@ -8,32 +8,23 @@
 
 #import "GraphView.h"
 #import "GraphView+Draw.h"
-#import "GraphViewOperation.h"
 #import "PID.h"
 #import "ComputeQueue.h"
 
 @implementation GraphView (Draw)
-- (void)drawInBackground
-{
-    GraphViewOperation *op = [[GraphViewOperation alloc] initWithGraphView:self];
-    [op setQueuePriority:NSOperationQueuePriorityHigh];
-    [self.cueAnimation addOperation:op];
-    
-}
-
 - (void)startPlot:(BOOL)repeat
 {
     if (self.cueActive)
         return;
     if (!repeat) {
         NSLog(@"One shot plot.");
-        [self drawInBackground];
+        [self display];
         return;
     }
     double interval = 1.0 / self.animationFPS;
     NSLog(@"Start animiation. interval = %f [sec]", interval);
     self.timerAnimation = [NSTimer timerWithTimeInterval:interval
-                                                  target:self selector:@selector(drawInBackground)
+                                                  target:self selector:@selector(display)
                                                 userInfo:nil
                                                  repeats:TRUE];
     [[NSRunLoop currentRunLoop] addTimer:self.timerAnimation
@@ -410,84 +401,24 @@
     
     [self.PID.outputLock unlock];
 }
-
-- (void)setLayerContext
-{
-    if (self.CGBackbuffer) {
-        CGLayerRelease(self.CGBackbuffer);
-        self.CGBackbuffer = NULL;
-        self.NSBackbuffer = nil;
-    }
-    
-    CGContextRef cgc = [[NSGraphicsContext currentContext] graphicsPort];
-    self.CGBackbuffer = CGLayerCreateWithContext(cgc, self.bounds.size, NULL);
-    
-    cgc = CGLayerGetContext(self.CGBackbuffer);
-    self.NSBackbuffer= [NSGraphicsContext graphicsContextWithCGContext:cgc flipped:FALSE];
-    self.bgReady = FALSE;
-}
-
-- (void)drawToLayer
-{
-    if (!self.NSBackbuffer)
-        return;
-    
-    [NSGraphicsContext saveGraphicsState];
-    [NSGraphicsContext setCurrentContext:self.NSBackbuffer];
-    [self drawAllWithSize:self.bounds OffScreen:FALSE];
-    [NSGraphicsContext restoreGraphicsState];
-    self.bgReady = TRUE;
-}
-
-- (void)drawLayerToGC
-{
-    if (!self.bgReady)
-        return;
-    CGContextRef cgc = [[NSGraphicsContext currentContext] graphicsPort];
-    CGContextDrawLayerAtPoint(cgc, CGPointZero, self.CGBackbuffer);
-    self.bgReady = FALSE;
-}
-
-- (void)refreshData
-{
-    // called from GraphViewOperation
-    if (self.bgReady)
-        return;
-    
-    [self resampleDataInRect:self.lastBounds];
-    [self drawToLayer];
-}
-
 - (void)drawRect:(NSRect)dirty_rect
 {
     if ([NSGraphicsContext currentContextDrawingToScreen]) {
-        self.lastBounds = self.bounds;
-        if (self.bounds.size.width != self.PID.outputSamples) {
-            self.PID.outputSamples = self.bounds.size.width;
-            [self purgeData];
-            self.bgReady = FALSE;
-        }
-        [self setLayerContext];
-        if (self.bgReady) {
-            [self drawLayerToGC];
-        }
-        else {
-            [NSGraphicsContext saveGraphicsState];
-            [self drawAllWithSize:dirty_rect OffScreen:FALSE];
-            [NSGraphicsContext restoreGraphicsState];
-        }
+        [NSGraphicsContext saveGraphicsState];
+        [self.PID.outputLock lock];
+        [self resampleDataInRect:self.bounds];
+        [self drawAllWithSize:dirty_rect OffScreen:FALSE];
+        [self.PID.outputLock unlock];
+        [NSGraphicsContext restoreGraphicsState];
     }
     else {
         NSLog(@"Off Screen Rendring requested.");
         NSLog(@"w:%f, h:%f, x:%f, y:%f", dirty_rect.size.width, dirty_rect.size.height, dirty_rect.origin.x, dirty_rect.origin.y);
         [self.PID.outputLock lock];
-        [self.PID purgeData];
-        self.lastResample = nil;
         [self resampleDataInRect:dirty_rect];
         [self drawAllWithSize:dirty_rect OffScreen:YES];
         [self.PID.outputLock unlock];
         NSLog(@"Off Screen Rendring done.");
-        [self purgeData];
     }
 }
 @end
