@@ -23,39 +23,38 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 //
-//  GenericData.h
+//  FractionNumber.h
 //  xtcpshow
 //
-//  Created by SUENAGA Hiroki on 2018/01/30.
+//  Created by SUENAGA Hiroki on 2018/05/24.
 //  Copyright © 2018年 SUENAGA Hiroki. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
-#import "FractionNumber.h"
-#import "GenericTime.h"
+enum enum_data_mode {
+	DATA_NOVALUE,
+	DATA_DOUBLE,
+	DATA_INTEGER,
+	DATA_UINTEGER,
+	DATA_FRACTION
+};
 
-@interface GenericData : FractionNumber<NSCopying>
-@property (readonly, atomic, class) NSUInteger newID;
-@property (atomic, class) NSFileHandle *debugHandle;
-
-@property (nonatomic, readonly) NSUInteger objectID;
-@property (nonatomic) NSUInteger numberOfSamples;
-@property (nonatomic) GenericTime *timestamp;
-@property (nonatomic) GenericTime *dataFrom;
-@property (nonatomic) GenericTime *dataTo;
-@property (nonatomic) NSString *unitName;
+@interface FractionNumber : NSObject<NSCopying>
+@property (atomic, class) BOOL defaultSaturation;
+@property (atomic, class) BOOL preferReal;
+@property (nonatomic) BOOL saturateValue;
+@property (nonatomic) double doubleValue;
+@property (nonatomic) int64_t int64Value;
+@property (nonatomic) uint64_t uint64Value;
 
 #pragma mark - initializer
-- (id)initWithMode:(enum enum_data_mode)mode numerator:(NSNumber *)nvalue denominator:(NSNumber *)dvalue dataFrom:(NSDate *)from dataTo:(NSDate *)to fromSamples:(NSUInteger)samples enableSaturation:(BOOL)saturation;
+- (id)initWithMode:(enum enum_data_mode)mode numerator:(NSNumber *)nvalue denominator:(NSNumber *)dvalue  enableSaturation:(BOOL)saturation;
 
 #pragma mark - allocator
-+ (id)dataWithoutValue;
-+ (id)dataWithDouble:(double)data atDate:(NSDate *)date fromSamples:(NSUInteger)samples;
-+ (id)dataWithDouble:(double)data;
-+ (id)dataWithInteger:(NSInteger)data atDate:(NSDate *)date fromSamples:(NSUInteger)samples;
-+ (id)dataWithInteger:(NSInteger)data;
-+ (id)dataWithUInteger:(NSUInteger)data atDate:(NSDate *)date fromSamples:(NSUInteger)samples;
-+ (id)dataWithUInteger:(NSUInteger)data;
++ (id)numberWithoutValue;
++ (id)numberWithDouble:(double)data;
++ (id)numberWithInteger:(NSInteger)data;
++ (id)numberWithUInteger:(NSUInteger)data;
 
 #pragma mark - accessor
 - (void)addInteger:(NSInteger)iValue;
@@ -63,20 +62,18 @@
 - (void)divInteger:(NSInteger)iValue;
 - (void)mulInteger:(NSInteger)iValue;
 
-- (void)addData:(GenericData *)data withSign:(int)sign;
-- (void)addData:(GenericData *)data;
-- (void)subData:(GenericData *)data;
-- (void)mulData:(GenericData *)data;
-- (void)divData:(GenericData *)data;
+- (void)addNumber:(FractionNumber *)rval withSign:(int)sign;
+- (void)addNumber:(FractionNumber *)rval;
+- (void)subNumber:(FractionNumber *)rval;
+- (void)mulNumber:(FractionNumber *)rval;
+- (void)divNumber:(FractionNumber *)rval;
+
+#pragma mark - comparator
+- (BOOL)isEqual:(FractionNumber *)rval;
 
 - (BOOL)simplifyNumerator:(uint32_t *)np denominator:(uint32_t *)qp;
 - (BOOL)simplifyFraction;
 
 - (void)castToFractionWithDenominator:(uint32_t)denominator;
 - (void)castToReal;
-
-#pragma mark - debug
-+ (void)openDebugFile:(NSString *)fileName;
-- (void)dumpTree:(BOOL)root;
-- (void)writeDebug:(NSString *)format, ... __attribute__((format(__NSString__, 1, 2)));
 @end

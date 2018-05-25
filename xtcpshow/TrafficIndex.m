@@ -43,7 +43,7 @@
 @property (assign, nonatomic, readwrite) uint64_t bytesReceived;
 @property (strong, nonatomic, readwrite) id parent;
 
-@property (strong, atomic, readwrite) NSDate *lastDate;
+@property (strong, atomic, readwrite) GenericTime *lastDate;
 @property (assign, nonatomic, readwrite) uint64_t bytesBefore;
 @property (assign, nonatomic, readwrite) uint64_t samplesBefore;
 @property (assign, nonatomic, readwrite) NSTimeInterval Resolution;
@@ -70,13 +70,13 @@
 //
 // initializer
 //
-- (id)initWithResolution:(NSTimeInterval)resolution startAt:(NSDate *)start endAt:(NSDate *)end
+- (id)initWithResolution:(NSTimeInterval)resolution startAt:(GenericTime *)start endAt:(GenericTime *)end
 {
     self = [super init];
 
     self.numberOfSamples = 0;
     self.bytesReceived = 0;
-    self.lastDate = [NSDate date];
+    self.lastDate = [GenericTime date];
     self.dataFrom = start;
     self.dataTo = end;
     [self updateResolution:resolution];
@@ -94,7 +94,7 @@
     return [self initWithResolution:NAN startAt:nil endAt:nil];
 }
 
-+(id)dataOf:(id)parent withResolution:(NSTimeInterval)Resolution startAt:(NSDate *)start endAt:(NSDate *)end
++(id)dataOf:(id)parent withResolution:(NSTimeInterval)Resolution startAt:(GenericTime *)start endAt:(GenericTime *)end
 {
     TrafficIndex *new = [[TrafficIndex alloc]
                         initWithResolution:Resolution startAt:start endAt:end];
@@ -107,14 +107,14 @@
 {
     return [TrafficIndex dataOf:parent
                 withResolution:msec2interval(msResolution)
-                       startAt:tvStart ? tv2date(tvStart) : nil
-                         endAt:tvEnd ? tv2date(tvEnd): nil];
+                        startAt:[GenericTime timeWithTimeval:tvStart]
+                          endAt:[GenericTime timeWithTimeval:tvEnd]];
 }
 
 //
 // basic acsessor
 //
-- (BOOL)dataAtDate:(NSDate *)date withBytes:(NSUInteger *)bytes withSamples:(NSUInteger *)samples
+- (BOOL)dataAtTime:(GenericTime *)time withBytes:(NSUInteger *)bytes withSamples:(NSUInteger *)samples
 {
     if (self.bytesReceived == 0 && self.numberOfSamples == 0) {
         if (bytes)
@@ -123,7 +123,7 @@
             *samples = 0;
         return TRUE; // no data
     }
-    if (!date || !self.dataFrom || !self.dataTo) {
+    if (!time || !self.dataFrom || !self.dataTo) {
         if (bytes)
             *bytes = self.bytesReceived;
         if (samples)
@@ -132,17 +132,15 @@
     }
     
     // we have data window.
-    struct timeval tv;
-    date2tv(date, &tv);
-    if ([date earlierDate:self.dataFrom] == date) {
+    if ([time earlierTime:self.dataFrom] == time) {
         if (bytes)
             *bytes = self.bytesBefore;
         if (samples)
             *samples = self.samplesBefore;
         return FALSE; // out of range
     }
-    if ([date isEqual:self.dataTo] ||
-        [date laterDate:self.dataTo] == date) {
+    if ([time isEqual:self.dataTo] ||
+        [time laterTime:self.dataTo] == time) {
         if (bytes)
             *bytes = self.bytesReceived;
         if (samples)
@@ -163,6 +161,8 @@
     }
     
     // search tree
+    struct timeval tv;
+    [time timeval:&tv];
     NSUInteger slot = [self slotFromTimeval:&tv];
     TrafficIndex *child = [dataRef pointerAtIndex:slot];
     if (!child) {
@@ -183,27 +183,27 @@
             *samples = self.samplesBefore;
         return TRUE;
     }
-    return [child dataAtDate:date withBytes:bytes withSamples:samples];
+    return [child dataAtTime:time withBytes:bytes withSamples:samples];
 }
 
-- (NSUInteger)bitsAtDate:(NSDate *)date
+- (NSUInteger)bitsAtTime:(GenericTime *)time
 {
-    return [self bytesAtDate:date] * 8;
+    return [self bytesAtTime:time] * 8;
 }
 
-- (NSUInteger)bytesAtDate:(NSDate *)date
+- (NSUInteger)bytesAtTime:(GenericTime *)time
 {
     NSUInteger bytes = 0;
     
-    [self dataAtDate:date withBytes:&bytes withSamples:NULL];
+    [self dataAtTime:date withBytes:&bytes withSamples:NULL];
     return bytes;
 }
 
-- (NSUInteger)samplesAtDate:(NSDate *)date
+- (NSUInteger)samplesAtTime:(GenericTime *)time
 {
     NSUInteger samples = 0;
 
-    [self dataAtDate:date withBytes:NULL withSamples:&samples];
+    [self dataAtTime:time withBytes:NULL withSamples:&samples];
     return samples;
 }
 
@@ -216,13 +216,16 @@
         NSLog(@"obj%lu time slot is not defined", self.objectID);
         return false;
     }
-    
-    NSUInteger msTimestamp = tv2msec(tv);
-    if ([self msStart] <= msTimestamp && msTimestamp < [self msEnd])
-        return true;
 
-    NSLog(@"obj%lu timestamp %lu is out of range: %lu - %lu", [self objectID],
-          msTimestamp, [self msStart], [self msEnd]);
+    GenericTime *time = [GenericTime timeWithTimeval:tv];
+    if (([self.dataFrom isEqual:time] ||
+         [self.dataFrom earlierTime:time]) &&
+        [self.dataTo laterTime:time] == self.dataTo) {
+        return true;
+    }
+
+    NSLog(@"obj%lu timestamp %@ is out of range: %@ - %@", [self objectID],
+          time, self.dataFrom, self.dataTo);
     return false;
 }
 

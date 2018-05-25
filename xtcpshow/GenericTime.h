@@ -1,4 +1,4 @@
-// Copyright (c) 2017
+// Copyright (c) 2018
 // SUENAGA Hiroki <hiroki_suenaga@mac.com>. All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -23,46 +23,32 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 //
-//  TrafficData.h
+//  GenericTime.h
 //  xtcpshow
 //
-//  Created by SUENAGA Hiroki on 2017/12/22.
-//  Copyright © 2017年 SUENAGA Hiroki. All rights reserved.
+//  Created by SUENAGA Hiroki on 2018/05/22.
+//  Copyright © 2018年 SUENAGA Hiroki. All rights reserved.
 //
-#import <sys/time.h>
-
-#import <Foundation/Foundation.h>
 
 #import "FractionNumber.h"
-#import "GenericTime.h"
-#import "GenericData.h"
-#import "TimeConverter.h"
-// precision used by smart string representations.
-#define PRECISION 1
 
-@interface TrafficData : GenericData
-@property (strong, nonatomic, readonly) id parent;
-@property (strong, nonatomic, readonly) id next;
-@property (strong, nonatomic, readonly) id aux;
+@interface GenericTime : FractionNumber<NSCopying>
+@property (nonatomic) uint32_t resolution;
 
 #pragma mark - initializer
-- (id)initAtTimeval:(struct timeval *)tv withPacketLength:(uint64_t)length;
-+ (TrafficData *)sampleOf:(id)parent atTimeval:(struct timeval *)tv withPacketLength:(uint64_t)length auxData:(id)aux;
+- (id)initWithNSTimeInterval:(NSTimeInterval)it withResolution:(uint32_t)res;
++ (id)timeWithNSDate:(NSDate *)date;
++ (id)timeWithTimeval:(const struct timeval *)tv;
++ (id)date;
 
-#pragma mark - basic acessor
-- (TrafficData *)addSampleAtTimeval:(struct timeval *)tv withBytes:(NSUInteger)bytes auxData:(id)aux;
-- (BOOL)dataAtTime:(GenericTime *)time withBytes:(NSUInteger *)bytes withSamples:(NSUInteger *)samples;
-- (NSUInteger)bitsAtTime:(GenericTime *)date;
-- (NSUInteger)bytesAtDate:(GenericTime *)date;
-- (NSUInteger)samplesAtDate:(GenericTime *)date;
-- (GenericTime *)timestamp;
-- (NSUInteger)bytesReceived;
+#pragma mark - acessor
+- (NSDate *)NSDate;
+- (NSUInteger)sec;
+- (void)timeval:(struct timeval *)tv;
+- (FractionNumber *)intervalFrom:(GenericTime *)from;
 
-#pragma mark - smart string representations
-- (NSString *)bytesString;
-
-#pragma mark - utility
-- (void)alignStartEnd;
-- (NSUInteger)msStart;
-- (NSUInteger)msEnd;
+#pragma mark - comparator
+- (GenericTime *)earlierTime:(GenericTime *)rtime;
+- (GenericTime *)laterTime:(GenericTime *)rtime;
+- (BOOL)isEqual:(GenericTime *)rtime;
 @end

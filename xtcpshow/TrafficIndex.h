@@ -31,19 +31,22 @@
 //
 #import <sys/time.h>
 #import <Foundation/Foundation.h>
+#import "FractionNumber.h"
+#import "GenericTime.h"
+#import "GenericData.h"
 #import "TrafficData.h"
 
 #define NBRANCH 10
 
 @interface TrafficIndex : TrafficData
-@property (strong, atomic, readonly) NSDate *lastDate;
+@property (strong, atomic, readonly) GenericTime *lastDate;
 @property (assign, nonatomic, readonly) uint64_t bytesBefore;
 @property (assign, nonatomic, readonly) uint64_t samplesBefore;
 @property (assign, nonatomic, readonly) NSTimeInterval Resolution;
 
 #pragma mark - initializer
-- (id)initWithResolution:(NSTimeInterval)resolusion startAt:(NSDate *)start endAt:(NSDate *)end;
-+ (id)dataOf:(id)parent withResolution:(NSTimeInterval)Resolution startAt:(NSDate *)start endAt:(NSDate *)end;
+- (id)initWithResolution:(NSTimeInterval)resolusion startAt:(GenericTime *)start endAt:(GenericTime *)end;
++ (id)dataOf:(id)parent withResolution:(NSTimeInterval)Resolution startAt:(GenericTime *)start endAt:(GenericTime *)end;
 + (id)unixDataOf:(id)parent withMsResolution:(NSUInteger)msResolution
          startAt:(struct timeval *)tvStart endAt:(struct timeval *)tvEnd;
 

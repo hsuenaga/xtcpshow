@@ -37,8 +37,8 @@
 //
 @interface TrafficData ()
 @property (assign, nonatomic, readwrite) int objectID;
-@property (strong, nonatomic, readwrite) NSDate *dataFrom;
-@property (strong, nonatomic, readwrite) NSDate *dataTo;
+@property (strong, nonatomic, readwrite) GenericTime *dataFrom;
+@property (strong, nonatomic, readwrite) GenericTime *dataTo;
 @property (assign, nonatomic) NSUInteger numberOfSamples;
 @property (strong, nonatomic, readwrite) id parent;
 @property (strong, nonatomic, readwrite) id next;
@@ -63,12 +63,10 @@
 //
 - (id)initAtTimeval:(struct timeval *)tv withPacketLength:(uint64_t)length
 {
-    NSNumber *data = [NSNumber numberWithUnsignedInteger:length];
-    NSDate *date = tv ? tv2date(tv) : nil;
     self = [super initWithMode:DATA_UINTEGER
-                     numerator:data
+                     numerator:[NSNumber numberWithUnsignedInteger:length]
                    denominator:nil
-                      dataFrom:date
+                      dataFrom:[GenericTime timeWithTimeval:tv]
                         dataTo:nil
                    fromSamples:0
               enableSaturation:TRUE];
@@ -121,7 +119,7 @@
     return self;
 }
 
--(BOOL)dataAtDate:(NSDate *)date withBytes:(NSUInteger *)bytes withSamples:(NSUInteger *)samples
+-(BOOL)dataAtTime:(GenericTime *)time withBytes:(NSUInteger *)bytes withSamples:(NSUInteger *)samples
 {
     if (!self.samplingData) {
         NSException *ex = [NSException exceptionWithName:@"Invalid Data"
@@ -129,12 +127,12 @@
                                                 userInfo:nil];
         @throw ex;
     }
-    if (!date || !self.dataFrom) {
+    if (!time || !self.dataFrom) {
         *bytes = *samples = 0;
         return TRUE; // no date
     }
-    if ([date isEqual:self.dataFrom] ||
-        ([date laterDate:self.dataFrom] == date && [date earlierDate:self.dataTo] == date)) {
+    if ([time isEqual:self.dataFrom] ||
+        ([time laterTime:self.dataFrom] == time && [time earlierTime:self.dataTo] == time)) {
         *bytes = self.bytesReceived;
         *samples = self.numberOfSamples;
         return TRUE;
@@ -160,21 +158,21 @@
     self.uint64Value = (uint64_t)bytesReceived;
 }
 
--(NSUInteger)bytesAtDate:(NSDate *)date
+-(NSUInteger)bytesAtTime:(GenericTime *)time
 {
-    if ([date isEqual:dataFrom] ||
-        ([date laterDate:dataFrom] == date && [date earlierDate:dataTo] == date))
+    if ([time isEqual:dataFrom] ||
+        ([time laterTime:dataFrom] == time && [time earlierTime:dataTo] == time))
         return self.bytesReceived;
     return 0;
 }
 
--(NSUInteger)bitsAtDate:(NSDate *)date
+-(NSUInteger)bitsAtTime:(GenericTime *)time
 {
-    return ([self bytesAtDate:date] * 8);
+    return ([self bytesAtTime:time] * 8);
 }
 
 
--(NSUInteger)samplesAtDate:(NSDate *)date
+-(NSUInteger)samplesAtTime:(GenericTime *)time
 {
     if (!self.samplingData) {
         NSException *ex = [NSException exceptionWithName:@"Invalid Data"
@@ -182,13 +180,13 @@
                                                 userInfo:nil];
         @throw ex;
     }
-    if ([date isEqual:dataFrom] ||
-        ([date laterDate:dataFrom] == date && [date earlierDate:dataTo] == date))
+    if ([time isEqual:dataFrom] ||
+        ([time laterTime:dataFrom] == time && [time earlierTime:dataTo] == time))
         return self.numberOfSamples;
     return 0;
 }
 
--(NSDate *)timestamp
+-(GenericTime *)timestamp
 {
     return self.dataFrom;
 }
@@ -219,16 +217,6 @@
 //
 // Utility
 //
-+ (NSDate *)alignTimeval:(struct timeval *)tv withResolution:(NSTimeInterval)resolution
-{
-    NSUInteger msInterval = tv2msec(tv);
-    NSUInteger msResolution = interval2msec(resolution);
-
-    msInterval = msInterval - (msInterval % msResolution);
-
-    return [NSDate dateWithTimeIntervalSince1970:msec2interval(msInterval)];
-}
-
 - (void)alignStartEnd
 {
     self.dataTo = self.dataFrom;
@@ -238,16 +226,20 @@
 {
     if (!self.dataFrom)
         return 0;
-    
-    return date2msec(self.dataFrom);
+
+    GenericTime *ms = [self.dataFrom copy];
+    [ms mulInteger:1000];
+    return (NSUInteger)[ms uint64Value];
 }
 
 - (NSUInteger)msEnd
 {
     if (!self.dataTo)
         return 0;
-    
-    return date2msec(self.dataTo);
+
+    GenericTime *ms = [self.dataTo copy];
+    [ms mulInteger:1000];
+    return (NSUInteger)[ms uint64Value];
 }
 
 //
